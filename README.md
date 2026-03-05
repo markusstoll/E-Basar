@@ -93,6 +93,7 @@ No build step required for basic use. For development (e.g. rebuilding the QR li
   npx browserify node_modules/qrcode/lib/browser.js -s QRCode -o lib/qrcode.min.js
   ```
 - **Version**: Bump in `package.json` and run `npm run update-version` to sync version in `script.js` and `index.html`.
+- **Localisation (DE/EN)**: Languages are loaded via `fetch` from `lang/de.json` and `lang/en.json`. For **local file:// testing** (where `fetch` is blocked), run `npm run build-lang` and uncomment the `lang-embed.js` script tag in `index.html`. For production (served over http(s)), do **not** include `lang-embed.js`; the app will load translations via `fetch`.
 
 ## Documentation
 

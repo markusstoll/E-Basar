@@ -50,14 +50,23 @@ let currentPaySellerItemIds = null;
 /** Selected list item ids for "Alle selektierten an Verkäufer zahlen" (same seller only). */
 let selectedSellerItemIds = new Set();
 
-// Initialize
+// Initialize (wait for i18n so translations are ready)
 document.addEventListener('DOMContentLoaded', () => {
-    applySettingsToMainForm();
-    applySettingsToSellerForm();
-    setModeUI(getMode());
-    renderSellerList();
-    updateFooterSums();
-    setupEventListeners();
+    const ready = window.i18n && typeof window.i18n.init === 'function'
+        ? window.i18n.init()
+        : Promise.resolve();
+    ready.then(() => {
+        if (window.i18n) {
+            window.i18n.applyToPage();
+            document.documentElement.lang = window.i18n.getLanguage();
+        }
+        applySettingsToMainForm();
+        applySettingsToSellerForm();
+        setModeUI(getMode());
+        renderSellerList();
+        updateFooterSums();
+        setupEventListeners();
+    });
 });
 
 function setupEventListeners() {
@@ -156,7 +165,7 @@ function setupEventListeners() {
         const amountStr = amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const iban = (currentOverlayData.iban || '').trim();
         const ibanDisplay = iban ? formatIBAN(iban) : iban;
-        const text = 'Die Bezahlung über ' + amountStr + ' EUR für ' + paramLabel + ' ' + param + ' wurde an ' + ibanDisplay + ' überwiesen, bitte bestätigen Sie den Zahlungseingang. Sie müssen nicht mehr zur Kasse kommen.';
+        const text = window.i18n ? window.i18n.t('sms.paymentConfirm', [amountStr, paramLabel, param, ibanDisplay]) : ('Die Bezahlung über ' + amountStr + ' EUR für ' + paramLabel + ' ' + param + ' wurde an ' + ibanDisplay + ' überwiesen, bitte bestätigen Sie den Zahlungseingang. Sie müssen nicht mehr zur Kasse kommen.');
         const phone = (item && (item.phone || '').trim()) ? (item.phone || '').trim().replace(/\s/g, '') : '';
         const url = phone ? 'sms:' + encodeURIComponent(phone) + '?body=' + encodeURIComponent(text) : 'sms:?body=' + encodeURIComponent(text);
         window.location.href = url;
@@ -190,6 +199,23 @@ function setupEventListeners() {
 
     settingsBtn.addEventListener('click', openSettingsOverlay);
 
+    // Switch language immediately when dropdown changes (no need to save form – so user can change language with incomplete setup)
+    const settingsLanguageEl = document.getElementById('settingsLanguage');
+    if (settingsLanguageEl && window.i18n) {
+        settingsLanguageEl.addEventListener('change', function () {
+            var newLang = this.value;
+            if (newLang !== window.i18n.getLanguage()) {
+                window.i18n.switchLanguage(newLang).then(function () {
+                    document.documentElement.lang = window.i18n.getLanguage();
+                    applySettingsToMainForm();
+                    applySettingsToSellerForm();
+                    refreshSettingsFormTranslations();
+                    renderSellerList();
+                    updateFooterSums();
+                });
+            }
+        });
+    }
 
     const viewObjectsBtn = document.getElementById('viewObjects');
     const objectsOverlay = document.getElementById('objectsOverlay');
@@ -220,7 +246,7 @@ function setupEventListeners() {
         importFileInput.addEventListener('change', function () {
             const file = importFileInput.files[0];
             if (file) {
-                const ok = confirm('Aktueller Bestand wird überschrieben. Fortfahren?');
+                const ok = confirm(window.i18n ? window.i18n.t('msg.overwriteConfirm') : 'Aktueller Bestand wird überschrieben. Fortfahren?');
                 if (ok) importData(file);
                 importFileInput.value = '';
             }
@@ -274,21 +300,22 @@ function applySettingsToMainForm() {
     const s = getSettings();
     const label = s.paramLabel || DEFAULT_SETTINGS.paramLabel;
     const paramFilterLabel = document.getElementById('sellerFilterParamLabel');
-    if (paramFilterLabel) paramFilterLabel.textContent = label + ' (exakt)';
-    if (sellerFilterParamEl) sellerFilterParamEl.placeholder = 'nur exakte Treffer';
-    if (sellerFilterSellerEl) sellerFilterSellerEl.placeholder = (label || 'Objekt') + ', Verkäufer, IBAN';
+    if (paramFilterLabel) paramFilterLabel.textContent = label + ' (' + (window.i18n ? window.i18n.t('filter.exact') : 'exakt') + ')';
+    if (sellerFilterParamEl) sellerFilterParamEl.placeholder = window.i18n ? window.i18n.t('filter.placeholderExact') : 'nur exakte Treffer';
+    if (sellerFilterSellerEl) sellerFilterSellerEl.placeholder = (label || 'Objekt') + ', ' + (window.i18n ? window.i18n.t('table.seller') : 'Verkäufer') + ', IBAN';
     const btnNewSeller = document.getElementById('btnNewSeller');
-    if (btnNewSeller) btnNewSeller.textContent = 'Neues ' + label + ' anlegen';
+    if (btnNewSeller) btnNewSeller.textContent = window.i18n ? window.i18n.t('button.newObject', [label]) : ('Neues ' + label + ' anlegen');
     const btnSellerSubmit = document.getElementById('btnSellerSubmit');
-    if (btnSellerSubmit) btnSellerSubmit.textContent = label + ' speichern';
+    if (btnSellerSubmit) btnSellerSubmit.textContent = window.i18n ? window.i18n.t('form.saveObject', [label]) : (label + ' speichern');
 }
 
 function applySettingsToSellerForm() {
     const s = getSettings();
+    const label = s.paramLabel || DEFAULT_SETTINGS.paramLabel;
     const labelEl = document.getElementById('sellerParamLabel');
     const paramInput = document.getElementById('sellerParam');
-    if (labelEl) labelEl.textContent = (s.paramLabel || DEFAULT_SETTINGS.paramLabel) + ' *';
-    if (paramInput) paramInput.placeholder = s.paramLabel ? `z.B. ${s.paramLabel}` : 'z.B. Objekt';
+    if (labelEl) labelEl.textContent = label + ' *';
+    if (paramInput) paramInput.placeholder = window.i18n ? window.i18n.t('form.placeholderObject', [label]) : ('z.B. ' + label);
 }
 
 // --- Modus (Verkäufer erfassen / Direktüberweisung) ---
@@ -439,7 +466,7 @@ function validateSellerIbanField() {
         errorEl.textContent = '';
     } else {
         input.classList.add('input-error');
-        errorEl.textContent = 'Ungültige IBAN';
+        errorEl.textContent = window.i18n ? window.i18n.t('msg.invalidIban') : 'Ungültige IBAN';
     }
 }
 
@@ -455,7 +482,7 @@ function handleSellerTestSms(e) {
     const name = (document.getElementById('sellerName') && document.getElementById('sellerName').value) || '';
     const iban = (document.getElementById('sellerIban') && document.getElementById('sellerIban').value.trim().toUpperCase().replace(/\s/g, '')) || '';
     const phone = (document.getElementById('sellerPhone') && document.getElementById('sellerPhone').value.trim()) || '';
-    const message = 'Verkäufer ' + name + ' mit IBAN ' + (iban || '(noch nicht angegeben)') + ' registriert';
+    const message = window.i18n ? window.i18n.t('sms.sellerRegistered', [name, iban || window.i18n.t('sms.ibanNotGiven')]) : ('Verkäufer ' + name + ' mit IBAN ' + (iban || '(noch nicht angegeben)') + ' registriert');
     const smsBody = encodeURIComponent(message);
     const href = phone ? 'sms:' + phone.replace(/\s/g, '') + '?body=' + smsBody : 'sms:?body=' + smsBody;
     window.location.href = href;
@@ -472,7 +499,7 @@ function setSellerFormSellerBlockVisible(visible) {
     if (block) block.classList.toggle('hidden', !visible);
     if (sellerPaidRow) sellerPaidRow.classList.toggle('hidden', !visible);
     if (btnToggle) {
-        btnToggle.textContent = visible ? 'Verkäufer nacherfassen (eingeblendet)' : 'Verkäufer nacherfassen';
+        btnToggle.textContent = window.i18n ? window.i18n.t(visible ? 'form.toggleSellerCaptureVisible' : 'form.toggleSellerCapture') : (visible ? 'Verkäufer nacherfassen (eingeblendet)' : 'Verkäufer nacherfassen');
         btnToggle.classList.toggle('active', visible);
     }
     [nameInput, ibanInput, phoneInput].forEach(function (el) {
@@ -491,7 +518,7 @@ function openSellerFormOverlay(editId) {
     const sellerBlock = document.getElementById('sellerFormSellerBlock');
     const label = (getSettings().paramLabel || 'Objekt').trim() || 'Objekt';
 
-    if (titleEl) titleEl.textContent = editId ? (label + ' bearbeiten') : ('Neues ' + label + ' erfassen');
+    if (titleEl) titleEl.textContent = window.i18n ? (editId ? window.i18n.t('form.sellerTitleEdit', [label]) : window.i18n.t('form.sellerTitleNew', [label])) : (editId ? (label + ' bearbeiten') : ('Neues ' + label + ' erfassen'));
 
     if (editId) {
         const items = getSellerItems();
@@ -539,13 +566,13 @@ function openSellerQuickFormOverlay() {
     const form = document.getElementById('sellerQuickForm');
     const titleEl = document.getElementById('sellerQuickFormTitle');
     const label = (getSettings().paramLabel || 'Objekt').trim() || 'Objekt';
-    if (titleEl) titleEl.textContent = 'Neues ' + label + ' anlegen';
+    if (titleEl) titleEl.textContent = window.i18n ? window.i18n.t('form.quickTitle', [label]) : ('Neues ' + label + ' anlegen');
     const quickParamLabel = document.getElementById('quickParamLabel');
     if (quickParamLabel) quickParamLabel.textContent = label + ' *';
     const quickParamInput = document.getElementById('quickParam');
-    if (quickParamInput) quickParamInput.placeholder = 'z.B. ' + label;
+    if (quickParamInput) quickParamInput.placeholder = window.i18n ? window.i18n.t('form.placeholderObject', [label]) : ('z.B. ' + label);
     const btnQuickSubmit = document.getElementById('btnQuickSellerSubmit');
-    if (btnQuickSubmit) btnQuickSubmit.textContent = label + ' speichern';
+    if (btnQuickSubmit) btnQuickSubmit.textContent = window.i18n ? window.i18n.t('form.saveObject', [label]) : (label + ' speichern');
     const quickForm = document.getElementById('sellerQuickForm');
     if (quickForm) quickForm.reset();
     if (overlay) overlay.classList.remove('hidden');
@@ -561,16 +588,16 @@ function handleSellerQuickFormSubmit(e) {
     const param = (document.getElementById('quickParam') && document.getElementById('quickParam').value) || '';
     const price = parseFloat(document.getElementById('quickPrice') && document.getElementById('quickPrice').value);
     if (!param.trim()) {
-        alert('Bitte Objekt angeben.');
+        alert(window.i18n ? window.i18n.t('msg.pleaseObject') : 'Bitte Objekt angeben.');
         return;
     }
     if (isNaN(price) || price <= 0) {
-        alert('Bitte einen gültigen Betrag eingeben.');
+        alert(window.i18n ? window.i18n.t('msg.pleaseAmount') : 'Bitte einen gültigen Betrag eingeben.');
         return;
     }
     const label = (getSettings().paramLabel || 'Objekt').trim() || 'Objekt';
     if (isParamInUse(param, null)) {
-        alert('Ein anderes Objekt hat bereits den gleichen ' + label + '-Wert. Bitte einen eindeutigen Wert verwenden.');
+        alert(window.i18n ? window.i18n.t('msg.duplicateParam', [label]) : ('Ein anderes Objekt hat bereits den gleichen ' + label + '-Wert. Bitte einen eindeutigen Wert verwenden.'));
         return;
     }
     addSellerItem({ sellerName: '', sellerIban: '', param: param.trim(), price, phone: '' });
@@ -592,7 +619,7 @@ function toggleSellerSelection(id, checked) {
             const firstId = selectedSellerItemIds.values().next().value;
             const first = items.find(i => i.id === firstId);
             if (first && normalizeIbanForCompare(first.sellerIban) !== normalizeIbanForCompare(item.sellerIban)) {
-                alert('Nur Objekte desselben Verkäufers (gleiche IBAN) auswählbar.');
+                alert(window.i18n ? window.i18n.t('msg.onlySameSeller') : 'Nur Objekte desselben Verkäufers (gleiche IBAN) auswählbar.');
                 return;
             }
         }
@@ -616,11 +643,11 @@ function updateSellerSelectionBar() {
     }
     bar.classList.remove('hidden');
     if (sameIban) {
-        textEl.textContent = selected.length + ' ausgewählt';
+        textEl.textContent = window.i18n ? window.i18n.t('msg.selectedCount', [selected.length]) : (selected.length + ' ausgewählt');
         btn.disabled = false;
         btn.classList.remove('disabled');
     } else {
-        textEl.textContent = 'Auswahl: unterschiedliche Verkäufer – nur ein Verkäufer auswählbar.';
+        textEl.textContent = window.i18n ? window.i18n.t('msg.selectedDifferentSellers') : 'Auswahl: unterschiedliche Verkäufer – nur ein Verkäufer auswählbar.';
         btn.disabled = true;
         btn.classList.add('disabled');
     }
@@ -644,7 +671,7 @@ function handleSellerListClick(e) {
     else if (action === 'pay') openPayOverlay(id);
     else if (action === 'paySeller') openPaySellerOverlay(id);
     else if (action === 'delete') {
-        if (confirm('Dieses Objekt wirklich als gelöscht markieren?')) setSellerDeleted(id);
+        if (confirm(window.i18n ? window.i18n.t('msg.confirmDeleteItem') : 'Dieses Objekt wirklich als gelöscht markieren?')) setSellerDeleted(id);
     }
 }
 
@@ -653,7 +680,7 @@ function openPayOverlay(id) {
     if (!item) return;
     const s = getSettings();
     if (!s.recipientName || !s.iban) {
-        alert('Bitte in den Einstellungen Empfänger und IBAN eintragen (für „Bezahlen“).');
+        alert(window.i18n ? window.i18n.t('msg.pleaseEnterRecipient') : 'Bitte in den Einstellungen Empfänger und IBAN eintragen.');
         return;
     }
     currentPayItemId = id;
@@ -704,7 +731,7 @@ function openPaySellerOverlayMultiple(ids) {
     if (selected.length === 0) return;
     const iban0 = normalizeIbanForCompare(selected[0].sellerIban);
     if (selected.some(i => normalizeIbanForCompare(i.sellerIban) !== iban0)) {
-        alert('Alle ausgewählten Objekte müssen zum gleichen Verkäufer (IBAN) gehören.');
+        alert(window.i18n ? window.i18n.t('sellerPaymentAllSame') : 'Alle ausgewählten Objekte müssen zum gleichen Verkäufer (IBAN) gehören.');
         return;
     }
     currentPaySellerItemId = null;
@@ -737,7 +764,7 @@ function openPaySellerOverlayMultiple(ids) {
 function fillSellerFormFromLast() {
     const items = getSellerItems();
     if (items.length === 0) {
-        alert('Noch keine Objekte erfasst. Legen Sie zuerst ein Objekt an.');
+        alert(window.i18n ? window.i18n.t('msg.noObjectsYet') : 'Noch keine Objekte erfasst. Legen Sie zuerst ein Objekt an.');
         return;
     }
     const last = items[items.length - 1];
@@ -767,29 +794,29 @@ function handleSellerFormSubmit(e) {
         phone = '';
     } else {
         if (!sellerName) {
-            alert('Bitte Name Verkäufer angeben.');
+            alert(window.i18n ? window.i18n.t('msg.pleaseNameSeller') : 'Bitte Name Verkäufer angeben.');
             return;
         }
         if (!validateIBAN(sellerIbanRaw)) {
-            alert('Bitte eine gültige IBAN eingeben.');
+            alert(window.i18n ? window.i18n.t('msg.pleaseValidIban') : 'Bitte eine gültige IBAN eingeben.');
             return;
         }
         if (!phone) {
-            alert('Bitte Mobilnummer angeben.');
+            alert(window.i18n ? window.i18n.t('msg.pleasePhone') : 'Bitte Mobilnummer angeben.');
             return;
         }
     }
     if (!param) {
-        alert('Bitte Objekt angeben.');
+        alert(window.i18n ? window.i18n.t('msg.pleaseObject') : 'Bitte Objekt angeben.');
         return;
     }
     if (isNaN(price) || price <= 0) {
-        alert('Bitte einen gültigen Preis angeben.');
+        alert(window.i18n ? window.i18n.t('msg.pleasePrice') : 'Bitte einen gültigen Preis angeben.');
         return;
     }
     const paramLabel = (getSettings().paramLabel || 'Objekt').trim() || 'Objekt';
     if (isParamInUse(param, editId || null)) {
-        alert('Ein anderes Objekt hat bereits den gleichen ' + paramLabel + '-Wert. Bitte einen eindeutigen Wert verwenden.');
+        alert(window.i18n ? window.i18n.t('msg.duplicateParam', [paramLabel]) : ('Ein anderes Objekt hat bereits den gleichen ' + paramLabel + '-Wert. Bitte einen eindeutigen Wert verwenden.'));
         return;
     }
 
@@ -843,8 +870,8 @@ function renderSellerList() {
     if (filtered.length === 0) {
         const total = items.length;
         const emptyMsg = total === 0
-            ? 'Noch keine Objekte. Klicken Sie auf „Neues ' + paramLabel + ' anlegen“.'
-            : (hasFilter ? 'Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.' : 'Keine Treffer.');
+            ? (window.i18n ? window.i18n.t('empty.noObjects', [paramLabel]) : ('Noch keine Objekte. Klicken Sie auf „Neues ' + paramLabel + ' anlegen".'))
+            : (hasFilter ? (window.i18n ? window.i18n.t('empty.noMatches', [paramLabel]) : ('Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.')) : (window.i18n ? window.i18n.t('empty.noMatchesShort') : 'Keine Treffer.'));
         sellerListEl.innerHTML = '<div class="seller-empty">' + emptyMsg + '</div>';
         return;
     }
@@ -852,25 +879,31 @@ function renderSellerList() {
         const paramText = paramLabel + ': ' + escapeHtml(item.param);
         const badges = [];
         if (item.paid) {
-            const methodLabel = item.paidMethod === 'bar' ? 'Bar' : 'Elektronisch';
-            badges.push('<span class="seller-badge seller-badge-paid">Bezahlt (' + escapeHtml(methodLabel.toLowerCase()) + ')</span>');
+            const methodKey = item.paidMethod === 'bar' ? 'form.bar' : 'form.electronic';
+            const methodLabel = window.i18n ? window.i18n.t(methodKey) : (item.paidMethod === 'bar' ? 'Bar' : 'Elektronisch');
+            badges.push('<span class="seller-badge seller-badge-paid">' + (window.i18n ? window.i18n.t('badge.paid', [methodLabel]) : ('Bezahlt (' + methodLabel.toLowerCase() + ')')) + '</span>');
         }
-        if (item.sellerPaid) badges.push('<span class="seller-badge seller-badge-seller-paid">an Verkäufer gezahlt</span>');
-        if (item.deleted) badges.push('<span class="seller-badge seller-badge-deleted">Gelöscht</span>');
+        if (item.sellerPaid) badges.push('<span class="seller-badge seller-badge-seller-paid">' + (window.i18n ? window.i18n.t('badge.sellerPaid') : 'an Verkäufer gezahlt') + '</span>');
+        if (item.deleted) badges.push('<span class="seller-badge seller-badge-deleted">' + (window.i18n ? window.i18n.t('badge.deleted') : 'Gelöscht') + '</span>');
         const hasSeller = !!((item.sellerName || '').trim() && (item.sellerIban || '').trim());
         const canSelectForSellerPay = item.paid && !item.sellerPaid && hasSeller && !item.deleted;
+        const selectLabel = window.i18n ? window.i18n.t('action.select') : 'Auswählen';
         const selectCb = canSelectForSellerPay
-            ? `<label class="seller-item-select"><input type="checkbox" class="seller-select-cb" data-id="${escapeHtml(item.id)}" ${selectedSellerItemIds.has(item.id) ? 'checked' : ''}> Auswählen</label>`
+            ? `<label class="seller-item-select"><input type="checkbox" class="seller-select-cb" data-id="${escapeHtml(item.id)}" ${selectedSellerItemIds.has(item.id) ? 'checked' : ''}> ${escapeHtml(selectLabel)}</label>`
             : '';
+        const paySellerLabel = window.i18n ? window.i18n.t('action.paySeller') : 'An Verkäufer zahlen';
         const paySellerBtn = hasSeller
-            ? `<button type="button" class="btn-small btn-pay-seller" data-action="paySeller" data-id="${escapeHtml(item.id)}">An Verkäufer zahlen</button>`
+            ? `<button type="button" class="btn-small btn-pay-seller" data-action="paySeller" data-id="${escapeHtml(item.id)}">${escapeHtml(paySellerLabel)}</button>`
             : '';
+        const editLabel = window.i18n ? window.i18n.t('action.edit') : 'Bearbeiten';
+        const payLabel = window.i18n ? window.i18n.t('action.pay') : 'Bezahlen';
+        const deleteLabel = window.i18n ? window.i18n.t('action.delete') : 'Löschen';
         const actions = item.deleted ? '' : `
             <div class="seller-item-actions">
-                <button type="button" class="btn-small btn-edit" data-action="edit" data-id="${escapeHtml(item.id)}">Bearbeiten</button>
-                <button type="button" class="btn-small btn-pay" data-action="pay" data-id="${escapeHtml(item.id)}">Bezahlen</button>
+                <button type="button" class="btn-small btn-edit" data-action="edit" data-id="${escapeHtml(item.id)}">${escapeHtml(editLabel)}</button>
+                <button type="button" class="btn-small btn-pay" data-action="pay" data-id="${escapeHtml(item.id)}">${escapeHtml(payLabel)}</button>
                 ${paySellerBtn}
-                <button type="button" class="btn-small btn-delete" data-action="delete" data-id="${escapeHtml(item.id)}">Löschen</button>
+                <button type="button" class="btn-small btn-delete" data-action="delete" data-id="${escapeHtml(item.id)}">${escapeHtml(deleteLabel)}</button>
             </div>
         `;
         const displayName = (item.sellerName || '').trim() || '—';
@@ -897,16 +930,23 @@ function renderSellerList() {
 
 function openSettingsOverlay() {
     const s = getSettings();
+    const langEl = document.getElementById('settingsLanguage');
+    if (langEl && window.i18n) langEl.value = window.i18n.getLanguage();
     document.getElementById('settingsRecipientName').value = s.recipientName;
     document.getElementById('settingsIban').value = formatIBAN(s.iban);
     document.getElementById('settingsUsageTemplate').value = s.usageTemplate;
     document.getElementById('settingsParamLabel').value = s.paramLabel;
     const commissionEl = document.getElementById('settingsCommissionPercent');
     if (commissionEl) commissionEl.value = s.commissionPercent != null ? s.commissionPercent : 10;
-    
     const weroLinkEl = document.getElementById('settingsWeroLink');
     if (weroLinkEl) weroLinkEl.value = s.weroLink || '';
-
+    if (window.i18n) {
+        document.getElementById('settingsRecipientName').placeholder = window.i18n.t('settings.placeholderName');
+        document.getElementById('settingsIban').placeholder = window.i18n.t('settings.placeholderIban');
+        document.getElementById('settingsUsageTemplate').placeholder = window.i18n.t('settings.placeholderUsage');
+        document.getElementById('settingsParamLabel').placeholder = window.i18n.t('settings.placeholderParamLabel');
+        document.getElementById('settingsWeroLink').placeholder = window.i18n.t('settings.placeholderWero');
+    }
     settingsOverlay.classList.remove('hidden');
 }
 
@@ -914,12 +954,22 @@ function closeSettingsOverlay() {
     settingsOverlay.classList.add('hidden');
 }
 
+/** Update labels and placeholders in the settings form (e.g. after language switch). */
+function refreshSettingsFormTranslations() {
+    if (!window.i18n) return;
+    document.getElementById('settingsRecipientName').placeholder = window.i18n.t('settings.placeholderName');
+    document.getElementById('settingsIban').placeholder = window.i18n.t('settings.placeholderIban');
+    document.getElementById('settingsUsageTemplate').placeholder = window.i18n.t('settings.placeholderUsage');
+    document.getElementById('settingsParamLabel').placeholder = window.i18n.t('settings.placeholderParamLabel');
+    document.getElementById('settingsWeroLink').placeholder = window.i18n.t('settings.placeholderWero');
+}
+
 function handleSettingsSubmit(e) {
     e.preventDefault();
     const fd = new FormData(settingsForm);
     const iban = fd.get('iban').trim().toUpperCase().replace(/\s/g, '');
     if (!validateIBAN(iban)) {
-        alert('Bitte geben Sie eine gültige IBAN ein.');
+        alert(window.i18n ? window.i18n.t('msg.enterValidIban') : 'Bitte geben Sie eine gültige IBAN ein.');
         return;
     }
     const commissionVal = fd.get('commissionPercent');
@@ -933,7 +983,7 @@ function handleSettingsSubmit(e) {
         weroLink: fd.get('weroLink').trim()
     };
     if (settings.usageTemplate.indexOf('$objekt') === -1) {
-        alert('Der Verwendungszweck muss den Platzhalter $objekt enthalten.');
+        alert(window.i18n ? window.i18n.t('msg.usageMustContain') : 'Der Verwendungszweck muss den Platzhalter $objekt enthalten.');
         return;
     }
     saveSettings(settings);
@@ -945,7 +995,7 @@ function handleSettingsSubmit(e) {
 function handleWeroScan() {
     // In einer echten Web-App würde hier die Kamera geöffnet, um einen QR-Code zu scannen.
     // Da dies eine terminalbasierte Umgebung ist, simulieren wir den Scan durch eine Eingabeaufforderung.
-    const scannedLink = prompt('Bitte scannen Sie den WERO QR-Code oder geben Sie den Zahlungslink hier ein:');
+    const scannedLink = prompt(window.i18n ? window.i18n.t('msg.weroScanPrompt') : 'Bitte scannen Sie den WERO QR-Code oder geben Sie den Zahlungslink hier ein:');
     if (scannedLink) {
         const weroInput = document.getElementById('settingsWeroLink');
         if (weroInput) {
@@ -1039,7 +1089,7 @@ function generateQRCode(data) {
     }, function (error) {
         if (error) {
             console.error('Error generating QR code:', error);
-            alert('Fehler beim Generieren des QR Codes.');
+            alert(window.i18n ? window.i18n.t('msg.qrError') : 'Fehler beim Generieren des QR Codes.');
             return;
         }
         displayTransferDetails(data);
@@ -1079,7 +1129,7 @@ function switchPaySellerPanel(panel) {
     const paramEl = document.getElementById('weroDetailParam');
     if (nameEl) nameEl.textContent = s.recipientName || '-';
     if (amountEl) amountEl.textContent = data && typeof data.amount === 'number' ? formatAmountDE(data.amount) + ' EUR' : '-';
-    const paramLabel = s.paramLabel || 'Objekt';
+    const paramLabel = s.paramLabel || (window.i18n ? window.i18n.t('table.object') : 'Objekt');
     if (paramLabelEl) paramLabelEl.textContent = paramLabel + ':';
     if (paramEl) paramEl.textContent = (data && data.param) || '-';
 
@@ -1102,13 +1152,13 @@ function displayTransferDetails(data) {
     const titleEl = qrOverlayTitle || document.getElementById('qrOverlayTitle');
     if (titleEl) {
         if (data.type === 'pay' || data.type === 'direct') {
-            titleEl.textContent = 'Bezahlung durch Käufer';
+            titleEl.textContent = window.i18n ? window.i18n.t('overlay.payByBuyer') : 'Bezahlung durch Käufer';
             titleEl.style.color = '';
         } else if (data.type === 'paySeller') {
-            titleEl.textContent = 'Bezahlung AN VERKÄUFER';
+            titleEl.textContent = window.i18n ? window.i18n.t('overlay.payToSeller') : 'Bezahlung AN VERKÄUFER';
             titleEl.style.color = 'red';
         } else {
-            titleEl.textContent = 'QR Code für Überweisung';
+            titleEl.textContent = window.i18n ? window.i18n.t('overlay.titleQR') : 'QR Code für Überweisung';
             titleEl.style.color = '';
         }
     }
@@ -1171,7 +1221,16 @@ function closeObjectsOverlay() {
 }
 
 function renderObjectsTable(items, paramLabel) {
-    if (!items.length) return '<p class="objects-empty">Keine Einträge</p>';
+    const emptyLabel = window.i18n ? window.i18n.t('objects.empty') : 'Keine Einträge';
+    const yesLabel = window.i18n ? window.i18n.t('yes') : 'Ja';
+    const noLabel = window.i18n ? window.i18n.t('no') : 'Nein';
+    const thSeller = window.i18n ? window.i18n.t('table.seller') : 'Verkäufer';
+    const thIban = window.i18n ? window.i18n.t('table.iban') : 'IBAN';
+    const thAmount = window.i18n ? window.i18n.t('table.amount') : 'Betrag';
+    const thTel = window.i18n ? window.i18n.t('table.tel') : 'Tel';
+    const thPaid = window.i18n ? window.i18n.t('table.paid') : 'Bezahlt';
+    const thPaidToSeller = window.i18n ? window.i18n.t('table.paidToSeller') : 'An Verkäufer gezahlt';
+    if (!items.length) return '<p class="objects-empty">' + emptyLabel + '</p>';
     var rows = items.map(function (item) {
         return '<tr>' +
             '<td>' + escapeHtml(item.param || '—') + '</td>' +
@@ -1179,12 +1238,12 @@ function renderObjectsTable(items, paramLabel) {
             '<td>' + escapeHtml((item.sellerIban || '').trim() ? formatIBAN(item.sellerIban) : '—') + '</td>' +
             '<td>' + (typeof item.price === 'number' ? formatAmountDE(item.price) : '—') + ' EUR</td>' +
             '<td>' + escapeHtml((item.phone || '').trim() || '—') + '</td>' +
-            '<td>' + (item.paid ? 'Ja' : 'Nein') + '</td>' +
-            '<td>' + (item.sellerPaid ? 'Ja' : 'Nein') + '</td>' +
+            '<td>' + (item.paid ? yesLabel : noLabel) + '</td>' +
+            '<td>' + (item.sellerPaid ? yesLabel : noLabel) + '</td>' +
         '</tr>';
     }).join('');
     return '<table class="objects-table"><thead><tr>' +
-        '<th>' + escapeHtml(paramLabel) + '</th><th>Verkäufer</th><th>IBAN</th><th>Betrag</th><th>Tel</th><th>Bezahlt</th><th>An Verkäufer gezahlt</th>' +
+        '<th>' + escapeHtml(paramLabel) + '</th><th>' + escapeHtml(thSeller) + '</th><th>' + escapeHtml(thIban) + '</th><th>' + escapeHtml(thAmount) + '</th><th>' + escapeHtml(thTel) + '</th><th>' + escapeHtml(thPaid) + '</th><th>' + escapeHtml(thPaidToSeller) + '</th>' +
         '</tr></thead><tbody>' + rows + '</tbody></table>';
 }
 
@@ -1212,7 +1271,7 @@ function showHistory() {
     const historyList = document.getElementById('historyList');
     
     if (history.length === 0) {
-        historyList.innerHTML = '<div class="history-empty">Noch keine QR Codes generiert</div>';
+        historyList.innerHTML = '<div class="history-empty">' + (window.i18n ? window.i18n.t('history.empty') : 'Noch keine QR Codes generiert') + '</div>';
     } else {
         historyList.innerHTML = history.map((item, index) => createHistoryItem(item, index)).join('');
     }
@@ -1223,7 +1282,7 @@ function showHistory() {
 function exportHistoryToPDF() {
     const history = getHistory();
     if (!history || history.length === 0) {
-        alert('Es gibt keine Einträge zum Exportieren.');
+        alert(window.i18n ? window.i18n.t('msg.noHistoryExport') : 'Es gibt keine Einträge zum Exportieren.');
         return;
     }
     // Sicherstellen, dass die History sichtbar und gerendert ist
@@ -1240,10 +1299,14 @@ function createHistoryItem(item, index) {
     const paramLabel = item.paramLabel || '';
     const param = item.param || '';
     const title = (item.type === 'paySeller')
-        ? 'Verkäuferbezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param
+        ? (window.i18n ? window.i18n.t('history.sellerPayment', [paramLabel, param]).trim() : ('Verkäuferbezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param))
         : (paramLabel || param)
-            ? 'Bezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param
-            : 'Überweisung #' + (index + 1);
+            ? (window.i18n ? window.i18n.t('history.payment', [paramLabel, param]).trim() : ('Bezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param))
+            : (window.i18n ? window.i18n.t('history.transfer', [index + 1]) : ('Überweisung #' + (index + 1)));
+    const lblRecipient = window.i18n ? window.i18n.t('history.recipient') : 'Empfänger';
+    const lblIban = window.i18n ? window.i18n.t('history.iban') : 'IBAN';
+    const lblAmount = window.i18n ? window.i18n.t('history.amount') : 'Betrag';
+    const lblSubject = window.i18n ? window.i18n.t('history.subject') : 'Betreff';
     return `
         <div class="history-item">
             <div class="history-item-header">
@@ -1252,19 +1315,19 @@ function createHistoryItem(item, index) {
             </div>
             <div class="history-item-details">
                 <div>
-                    <strong>Empfänger</strong>
+                    <strong>${escapeHtml(lblRecipient)}</strong>
                     <span>${escapeHtml(item.recipientName)}</span>
                 </div>
                 <div>
-                    <strong>IBAN</strong>
+                    <strong>${escapeHtml(lblIban)}</strong>
                     <span>${formatIBAN(item.iban)}</span>
                 </div>
                 <div>
-                    <strong>Betrag</strong>
+                    <strong>${escapeHtml(lblAmount)}</strong>
                     <span>${item.amount.toFixed(2)} EUR</span>
                 </div>
                 <div>
-                    <strong>Betreff</strong>
+                    <strong>${escapeHtml(lblSubject)}</strong>
                     <span>${escapeHtml(item.subject) || '-'}</span>
                 </div>
             </div>
@@ -1370,7 +1433,7 @@ function importData(file) {
         try {
             const payload = JSON.parse(reader.result);
             if (payload.version !== EXPORT_VERSION || !payload.data) {
-                alert('Ungültige oder veraltete Backup-Datei.');
+                alert(window.i18n ? window.i18n.t('msg.invalidBackup') : 'Ungültige oder veraltete Backup-Datei.');
                 return;
             }
             const d = payload.data;
@@ -1379,20 +1442,20 @@ function importData(file) {
             if (d[MODE_KEY] != null) localStorage.setItem(MODE_KEY, String(d[MODE_KEY]));
             if (d[SELLER_ITEMS_KEY] != null) localStorage.setItem(SELLER_ITEMS_KEY, typeof d[SELLER_ITEMS_KEY] === 'string' ? d[SELLER_ITEMS_KEY] : JSON.stringify(d[SELLER_ITEMS_KEY]));
             closeSettingsOverlay();
-            alert('Backup wurde eingelesen. Die Seite wird neu geladen.');
+            alert(window.i18n ? window.i18n.t('msg.importSuccess') : 'Backup wurde eingelesen. Die Seite wird neu geladen.');
             location.reload();
         } catch (err) {
-            alert('Fehler beim Einlesen der Datei: ' + (err.message || 'Ungültiges Format'));
+            alert(window.i18n ? window.i18n.t('msg.importError', [err.message || 'Ungültiges Format']) : ('Fehler beim Einlesen der Datei: ' + (err.message || 'Ungültiges Format')));
         }
     };
     reader.readAsText(file, 'UTF-8');
 }
 
 function resetAllData() {
-    const confirmation = confirm('Sind Sie sicher, dass Sie ALLE Daten unwiderruflich löschen möchten? Dies umfasst das Protokoll, alle Verkäufer-Objekte und Ihre Einstellungen.');
+    const confirmation = confirm(window.i18n ? window.i18n.t('msg.confirmResetAll') : 'Sind Sie sicher, dass Sie ALLE Daten unwiderruflich löschen möchten? Dies umfasst das Protokoll, alle Verkäufer-Objekte und Ihre Einstellungen.');
     if (confirmation) {
         localStorage.clear();
-        alert('Alle Daten wurden gelöscht. Die Seite wird nun neu geladen.');
+        alert(window.i18n ? window.i18n.t('msg.resetDone') : 'Alle Daten wurden gelöscht. Die Seite wird nun neu geladen.');
         location.reload();
     }
 }

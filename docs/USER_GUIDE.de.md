@@ -21,7 +21,8 @@ Alle Daten bleiben in Ihrem Browser; es wird nichts an einen Server gesendet.
 
 1. App öffnen (`index.html` im Browser oder über einen Webserver).
 2. Auf das **Einstellungen**-Symbol (Zahnrad) tippen.
-3. Eingeben:
+3. Eingeben bzw. wählen:
+   - **Sprache**: Deutsch oder English (wird im Browser gespeichert).
    - **Empfängername**: Name der Barkasse/des Basars (wie auf der Überweisung erscheinen soll).
    - **Empfänger-IBAN**: Die IBAN der Barkasse/des Basars (für Käuferzahlungen per Direktüberweisung).
    - **Verwendungszweck-Vorlage**: Text für „Verwendungszweck“. Verwenden Sie `$param` dort, wo der variable Teil (z. B. Rechnungsnummer) stehen soll, z. B. `Rechnung $param`.

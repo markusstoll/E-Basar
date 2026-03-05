@@ -21,7 +21,8 @@ All data stays in your browser; nothing is sent to a server.
 
 1. Open the app (`index.html` in a browser or via a web server).
 2. Click the **Settings** (gear) icon.
-3. Enter:
+3. Enter or select:
+   - **Language**: Deutsch or English (stored in your browser).
    - **Recipient name**: Name of the Barkasse/Basar (as it appears on the transfer).
    - **Recipient IBAN**: The Basar/Barkasse IBAN (used for buyer payments in direct transfer).
    - **Usage template**: Text for "Verwendungszweck". Use `$param` where the variable part (e.g. invoice number) should go, e.g. `Rechnung $param`.

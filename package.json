@@ -6,6 +6,7 @@
   "scripts": {
     "update-version": "node update-version.js",
     "postversion": "npm run update-version",
+    "build-lang": "node build-lang-embed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
