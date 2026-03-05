@@ -1,0 +1,18 @@
+{
+  "name": "sofortueberw",
+  "version": "0.8.0",
+  "description": "Cashless payment app for a Basar: Echtzeitüberweisung and WERO for buyers/sellers, EPC QR codes, balancing for Barkasse reconciliation.",
+  "main": "script.js",
+  "scripts": {
+    "update-version": "node update-version.js",
+    "postversion": "npm run update-version",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "qrcode": "^1.5.3"
+  }
+}

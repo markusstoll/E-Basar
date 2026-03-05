@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Basar!</title>
+    <link rel="stylesheet" href="style.css?v=0.8.0">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <span class="app-version">v0.8.0</span>
+            <button id="settingsBtn" class="settings-btn" aria-label="Einstellungen">⚙</button>
+            <h1>E-Basar!</h1>
+            <p>Bargeldloses Kassensystem für Basare</p>
+            <div class="mode-switch">
+                <button type="button" id="modeSeller" class="mode-btn" data-mode="seller">Verkäufer erfassen</button>
+                <button type="button" id="modeSell" class="mode-btn active" data-mode="sell">Verkaufen</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Modus: Verkäufer erfassen + Verkaufen (gleiche Liste) -->
+            <section id="panelSeller" class="mode-panel hidden">
+                <div class="seller-toolbar">
+                    <div class="seller-search-row">
+                        <label for="sellerFilterParam" id="sellerFilterParamLabel">Objekt (exakt)</label>
+                        <div class="search-field-with-clear">
+                            <input type="text" id="sellerFilterParam" class="seller-filter" placeholder="" autocomplete="off">
+                            <button type="button" id="btnClearFilterParam" class="btn-clear-search" aria-label="Suche löschen">×</button>
+                        </div>
+                    </div>
+                    <div class="seller-search-row">
+                        <label for="sellerFilterSeller">Suche</label>
+                        <div class="search-field-with-clear">
+                            <input type="text" id="sellerFilterSeller" class="seller-filter" placeholder="Objekt, Verkäufer, IBAN" autocomplete="off">
+                            <button type="button" id="btnClearFilterSeller" class="btn-clear-search" aria-label="Suche löschen">×</button>
+                        </div>
+                    </div>
+                    <div class="seller-visibility">
+                        <label class="checkbox-label"><input type="checkbox" id="showPaid"> Bezahlte einblenden</label>
+                        <label class="checkbox-label"><input type="checkbox" id="showDeleted"> Gelöschte einblenden</label>
+                    </div>
+                    <p class="seller-toolbar-hint">Bei „verkauft, noch nicht an Verkäufer gezahlt“ können Sie Objekte desselben Verkäufers per Checkbox auswählen und dann gemeinsam „An Verkäufer zahlen“ ausführen.</p>
+                    <button type="button" id="btnNewSeller" class="btn-primary">Neues Objekt anlegen</button>
+                </div>
+                <div id="sellerList" class="seller-list">
+                    <!-- Liste wird per JS befüllt -->
+                </div>
+                <div id="sellerSelectionBar" class="seller-selection-bar hidden">
+                    <span id="sellerSelectionBarText"></span>
+                    <button type="button" id="btnPaySelectedToSeller" class="btn-primary">Alle selektierten an Verkäufer zahlen</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <button type="button" id="viewObjects" class="btn-secondary">Export</button>
+                <button type="button" id="viewHistory" class="btn-secondary">Protokoll</button>
+                <table id="footerSums" class="footer-sums-table">
+                    <tr><td class="footer-sum-label">Summe bezahlt:</td><td class="footer-sum-value"><span id="sumPaid">0,00</span> EUR</td></tr>
+                    <tr><td class="footer-sum-label">An Verkäufer gezahlt:</td><td class="footer-sum-value"><span id="sumSellerPaid">0,00</span> EUR</td></tr>
+                    <tr><td class="footer-sum-label">Summe Barzahlungen:</td><td class="footer-sum-value"><span id="sumBar">0,00</span> EUR</td></tr>
+                    <tr><td class="footer-sum-label">Summe bargeldlose Zahlungen ohne reg. Verkäufer:</td><td class="footer-sum-value"><span id="sumElectronicNoIban">0,00</span> EUR</td></tr>
+                    <tr><td class="footer-sum-label">Bilanz Kasse:</td><td class="footer-sum-value"><span id="balanceCash">0,00</span> EUR</td></tr>
+                    <tr><td class="footer-sum-label">Möglicher Kassenausgleich durch Barzahlung:</td><td class="footer-sum-value"><span id="sumPendingToSeller">0,00</span> EUR</td></tr>
+                </table>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Overlay für QR Code -->
+    <div id="overlay" class="overlay hidden">
+        <div class="overlay-content">
+            <button id="closeOverlay" class="close-btn" aria-label="Schließen">&times;</button>
+            <h2 id="qrOverlayTitle">QR Code für Überweisung</h2>
+
+            <!-- Schalter Sofort | WERO nur bei "Bezahlung durch Käufer", nicht bei "Bezahlung an Verkäufer" -->
+            <div id="overlaySellerSwitch" class="overlay-seller-switch hidden">
+                <button type="button" id="overlayBtnSofort" class="overlay-switch-btn active" data-panel="sofort">Sofortüberweisung</button>
+                <button type="button" id="overlayBtnWero" class="overlay-switch-btn" data-panel="wero">WERO Zahlung</button>
+            </div>
+
+            <!-- Panel: Sofortüberweisung (SEPA) -->
+            <div id="overlayPanelSofort" class="overlay-panel">
+                <div class="qr-container">
+                    <canvas id="qrCanvas"></canvas>
+                </div>
+                <div class="details">
+                    <h3>Überweisungsdetails</h3>
+                    <div class="detail-item">
+                        <strong>Empfänger:</strong>
+                        <span id="detailName"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>IBAN:</strong>
+                        <span id="detailIban"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Betrag:</strong>
+                        <span id="detailAmount"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Betreff:</strong>
+                        <span id="detailSubject"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Erstellt am:</strong>
+                        <span id="detailDate"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel: WERO Zahlung (nur bei "Bezahlung durch Käufer", wenn WERO-Link gesetzt) -->
+            <div id="overlayPanelWero" class="overlay-panel hidden">
+                <div class="qr-container">
+                    <canvas id="weroQrCanvas"></canvas>
+                </div>
+                <div class="wero-details details">
+                    <h3>WERO Zahlungsdetails</h3>
+                    <div class="detail-item">
+                        <strong>Empfängername:</strong>
+                        <span id="weroDetailName"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Betrag:</strong>
+                        <span id="weroDetailAmount"></span>
+                    </div>
+                    <div class="detail-item">
+                        <strong id="weroDetailParamLabel">Objekt:</strong>
+                        <span id="weroDetailParam"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status-Buttons: nur bei Bezahlen (Käufer) – setzen Status und schließen -->
+            <div id="overlayPayActions" class="overlay-status-actions hidden">
+                <p class="overlay-status-label">Zahlung erfasst?</p>
+                <div class="overlay-status-buttons">
+                    <button type="button" id="overlayPayDoneElectronic" class="btn-overlay-pay">Bezahlt (elektronisch)</button>
+                    <button type="button" id="overlayPayDoneCash" class="btn-overlay-pay btn-overlay-pay-alt">Bezahlt (bar)</button>
+                </div>
+            </div>
+            <!-- Status-Button: nur bei An Verkäufer zahlen -->
+            <div id="overlayPaySellerAction" class="overlay-status-actions hidden">
+                <p class="overlay-status-label">Auszahlung erfasst?</p>
+                <div class="overlay-status-buttons">
+                    <button type="button" id="overlayPaySellerDone" class="btn-primary">An Verkäufer ausgezahlt</button>
+                    <button type="button" id="overlayPaySellerNotify" class="btn-secondary btn-seller-notify">Verkäufer informieren</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Einstellungen / Setup Overlay -->
+    <div id="settingsOverlay" class="overlay hidden">
+        <div class="overlay-content">
+            <button id="closeSettings" class="close-btn" aria-label="Schließen">&times;</button>
+            <h2>Einstellungen</h2>
+            <form id="settingsForm" class="form">
+                <div class="form-group">
+                    <label for="settingsRecipientName">Empfängername *</label>
+                    <input type="text" id="settingsRecipientName" name="recipientName" required placeholder="Max Mustermann">
+                </div>
+                <div class="form-group">
+                    <label for="settingsIban">Empfänger IBAN *</label>
+                    <input type="text" id="settingsIban" name="iban" required placeholder="DE89370400440532013000">
+                </div>
+                <div class="form-group">
+                    <label for="settingsUsageTemplate">Verwendungszweck (Platzhalter: $objekt) *</label>
+                    <input type="text" id="settingsUsageTemplate" name="usageTemplate" required placeholder="Rechnung $objekt">
+                </div>
+                <div class="form-group">
+                    <label for="settingsParamLabel">Label für das Objekt-Eingabefeld *</label>
+                    <input type="text" id="settingsParamLabel" name="paramLabel" required placeholder="z.B. Objekt">
+                </div>
+                <div class="form-group">
+                    <label for="settingsCommissionPercent">Provision (%) für „An Verkäufer zahlen“</label>
+                    <input type="number" id="settingsCommissionPercent" name="commissionPercent" min="0" max="100" step="0.5" placeholder="10" value="10">
+                </div>
+                <div class="form-group">
+                    <label for="settingsWeroLink">WERO-Zahlungslink</label>
+                    <div class="input-with-action">
+                        <input type="text" id="settingsWeroLink" name="weroLink" placeholder="https://wero.me/...">
+                        <button type="button" id="btnScanWero" class="btn-secondary" title="QR-Code scannen">📷</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Einstellungen speichern</button>
+            </form>
+            <div class="settings-export">
+                <hr>
+                <h3>Daten exportieren</h3>
+                <p class="text-muted">Laden Sie eine Sicherungskopie aller Daten (Einstellungen, Objekte, Protokoll) als Datei herunter.</p>
+                <button type="button" id="btnExportData" class="btn-secondary">Backup herunterladen</button>
+            </div>
+            <div class="settings-danger-zone">
+                <hr>
+                <h3>Gefahrenzone</h3>
+                <p class="text-muted">Import überschreibt den aktuellen Bestand. Löschen entfernt alle Daten unwiderruflich.</p>
+                <div class="settings-import">
+                    <label for="importFileInput" class="sr-only">Backup-Datei wählen</label>
+                    <input type="file" id="importFileInput" accept=".json,application/json" class="settings-import-input">
+                    <button type="button" id="btnImportData" class="btn-danger">Backup einlesen (überschreibt Bestand)</button>
+                </div>
+                <button type="button" id="btnResetAll" class="btn-danger">Alle Daten löschen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay: Neues Verkäufer-Objekt -->
+    <div id="sellerFormOverlay" class="overlay hidden">
+        <div class="overlay-content">
+            <button id="closeSellerForm" class="close-btn" aria-label="Schließen">&times;</button>
+            <h2 id="sellerFormTitle">Neues Objekt erfassen</h2>
+            <form id="sellerForm" class="form">
+                <input type="hidden" id="sellerEditId" name="sellerEditId" value="">
+                <div id="sellerFormToggleSellerRow" class="form-group hidden">
+                    <button type="button" id="btnToggleSellerCapture" class="btn-secondary btn-toggle-capture">Verkäufer nacherfassen</button>
+                </div>
+                <div id="sellerFormSellerBlock">
+                    <div class="form-group">
+                        <label for="sellerName">Name Verkäufer *</label>
+                        <input type="text" id="sellerName" name="sellerName" required placeholder="Max Mustermann">
+                    </div>
+                    <div class="form-group" id="sellerIbanGroup">
+                        <label for="sellerIban">IBAN Verkäufer *</label>
+                        <input type="text" id="sellerIban" name="sellerIban" required placeholder="DE89370400440532013000" autocomplete="off">
+                        <span id="sellerIbanError" class="input-error-message" aria-live="polite"></span>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-group-label-row">
+                            <label for="sellerPhone">Mobilnummer *</label>
+                            <a href="#" id="btnSellerTestSms" class="link-test-sms" title="Testnachricht senden">Testnachricht</a>
+                        </div>
+                        <input type="tel" id="sellerPhone" name="sellerPhone" required placeholder="+49 123 456789">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sellerParam" id="sellerParamLabel">Objekt *</label>
+                    <input type="text" id="sellerParam" name="sellerParam" required placeholder="">
+                </div>
+                <div class="form-group">
+                    <label for="sellerPrice">Preis (EUR) *</label>
+                    <input type="number" id="sellerPrice" name="sellerPrice" required step="0.01" min="0.01" placeholder="0.00">
+                </div>
+                <div id="sellerStatusContainer" class="form-group hidden">
+                    <div class="seller-paid-row">
+                        <label class="checkbox-label"><input type="checkbox" id="sellerEditPaid" name="paid"> Bezahlt (vom Käufer)</label>
+                        <div id="sellerPaidMethodRow" class="seller-paid-method-row hidden">
+                            <span class="seller-paid-method-label">Zahlungsart:</span>
+                            <button type="button" class="btn-paid-method" data-method="elektronisch" id="btnPaidElectronic">Elektronisch</button>
+                            <button type="button" class="btn-paid-method" data-method="bar" id="btnPaidBar">Bar</button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="sellerEditPaidMethod" name="paidMethod" value="elektronisch">
+                    <div id="sellerFormSellerPaidRow" class="form-group seller-form-seller-paid-row">
+                        <label class="checkbox-label"><input type="checkbox" id="sellerEditSellerPaid" name="sellerPaid"> An Verkäufer ausgezahlt</label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="btnFillFromLast" class="btn-secondary">Aus letzter Eingabe</button>
+                    <button type="submit" id="btnSellerSubmit" class="btn-primary">Objekt speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Overlay: Schnell erfassen (nur Objekt + Betrag, Modus Verkaufen) -->
+    <div id="sellerQuickFormOverlay" class="overlay hidden">
+        <div class="overlay-content">
+            <button id="closeSellerQuickForm" class="close-btn" aria-label="Schließen">&times;</button>
+            <h2 id="sellerQuickFormTitle">Neues Objekt anlegen</h2>
+            <form id="sellerQuickForm" class="form">
+                <div class="form-group">
+                    <label for="quickParam" id="quickParamLabel">Objekt *</label>
+                    <input type="text" id="quickParam" name="quickParam" required placeholder="">
+                </div>
+                <div class="form-group">
+                    <label for="quickPrice">Betrag (EUR) *</label>
+                    <input type="number" id="quickPrice" name="quickPrice" required step="0.01" min="0.01" placeholder="0.00">
+                </div>
+                <button type="submit" id="btnQuickSellerSubmit" class="btn-primary">Speichern</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Objekte-Druckansicht (alle Objekte, gelöschte getrennt) -->
+    <div id="objectsOverlay" class="overlay hidden">
+        <div class="overlay-content objects-content">
+            <button id="closeObjects" class="close-btn" aria-label="Schließen">&times;</button>
+            <h2 id="objectsOverlayTitle">Objekte</h2>
+            <div class="objects-actions">
+                <button type="button" id="printObjects" class="btn-secondary">Drucken</button>
+            </div>
+            <div id="objectsListActive" class="objects-list">
+                <!-- Aktive Objekte -->
+            </div>
+            <h3 id="objectsDeletedHeading" class="objects-deleted-heading">Gelöschte Objekte</h3>
+            <div id="objectsListDeleted" class="objects-list">
+                <!-- Gelöschte Objekte -->
+            </div>
+        </div>
+    </div>
+
+    <!-- History Overlay -->
+    <div id="historyOverlay" class="overlay hidden">
+        <div class="overlay-content history-content">
+            <button id="closeHistory" class="close-btn" aria-label="Schließen">&times;</button>
+            <h2>Protokoll</h2>
+            <div class="history-actions">
+                <button id="exportHistory" class="btn-secondary">Als PDF exportieren</button>
+            </div>
+            <div id="historyList" class="history-list">
+                <!-- History items will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- QR-Bibliothek lokal (unterstützt lange EPC-Strings, funktioniert mit file://) -->
+    <script src="lib/qrcode.min.js?v=0.8.0"></script>
+    <script src="script.js?v=0.8.0"></script>
+</body>
+</html>
+
