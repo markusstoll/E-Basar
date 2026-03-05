@@ -25,7 +25,7 @@ All data stays in your browser; nothing is sent to a server.
    - **Recipient name**: Name of the Barkasse/Basar (as it appears on the transfer).
    - **Recipient IBAN**: The Basar/Barkasse IBAN (used for buyer payments in direct transfer).
    - **Usage template**: Text for "Verwendungszweck". Use `$param` where the variable part (e.g. invoice number) should go, e.g. `Rechnung $param`.
-   - **Parameter label**: Label for the input field (e.g. "Rechnungsnummer").
+   - **Parameter label**: Label for the input field (e.g. "bicycle no." for a bike basar).
    - **Commission %** (optional): Used in Seller mode for "An Verkäufer zahlen" calculation.
 4. Save. Settings are stored in your browser.
 
@@ -48,10 +48,17 @@ All data stays in your browser; nothing is sent to a server.
 - Click **Protokoll anzeigen** to see all generated transfers.
 - Use **Export as PDF** to download the list (if your browser supports it).
 
+## Backup (export/import)
+
+- The app provides **export** and **import** functions to back up and restore all data stored in localStorage (settings, seller list, protocol).
+- Use **Export** (in Settings or toolbar) to download a backup file. Use **Import** to restore from a previously exported file.
+- This lets you keep a backup on another device or move data to a different browser.
+
 ## Data and privacy
 
 - All data (settings, history, seller list) is stored in **localStorage** in your browser.
 - No data is sent to any server. The app runs entirely in the browser.
+- Use **Export/Import** (see Backup above) to create backups of localStorage.
 - To reset everything, use **Alle Daten löschen** in Settings (danger zone).
 
 ## Troubleshooting

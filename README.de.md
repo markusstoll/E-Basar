@@ -96,7 +96,7 @@ Für die normale Nutzung ist kein Build-Schritt nötig. Für die Entwicklung (z.
 
 ## Dokumentation
 
-- [Benutzerhandbuch & EPC-Format](docs/USER_GUIDE.md)
+- [Benutzerhandbuch & EPC-Format](docs/USER_GUIDE.de.md) (Deutsch) · [User Guide (English)](docs/USER_GUIDE.md)
 - [Changelog](CHANGELOG.md)
 
 ## Mitwirken

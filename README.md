@@ -96,7 +96,7 @@ No build step required for basic use. For development (e.g. rebuilding the QR li
 
 ## Documentation
 
-- [User guide & EPC format](docs/USER_GUIDE.md)
+- [User guide & EPC format](docs/USER_GUIDE.md) (English) · [Benutzerhandbuch](docs/USER_GUIDE.de.md) (Deutsch)
 - [Changelog](CHANGELOG.md)
 
 ## Contributing
