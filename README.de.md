@@ -12,12 +12,7 @@ Die App ist **serverlos** (läuft im Browser, kein Backend). Sie erzeugt **EPC-Q
 
 ### Direkt von GitHub nutzen
 
-Sobald für das Repository [GitHub Pages](https://docs.github.com/de/pages) aktiviert ist, können Sie die App im Browser nutzen, ohne es zu klonen:
-
 **https://markusstoll.github.io/E-Basar/**  
-*(Ersetzen Sie *OWNER* durch den GitHub-Benutzernamen bzw. die Organisation, der das Repo gehört.)*
-
-GitHub Pages aktivieren: **Einstellungen → Pages → Source**: Branch `main` (oder `master`), Ordner **/ (root)**. Nach kurzer Zeit ist die App unter der obigen Adresse erreichbar.
 
 [![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-blau.svg)](LICENSE)
 
