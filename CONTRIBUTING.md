@@ -10,7 +10,7 @@ Be respectful and constructive. This project aims to stay simple and useful for 
 
 ### Reporting bugs
 
-- Use the [GitHub issue tracker](https://github.com/YOUR_USERNAME/E-Basar/issues) (replace `YOUR_USERNAME` with the actual repo owner).
+- Use the [GitHub issue tracker](https://github.com/markusstoll/E-Basar/issues) (replace `markusstoll` with the actual repo owner).
 - Choose the **Bug report** template if available.
 - Include:
   - Browser and OS

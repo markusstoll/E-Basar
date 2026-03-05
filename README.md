@@ -14,8 +14,7 @@ The app is **serverless** (runs in the browser, no backend). It generates **EPC 
 
 Once the repo has [GitHub Pages](https://docs.github.com/en/pages) enabled, you can use the app in your browser without cloning:
 
-**https://*OWNER*.github.io/E-Basar/**  
-*(Replace *OWNER* with the GitHub username or org that hosts the repo.)*
+**https://markusstoll.github.io/E-Basar/**  
 
 To enable GitHub Pages: repo **Settings → Pages → Source**: deploy from branch `main` (or `master`), folder **/ (root)**. After a short delay, the link above will serve `index.html`.
 
