@@ -13,7 +13,10 @@ const DEFAULT_SETTINGS = {
     usageTemplate: 'Rechnung $objekt',
     paramLabel: 'Objekt',
     commissionPercent: 10,
-    weroLink: ''
+    weroLink: '',
+    appTitle: '',
+    appSubtitle: '',
+    appLogoDataUrl: ''
 };
 
 // DOM Elements
@@ -62,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         applySettingsToMainForm();
         applySettingsToSellerForm();
+        applyBrandingFromSettings();
         setModeUI(getMode());
         renderSellerList();
         updateFooterSums();
@@ -210,10 +214,26 @@ function setupEventListeners() {
                     applySettingsToMainForm();
                     applySettingsToSellerForm();
                     refreshSettingsFormTranslations();
+                    applyBrandingFromSettings();
                     renderSellerList();
                     updateFooterSums();
                 });
             }
+        });
+    }
+    const logoInput = document.getElementById('settingsLogo');
+    if (logoInput) {
+        logoInput.addEventListener('change', handleLogoFileSelected);
+    }
+    const btnRemoveLogo = document.getElementById('btnRemoveLogo');
+    if (btnRemoveLogo) {
+        btnRemoveLogo.addEventListener('click', function () {
+            const s = getSettings();
+            const next = { ...s, appLogoDataUrl: '' };
+            if (!saveSettings(next)) return;
+            applyBrandingFromSettings();
+            const input = document.getElementById('settingsLogo');
+            if (input) input.value = '';
         });
     }
 
@@ -293,7 +313,13 @@ function getSettings() {
 }
 
 function saveSettings(settings) {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        return true;
+    } catch (e) {
+        alert(window.i18n ? window.i18n.t('msg.storageQuota') : 'Der Browser-Speicher ist voll. Bitte ein kleineres Logo verwenden oder Daten löschen.');
+        return false;
+    }
 }
 
 function applySettingsToMainForm() {
@@ -932,6 +958,10 @@ function openSettingsOverlay() {
     const s = getSettings();
     const langEl = document.getElementById('settingsLanguage');
     if (langEl && window.i18n) langEl.value = window.i18n.getLanguage();
+    const appTitleEl = document.getElementById('settingsAppTitle');
+    if (appTitleEl) appTitleEl.value = s.appTitle || '';
+    const appSubtitleEl = document.getElementById('settingsAppSubtitle');
+    if (appSubtitleEl) appSubtitleEl.value = s.appSubtitle || '';
     document.getElementById('settingsRecipientName').value = s.recipientName;
     document.getElementById('settingsIban').value = formatIBAN(s.iban);
     document.getElementById('settingsUsageTemplate').value = s.usageTemplate;
@@ -941,12 +971,18 @@ function openSettingsOverlay() {
     const weroLinkEl = document.getElementById('settingsWeroLink');
     if (weroLinkEl) weroLinkEl.value = s.weroLink || '';
     if (window.i18n) {
+        const appTitleEl2 = document.getElementById('settingsAppTitle');
+        if (appTitleEl2) appTitleEl2.placeholder = window.i18n.t('settings.placeholderAppTitle');
+        const appSubtitleEl2 = document.getElementById('settingsAppSubtitle');
+        if (appSubtitleEl2) appSubtitleEl2.placeholder = window.i18n.t('settings.placeholderAppSubtitle');
         document.getElementById('settingsRecipientName').placeholder = window.i18n.t('settings.placeholderName');
         document.getElementById('settingsIban').placeholder = window.i18n.t('settings.placeholderIban');
         document.getElementById('settingsUsageTemplate').placeholder = window.i18n.t('settings.placeholderUsage');
         document.getElementById('settingsParamLabel').placeholder = window.i18n.t('settings.placeholderParamLabel');
         document.getElementById('settingsWeroLink').placeholder = window.i18n.t('settings.placeholderWero');
     }
+    const btnRemoveLogo = document.getElementById('btnRemoveLogo');
+    if (btnRemoveLogo) btnRemoveLogo.disabled = !(s.appLogoDataUrl && String(s.appLogoDataUrl).trim());
     settingsOverlay.classList.remove('hidden');
 }
 
@@ -957,6 +993,10 @@ function closeSettingsOverlay() {
 /** Update labels and placeholders in the settings form (e.g. after language switch). */
 function refreshSettingsFormTranslations() {
     if (!window.i18n) return;
+    const appTitleEl = document.getElementById('settingsAppTitle');
+    if (appTitleEl) appTitleEl.placeholder = window.i18n.t('settings.placeholderAppTitle');
+    const appSubtitleEl = document.getElementById('settingsAppSubtitle');
+    if (appSubtitleEl) appSubtitleEl.placeholder = window.i18n.t('settings.placeholderAppSubtitle');
     document.getElementById('settingsRecipientName').placeholder = window.i18n.t('settings.placeholderName');
     document.getElementById('settingsIban').placeholder = window.i18n.t('settings.placeholderIban');
     document.getElementById('settingsUsageTemplate').placeholder = window.i18n.t('settings.placeholderUsage');
@@ -967,6 +1007,7 @@ function refreshSettingsFormTranslations() {
 function handleSettingsSubmit(e) {
     e.preventDefault();
     const fd = new FormData(settingsForm);
+    const prev = getSettings();
     const iban = fd.get('iban').trim().toUpperCase().replace(/\s/g, '');
     if (!validateIBAN(iban)) {
         alert(window.i18n ? window.i18n.t('msg.enterValidIban') : 'Bitte geben Sie eine gültige IBAN ein.');
@@ -975,21 +1016,130 @@ function handleSettingsSubmit(e) {
     const commissionVal = fd.get('commissionPercent');
     const commissionPercent = (commissionVal !== '' && commissionVal !== null) ? parseFloat(commissionVal) : 10;
     const settings = {
+        ...prev,
         recipientName: fd.get('recipientName').trim(),
         iban,
         usageTemplate: fd.get('usageTemplate').trim() || DEFAULT_SETTINGS.usageTemplate,
         paramLabel: fd.get('paramLabel').trim() || DEFAULT_SETTINGS.paramLabel,
         commissionPercent: isNaN(commissionPercent) ? 10 : Math.max(0, Math.min(100, commissionPercent)),
-        weroLink: fd.get('weroLink').trim()
+        weroLink: fd.get('weroLink').trim(),
+        appTitle: (fd.get('appTitle') || '').toString().trim(),
+        appSubtitle: (fd.get('appSubtitle') || '').toString().trim()
     };
     if (settings.usageTemplate.indexOf('$objekt') === -1) {
         alert(window.i18n ? window.i18n.t('msg.usageMustContain') : 'Der Verwendungszweck muss den Platzhalter $objekt enthalten.');
         return;
     }
-    saveSettings(settings);
+    if (!saveSettings(settings)) return;
     applySettingsToMainForm();
     applySettingsToSellerForm();
+    applyBrandingFromSettings();
     closeSettingsOverlay();
+}
+
+function applyBrandingFromSettings() {
+    const s = getSettings();
+    const titleDefault = window.i18n ? window.i18n.t('app.title') : 'E-Basar!';
+    const subtitleDefault = window.i18n ? window.i18n.t('app.subtitle') : '';
+    const title = (s.appTitle || '').trim() || titleDefault;
+    const subtitle = (s.appSubtitle || '').trim() || subtitleDefault;
+
+    const titleHeading = document.getElementById('appTitleHeading');
+    if (titleHeading) titleHeading.textContent = title;
+    const subtitleEl = document.getElementById('appSubtitleText');
+    if (subtitleEl) subtitleEl.textContent = subtitle;
+    document.title = title;
+
+    const logoEl = document.getElementById('appLogo');
+    const logoDataUrl = (s.appLogoDataUrl || '').toString().trim();
+    if (logoEl) {
+        if (logoDataUrl) {
+            logoEl.src = logoDataUrl;
+            logoEl.alt = title;
+            logoEl.classList.remove('hidden');
+        } else {
+            logoEl.removeAttribute('src');
+            logoEl.alt = '';
+            logoEl.classList.add('hidden');
+        }
+    }
+    const btnRemoveLogo = document.getElementById('btnRemoveLogo');
+    if (btnRemoveLogo) btnRemoveLogo.disabled = !logoDataUrl;
+}
+
+function handleLogoFileSelected(e) {
+    const input = e && e.target ? e.target : null;
+    const file = input && input.files && input.files[0] ? input.files[0] : null;
+    if (!file) return;
+    if (!file.type || file.type.indexOf('image/') !== 0) {
+        alert(window.i18n ? window.i18n.t('msg.invalidImage') : 'Bitte eine Bilddatei auswählen.');
+        if (input) input.value = '';
+        return;
+    }
+    processLogoFile(file).then(function (dataUrl) {
+        const s = getSettings();
+        const next = { ...s, appLogoDataUrl: dataUrl };
+        if (!saveSettings(next)) return;
+        applyBrandingFromSettings();
+        if (input) input.value = '';
+    }).catch(function () {
+        alert(window.i18n ? window.i18n.t('msg.invalidImage') : 'Bitte eine Bilddatei auswählen.');
+        if (input) input.value = '';
+    });
+}
+
+function processLogoFile(file) {
+    // Display size in CSS pixels; scale stored resolution for Retina (devicePixelRatio)
+    const DISPLAY_MAX_WIDTH = 400;
+    const DISPLAY_MAX_HEIGHT = 96;
+    const dpr = Math.min(3, Math.max(1, Math.round((typeof window !== 'undefined' && window.devicePixelRatio) || 1)));
+    const maxWidth = DISPLAY_MAX_WIDTH * dpr;
+    const maxHeight = DISPLAY_MAX_HEIGHT * dpr;
+    return readFileAsDataUrl(file).then(function (dataUrl) {
+        return resizeImageDataUrl(dataUrl, file.type, maxWidth, maxHeight);
+    });
+}
+
+function readFileAsDataUrl(file) {
+    return new Promise(function (resolve, reject) {
+        const reader = new FileReader();
+        reader.onerror = function () { reject(new Error('read_error')); };
+        reader.onload = function () { resolve(String(reader.result || '')); };
+        reader.readAsDataURL(file);
+    });
+}
+
+function resizeImageDataUrl(dataUrl, mimeType, maxWidth, maxHeight) {
+    return new Promise(function (resolve, reject) {
+        const img = new Image();
+        img.onerror = function () { reject(new Error('img_error')); };
+        img.onload = function () {
+            const w = img.naturalWidth || img.width || 0;
+            const h = img.naturalHeight || img.height || 0;
+            if (!w || !h) {
+                reject(new Error('img_empty'));
+                return;
+            }
+            const scaleW = maxWidth / w;
+            const scaleH = maxHeight / h;
+            const scale = Math.min(1, scaleW, scaleH);
+            const tw = Math.max(1, Math.round(w * scale));
+            const th = Math.max(1, Math.round(h * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = tw;
+            canvas.height = th;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                resolve(dataUrl);
+                return;
+            }
+            ctx.drawImage(img, 0, 0, tw, th);
+            const type = (mimeType === 'image/png') ? 'image/png' : 'image/jpeg';
+            const out = type === 'image/jpeg' ? canvas.toDataURL(type, 0.85) : canvas.toDataURL(type);
+            resolve(out);
+        };
+        img.src = dataUrl;
+    });
 }
 
 function handleWeroScan() {

@@ -11,8 +11,13 @@
         <header>
             <span class="app-version">v0.8.0</span>
             <button id="settingsBtn" class="settings-btn" aria-label="Einstellungen" data-i18n="aria.settings" data-i18n-attr="aria-label">⚙</button>
-            <h1 data-i18n="app.title">E-Basar!</h1>
-            <p data-i18n="app.subtitle">Bargeldloses Kassensystem für Basare</p>
+            <div class="header-branding">
+                <img id="appLogo" class="app-logo hidden" alt="">
+                <div class="header-title-block">
+                    <h1 id="appTitleHeading" data-i18n="app.title">E-Basar!</h1>
+                    <p id="appSubtitleText" data-i18n="app.subtitle">Bargeldloses Kassensystem für Basare</p>
+                </div>
+            </div>
             <div class="mode-switch">
                 <button type="button" id="modeSeller" class="mode-btn" data-mode="seller" data-i18n="mode.seller">Verkäufer erfassen</button>
                 <button type="button" id="modeSell" class="mode-btn active" data-mode="sell" data-i18n="mode.sell">Verkaufen</button>
@@ -160,6 +165,22 @@
                         <option value="de">Deutsch</option>
                         <option value="en">English</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label for="settingsAppTitle" data-i18n="settings.appTitle">App title (optional)</label>
+                    <input type="text" id="settingsAppTitle" name="appTitle" placeholder="" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="settingsAppSubtitle" data-i18n="settings.appSubtitle">App subtitle (optional)</label>
+                    <input type="text" id="settingsAppSubtitle" name="appSubtitle" placeholder="" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="settingsLogo" data-i18n="settings.logo">Logo (optional)</label>
+                    <div class="input-with-action">
+                        <input type="file" id="settingsLogo" name="logo" accept="image/*" class="settings-file-input">
+                        <button type="button" id="btnRemoveLogo" class="btn-secondary" data-i18n="settings.logoRemove">Remove</button>
+                    </div>
+                    <p class="text-muted" data-i18n="settings.logoHint">Stored locally in your browser (localStorage).</p>
                 </div>
                 <div class="form-group">
                     <label for="settingsRecipientName" data-i18n="settings.recipientName">Empfängername *</label>
