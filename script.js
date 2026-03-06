@@ -211,6 +211,8 @@ function setupEventListeners() {
 
     viewHistoryBtn.addEventListener('click', showHistory);
     if (btnResetAll) btnResetAll.addEventListener('click', resetAllData);
+    const btnResetWegedaten = document.getElementById('btnResetWegedaten');
+    if (btnResetWegedaten) btnResetWegedaten.addEventListener('click', resetWegedatenOnly);
     const btnExportData = document.getElementById('btnExportData');
     if (btnExportData) btnExportData.addEventListener('click', exportData);
     const btnImportData = document.getElementById('btnImportData');
@@ -1388,11 +1390,26 @@ function importData(file) {
     reader.readAsText(file, 'UTF-8');
 }
 
+function resetWegedatenOnly() {
+    const confirmation = confirm(window.i18n ? window.i18n.tOr('msg.confirmResetWegedaten', 'Nur Protokoll und Verkäufer-Objekte löschen? Einstellungen (IBAN, Logo, etc.) bleiben erhalten.') : 'Nur Protokoll und Verkäufer-Objekte löschen? Einstellungen (IBAN, Logo, etc.) bleiben erhalten.');
+    if (confirmation) {
+        try {
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(SELLER_ITEMS_KEY);
+            localStorage.removeItem(MODE_KEY);
+        } catch (e) {}
+        renderSellerList();
+        updateFooterSums();
+        closeSettingsOverlay();
+        alert(window.i18n ? window.i18n.tOr('msg.resetWegedatenDone', 'Verlaufsdaten wurden gelöscht.') : 'Verlaufsdaten wurden gelöscht.');
+    }
+}
+
 function resetAllData() {
-    const confirmation = confirm('Sind Sie sicher, dass Sie ALLE Daten unwiderruflich löschen möchten? Dies umfasst das Protokoll, alle Verkäufer-Objekte und Ihre Einstellungen.');
+    const confirmation = confirm(window.i18n ? window.i18n.tOr('msg.confirmResetAll', 'Sind Sie sicher, dass Sie ALLE Daten unwiderruflich löschen möchten? Dies umfasst das Protokoll, alle Verkäufer-Objekte und Ihre Einstellungen.') : 'Sind Sie sicher, dass Sie ALLE Daten unwiderruflich löschen möchten? Dies umfasst das Protokoll, alle Verkäufer-Objekte und Ihre Einstellungen.');
     if (confirmation) {
         localStorage.clear();
-        alert('Alle Daten wurden gelöscht. Die Seite wird nun neu geladen.');
+        alert(window.i18n ? window.i18n.tOr('msg.resetDone', 'Alle Daten wurden gelöscht. Die Seite wird nun neu geladen.') : 'Alle Daten wurden gelöscht. Die Seite wird nun neu geladen.');
         location.reload();
     }
 }
