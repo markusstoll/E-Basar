@@ -83,6 +83,7 @@ No build step required for basic use. For development (e.g. rebuilding the QR li
 ├── LICENSE
 ├── CONTRIBUTING.md
 ├── CHANGELOG.md
+├── ROADMAP.md          # Planned features
 └── docs/               # Additional documentation
 ```
 
@@ -99,6 +100,7 @@ No build step required for basic use. For development (e.g. rebuilding the QR li
 
 - [User guide & EPC format](docs/USER_GUIDE.md) (English) · [Benutzerhandbuch](docs/USER_GUIDE.de.md) (Deutsch)
 - [Changelog](CHANGELOG.md)
+- [Roadmap (planned features)](ROADMAP.md)
 
 ## Contributing
 

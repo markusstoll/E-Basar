@@ -83,6 +83,7 @@ Für die normale Nutzung ist kein Build-Schritt nötig. Für die Entwicklung (z.
 ├── LICENSE
 ├── CONTRIBUTING.md
 ├── CHANGELOG.md
+├── ROADMAP.md          # Geplante Features
 └── docs/               # Weitere Dokumentation
 ```
 
@@ -98,6 +99,7 @@ Für die normale Nutzung ist kein Build-Schritt nötig. Für die Entwicklung (z.
 
 - [Benutzerhandbuch & EPC-Format](docs/USER_GUIDE.de.md) (Deutsch) · [User Guide (English)](docs/USER_GUIDE.md)
 - [Changelog](CHANGELOG.md)
+- [Roadmap (geplante Features)](ROADMAP.md)
 
 ## Mitwirken
 
