@@ -1,7 +1,8 @@
 /**
  * Generates lang-embed.js from lang/de.json and lang/en.json.
  * Run: node build-lang-embed.js
- * Required so that i18n works when the app is opened via file:// (fetch is blocked).
+ * Optional: When the app is opened via file://, translations cannot be loaded (fetch blocked).
+ * Without this file, the app keeps the German default text from the HTML and works out of the box.
  */
 const fs = require('fs');
 const path = require('path');

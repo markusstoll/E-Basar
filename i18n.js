@@ -20,7 +20,7 @@
         return lang === 'en' ? 'en' : 'de';
     }
 
-    /** Load translations: try fetch (works with http(s)); on failure use embedded data (for file://). */
+    /** Load translations via fetch. On failure (e.g. file://) messages stay empty; HTML default text is kept. */
     function loadLanguage(lang) {
         return fetch('lang/' + lang + '.json')
             .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('Not ok')); })
@@ -30,15 +30,8 @@
                 return messages;
             })
             .catch(function () {
-                // file:// and some environments block fetch; use embedded translations if available
-                var embedded = global.__I18N_EMBEDDED;
-                if (embedded && (embedded.de || embedded.en)) {
-                    messages = (lang === 'en' && embedded.en) ? embedded.en : (embedded.de || {});
-                } else if (lang === 'de') {
-                    messages = { 'app.title': 'E-Basar!', 'app.subtitle': 'Bargeldloses Kassensystem für Basare' };
-                } else {
-                    messages = {};
-                }
+                // file:// or network error: no translations; applyToPage will leave existing HTML text unchanged
+                messages = {};
                 currentLang = lang;
                 return messages;
             });
@@ -46,6 +39,7 @@
 
     /**
      * Translate key. Params can be array or single value for {0}.
+     * Returns key if no translation (e.g. when lang files did not load).
      * @param {string} key - e.g. 'footer.sumPaid'
      * @param {Array|string|number} [params] - values for {0}, {1}, ...
      */
@@ -58,6 +52,12 @@
             });
         }
         return str;
+    }
+
+    /** Like t(key, params) but returns fallback when no translation is available (e.g. file://). */
+    function tOr(key, fallback, params) {
+        const val = t(key, params);
+        return val === key ? fallback : val;
     }
 
     function getLanguage() {
@@ -91,14 +91,15 @@
     }
 
     /**
-     * Apply translations to all elements with data-i18n="key" or data-i18n-attr="title,aria-label" with data-i18n="key".
-     * For data-i18n, sets textContent. For data-i18n-attr, splits by comma and sets each attribute from the same key (value is used for all).
+     * Apply translations to all elements with data-i18n="key". If no translation is loaded (e.g. file://),
+     * leaves the existing German default text in the HTML unchanged.
      */
     function applyToPage() {
         document.querySelectorAll('[data-i18n]').forEach(function (el) {
             const key = el.getAttribute('data-i18n');
             const attr = el.getAttribute('data-i18n-attr');
             const value = t(key);
+            if (value === key) return;
             if (attr) {
                 attr.split(',').forEach(function (a) {
                     const name = a.trim();
@@ -112,11 +113,12 @@
             global.document.documentElement.lang = currentLang === 'en' ? 'en' : 'de';
         }
         var titleEl = global.document && global.document.querySelector('title[data-i18n]');
-        if (titleEl) titleEl.textContent = t('app.title');
+        if (titleEl && t('app.title') !== 'app.title') titleEl.textContent = t('app.title');
     }
 
     global.i18n = {
         t: t,
+        tOr: tOr,
         getLanguage: getLanguage,
         setLanguage: setLanguage,
         init: init,

@@ -169,7 +169,7 @@ function setupEventListeners() {
         const amountStr = amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const iban = (currentOverlayData.iban || '').trim();
         const ibanDisplay = iban ? formatIBAN(iban) : iban;
-        const text = window.i18n ? window.i18n.t('sms.paymentConfirm', [amountStr, paramLabel, param, ibanDisplay]) : ('Die Bezahlung über ' + amountStr + ' EUR für ' + paramLabel + ' ' + param + ' wurde an ' + ibanDisplay + ' überwiesen, bitte bestätigen Sie den Zahlungseingang. Sie müssen nicht mehr zur Kasse kommen.');
+        const text = window.i18n ? window.i18n.tOr('sms.paymentConfirm', 'Die Bezahlung über ' + amountStr + ' EUR für ' + paramLabel + ' ' + param + ' wurde an ' + ibanDisplay + ' überwiesen, bitte bestätigen Sie den Zahlungseingang. Sie müssen nicht mehr zur Kasse kommen.', [amountStr, paramLabel, param, ibanDisplay]) : ('Die Bezahlung über ' + amountStr + ' EUR für ' + paramLabel + ' ' + param + ' wurde an ' + ibanDisplay + ' überwiesen, bitte bestätigen Sie den Zahlungseingang. Sie müssen nicht mehr zur Kasse kommen.');
         const phone = (item && (item.phone || '').trim()) ? (item.phone || '').trim().replace(/\s/g, '') : '';
         const url = phone ? 'sms:' + encodeURIComponent(phone) + '?body=' + encodeURIComponent(text) : 'sms:?body=' + encodeURIComponent(text);
         window.location.href = url;
@@ -266,7 +266,7 @@ function setupEventListeners() {
         importFileInput.addEventListener('change', function () {
             const file = importFileInput.files[0];
             if (file) {
-                const ok = confirm(window.i18n ? window.i18n.t('msg.overwriteConfirm') : 'Aktueller Bestand wird überschrieben. Fortfahren?');
+                const ok = confirm(window.i18n ? window.i18n.tOr('msg.overwriteConfirm', 'Aktueller Bestand wird überschrieben. Fortfahren?') : 'Aktueller Bestand wird überschrieben. Fortfahren?');
                 if (ok) importData(file);
                 importFileInput.value = '';
             }
@@ -317,7 +317,7 @@ function saveSettings(settings) {
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
         return true;
     } catch (e) {
-        alert(window.i18n ? window.i18n.t('msg.storageQuota') : 'Der Browser-Speicher ist voll. Bitte ein kleineres Logo verwenden oder Daten löschen.');
+        alert(window.i18n ? window.i18n.tOr('msg.storageQuota', 'Der Browser-Speicher ist voll. Bitte ein kleineres Logo verwenden oder Daten löschen.') : 'Der Browser-Speicher ist voll. Bitte ein kleineres Logo verwenden oder Daten löschen.');
         return false;
     }
 }
@@ -326,13 +326,13 @@ function applySettingsToMainForm() {
     const s = getSettings();
     const label = s.paramLabel || DEFAULT_SETTINGS.paramLabel;
     const paramFilterLabel = document.getElementById('sellerFilterParamLabel');
-    if (paramFilterLabel) paramFilterLabel.textContent = label + ' (' + (window.i18n ? window.i18n.t('filter.exact') : 'exakt') + ')';
-    if (sellerFilterParamEl) sellerFilterParamEl.placeholder = window.i18n ? window.i18n.t('filter.placeholderExact') : 'nur exakte Treffer';
-    if (sellerFilterSellerEl) sellerFilterSellerEl.placeholder = (label || 'Objekt') + ', ' + (window.i18n ? window.i18n.t('table.seller') : 'Verkäufer') + ', IBAN';
+    if (paramFilterLabel) paramFilterLabel.textContent = label + ' (' + (window.i18n ? window.i18n.tOr('filter.exact', 'exakt') : 'exakt') + ')';
+    if (sellerFilterParamEl) sellerFilterParamEl.placeholder = window.i18n ? window.i18n.tOr('filter.placeholderExact', 'nur exakte Treffer') : 'nur exakte Treffer';
+    if (sellerFilterSellerEl) sellerFilterSellerEl.placeholder = (label || 'Objekt') + ', ' + (window.i18n ? window.i18n.tOr('table.seller', 'Verkäufer') : 'Verkäufer') + ', IBAN';
     const btnNewSeller = document.getElementById('btnNewSeller');
-    if (btnNewSeller) btnNewSeller.textContent = window.i18n ? window.i18n.t('button.newObject', [label]) : ('Neues ' + label + ' anlegen');
+    if (btnNewSeller) btnNewSeller.textContent = window.i18n ? window.i18n.tOr('button.newObject', 'Neues ' + label + ' anlegen', [label]) : ('Neues ' + label + ' anlegen');
     const btnSellerSubmit = document.getElementById('btnSellerSubmit');
-    if (btnSellerSubmit) btnSellerSubmit.textContent = window.i18n ? window.i18n.t('form.saveObject', [label]) : (label + ' speichern');
+    if (btnSellerSubmit) btnSellerSubmit.textContent = window.i18n ? window.i18n.tOr('form.saveObject', label + ' speichern', [label]) : (label + ' speichern');
 }
 
 function applySettingsToSellerForm() {
@@ -341,7 +341,7 @@ function applySettingsToSellerForm() {
     const labelEl = document.getElementById('sellerParamLabel');
     const paramInput = document.getElementById('sellerParam');
     if (labelEl) labelEl.textContent = label + ' *';
-    if (paramInput) paramInput.placeholder = window.i18n ? window.i18n.t('form.placeholderObject', [label]) : ('z.B. ' + label);
+    if (paramInput) paramInput.placeholder = window.i18n ? window.i18n.tOr('form.placeholderObject', 'z.B. ' + label, [label]) : ('z.B. ' + label);
 }
 
 // --- Modus (Verkäufer erfassen / Direktüberweisung) ---
@@ -492,7 +492,7 @@ function validateSellerIbanField() {
         errorEl.textContent = '';
     } else {
         input.classList.add('input-error');
-        errorEl.textContent = window.i18n ? window.i18n.t('msg.invalidIban') : 'Ungültige IBAN';
+        errorEl.textContent = window.i18n ? window.i18n.tOr('msg.invalidIban', 'Ungültige IBAN') : 'Ungültige IBAN';
     }
 }
 
@@ -508,7 +508,7 @@ function handleSellerTestSms(e) {
     const name = (document.getElementById('sellerName') && document.getElementById('sellerName').value) || '';
     const iban = (document.getElementById('sellerIban') && document.getElementById('sellerIban').value.trim().toUpperCase().replace(/\s/g, '')) || '';
     const phone = (document.getElementById('sellerPhone') && document.getElementById('sellerPhone').value.trim()) || '';
-    const message = window.i18n ? window.i18n.t('sms.sellerRegistered', [name, iban || window.i18n.t('sms.ibanNotGiven')]) : ('Verkäufer ' + name + ' mit IBAN ' + (iban || '(noch nicht angegeben)') + ' registriert');
+    const message = window.i18n ? window.i18n.tOr('sms.sellerRegistered', 'Verkäufer ' + name + ' mit IBAN ' + (iban || '(noch nicht angegeben)') + ' registriert', [name, iban || (window.i18n.tOr('sms.ibanNotGiven', '(noch nicht angegeben)'))]) : ('Verkäufer ' + name + ' mit IBAN ' + (iban || '(noch nicht angegeben)') + ' registriert');
     const smsBody = encodeURIComponent(message);
     const href = phone ? 'sms:' + phone.replace(/\s/g, '') + '?body=' + smsBody : 'sms:?body=' + smsBody;
     window.location.href = href;
@@ -525,7 +525,7 @@ function setSellerFormSellerBlockVisible(visible) {
     if (block) block.classList.toggle('hidden', !visible);
     if (sellerPaidRow) sellerPaidRow.classList.toggle('hidden', !visible);
     if (btnToggle) {
-        btnToggle.textContent = window.i18n ? window.i18n.t(visible ? 'form.toggleSellerCaptureVisible' : 'form.toggleSellerCapture') : (visible ? 'Verkäufer nacherfassen (eingeblendet)' : 'Verkäufer nacherfassen');
+        btnToggle.textContent = window.i18n ? window.i18n.tOr(visible ? 'form.toggleSellerCaptureVisible' : 'form.toggleSellerCapture', visible ? 'Verkäufer nacherfassen (eingeblendet)' : 'Verkäufer nacherfassen') : (visible ? 'Verkäufer nacherfassen (eingeblendet)' : 'Verkäufer nacherfassen');
         btnToggle.classList.toggle('active', visible);
     }
     [nameInput, ibanInput, phoneInput].forEach(function (el) {
@@ -544,7 +544,7 @@ function openSellerFormOverlay(editId) {
     const sellerBlock = document.getElementById('sellerFormSellerBlock');
     const label = (getSettings().paramLabel || 'Objekt').trim() || 'Objekt';
 
-    if (titleEl) titleEl.textContent = window.i18n ? (editId ? window.i18n.t('form.sellerTitleEdit', [label]) : window.i18n.t('form.sellerTitleNew', [label])) : (editId ? (label + ' bearbeiten') : ('Neues ' + label + ' erfassen'));
+    if (titleEl) titleEl.textContent = window.i18n ? (editId ? window.i18n.tOr('form.sellerTitleEdit', label + ' bearbeiten', [label]) : window.i18n.tOr('form.sellerTitleNew', 'Neues ' + label + ' erfassen', [label])) : (editId ? (label + ' bearbeiten') : ('Neues ' + label + ' erfassen'));
 
     if (editId) {
         const items = getSellerItems();
@@ -592,13 +592,13 @@ function openSellerQuickFormOverlay() {
     const form = document.getElementById('sellerQuickForm');
     const titleEl = document.getElementById('sellerQuickFormTitle');
     const label = (getSettings().paramLabel || 'Objekt').trim() || 'Objekt';
-    if (titleEl) titleEl.textContent = window.i18n ? window.i18n.t('form.quickTitle', [label]) : ('Neues ' + label + ' anlegen');
+    if (titleEl) titleEl.textContent = window.i18n ? window.i18n.tOr('form.quickTitle', 'Neues ' + label + ' anlegen', [label]) : ('Neues ' + label + ' anlegen');
     const quickParamLabel = document.getElementById('quickParamLabel');
     if (quickParamLabel) quickParamLabel.textContent = label + ' *';
     const quickParamInput = document.getElementById('quickParam');
-    if (quickParamInput) quickParamInput.placeholder = window.i18n ? window.i18n.t('form.placeholderObject', [label]) : ('z.B. ' + label);
+    if (quickParamInput) quickParamInput.placeholder = window.i18n ? window.i18n.tOr('form.placeholderObject', 'z.B. ' + label, [label]) : ('z.B. ' + label);
     const btnQuickSubmit = document.getElementById('btnQuickSellerSubmit');
-    if (btnQuickSubmit) btnQuickSubmit.textContent = window.i18n ? window.i18n.t('form.saveObject', [label]) : (label + ' speichern');
+    if (btnQuickSubmit) btnQuickSubmit.textContent = window.i18n ? window.i18n.tOr('form.saveObject', label + ' speichern', [label]) : (label + ' speichern');
     const quickForm = document.getElementById('sellerQuickForm');
     if (quickForm) quickForm.reset();
     if (overlay) overlay.classList.remove('hidden');
@@ -614,16 +614,16 @@ function handleSellerQuickFormSubmit(e) {
     const param = (document.getElementById('quickParam') && document.getElementById('quickParam').value) || '';
     const price = parseFloat(document.getElementById('quickPrice') && document.getElementById('quickPrice').value);
     if (!param.trim()) {
-        alert(window.i18n ? window.i18n.t('msg.pleaseObject') : 'Bitte Objekt angeben.');
+        alert(window.i18n ? window.i18n.tOr('msg.pleaseObject', 'Bitte Objekt angeben.') : 'Bitte Objekt angeben.');
         return;
     }
     if (isNaN(price) || price <= 0) {
-        alert(window.i18n ? window.i18n.t('msg.pleaseAmount') : 'Bitte einen gültigen Betrag eingeben.');
+        alert(window.i18n ? window.i18n.tOr('msg.pleaseAmount', 'Bitte einen gültigen Betrag eingeben.') : 'Bitte einen gültigen Betrag eingeben.');
         return;
     }
     const label = (getSettings().paramLabel || 'Objekt').trim() || 'Objekt';
     if (isParamInUse(param, null)) {
-        alert(window.i18n ? window.i18n.t('msg.duplicateParam', [label]) : ('Ein anderes Objekt hat bereits den gleichen ' + label + '-Wert. Bitte einen eindeutigen Wert verwenden.'));
+        alert(window.i18n ? window.i18n.tOr('msg.duplicateParam', 'Ein anderes Objekt hat bereits den gleichen ' + label + '-Wert. Bitte einen eindeutigen Wert verwenden.', [label]) : ('Ein anderes Objekt hat bereits den gleichen ' + label + '-Wert. Bitte einen eindeutigen Wert verwenden.'));
         return;
     }
     addSellerItem({ sellerName: '', sellerIban: '', param: param.trim(), price, phone: '' });
@@ -645,7 +645,7 @@ function toggleSellerSelection(id, checked) {
             const firstId = selectedSellerItemIds.values().next().value;
             const first = items.find(i => i.id === firstId);
             if (first && normalizeIbanForCompare(first.sellerIban) !== normalizeIbanForCompare(item.sellerIban)) {
-                alert(window.i18n ? window.i18n.t('msg.onlySameSeller') : 'Nur Objekte desselben Verkäufers (gleiche IBAN) auswählbar.');
+                alert(window.i18n ? window.i18n.tOr('msg.onlySameSeller', 'Nur Objekte desselben Verkäufers (gleiche IBAN) auswählbar.') : 'Nur Objekte desselben Verkäufers (gleiche IBAN) auswählbar.');
                 return;
             }
         }
@@ -669,11 +669,11 @@ function updateSellerSelectionBar() {
     }
     bar.classList.remove('hidden');
     if (sameIban) {
-        textEl.textContent = window.i18n ? window.i18n.t('msg.selectedCount', [selected.length]) : (selected.length + ' ausgewählt');
+        textEl.textContent = window.i18n ? window.i18n.tOr('msg.selectedCount', selected.length + ' ausgewählt', [selected.length]) : (selected.length + ' ausgewählt');
         btn.disabled = false;
         btn.classList.remove('disabled');
     } else {
-        textEl.textContent = window.i18n ? window.i18n.t('msg.selectedDifferentSellers') : 'Auswahl: unterschiedliche Verkäufer – nur ein Verkäufer auswählbar.';
+        textEl.textContent = window.i18n ? window.i18n.tOr('msg.selectedDifferentSellers', 'Auswahl: unterschiedliche Verkäufer – nur ein Verkäufer auswählbar.') : 'Auswahl: unterschiedliche Verkäufer – nur ein Verkäufer auswählbar.';
         btn.disabled = true;
         btn.classList.add('disabled');
     }
@@ -697,7 +697,7 @@ function handleSellerListClick(e) {
     else if (action === 'pay') openPayOverlay(id);
     else if (action === 'paySeller') openPaySellerOverlay(id);
     else if (action === 'delete') {
-        if (confirm(window.i18n ? window.i18n.t('msg.confirmDeleteItem') : 'Dieses Objekt wirklich als gelöscht markieren?')) setSellerDeleted(id);
+        if (confirm(window.i18n ? window.i18n.tOr('msg.confirmDeleteItem', 'Dieses Objekt wirklich als gelöscht markieren?') : 'Dieses Objekt wirklich als gelöscht markieren?')) setSellerDeleted(id);
     }
 }
 
@@ -706,7 +706,7 @@ function openPayOverlay(id) {
     if (!item) return;
     const s = getSettings();
     if (!s.recipientName || !s.iban) {
-        alert(window.i18n ? window.i18n.t('msg.pleaseEnterRecipient') : 'Bitte in den Einstellungen Empfänger und IBAN eintragen.');
+        alert(window.i18n ? window.i18n.tOr('msg.pleaseEnterRecipient', 'Bitte in den Einstellungen Empfänger und IBAN eintragen (für „Bezahlen").') : 'Bitte in den Einstellungen Empfänger und IBAN eintragen.');
         return;
     }
     currentPayItemId = id;
@@ -757,7 +757,7 @@ function openPaySellerOverlayMultiple(ids) {
     if (selected.length === 0) return;
     const iban0 = normalizeIbanForCompare(selected[0].sellerIban);
     if (selected.some(i => normalizeIbanForCompare(i.sellerIban) !== iban0)) {
-        alert(window.i18n ? window.i18n.t('sellerPaymentAllSame') : 'Alle ausgewählten Objekte müssen zum gleichen Verkäufer (IBAN) gehören.');
+        alert(window.i18n ? window.i18n.tOr('sellerPaymentAllSame', 'Alle ausgewählten Objekte müssen zum gleichen Verkäufer (IBAN) gehören.') : 'Alle ausgewählten Objekte müssen zum gleichen Verkäufer (IBAN) gehören.');
         return;
     }
     currentPaySellerItemId = null;
@@ -790,7 +790,7 @@ function openPaySellerOverlayMultiple(ids) {
 function fillSellerFormFromLast() {
     const items = getSellerItems();
     if (items.length === 0) {
-        alert(window.i18n ? window.i18n.t('msg.noObjectsYet') : 'Noch keine Objekte erfasst. Legen Sie zuerst ein Objekt an.');
+        alert(window.i18n ? window.i18n.tOr('msg.noObjectsYet', 'Noch keine Objekte erfasst. Legen Sie zuerst ein Objekt an.') : 'Noch keine Objekte erfasst. Legen Sie zuerst ein Objekt an.');
         return;
     }
     const last = items[items.length - 1];
@@ -820,29 +820,29 @@ function handleSellerFormSubmit(e) {
         phone = '';
     } else {
         if (!sellerName) {
-            alert(window.i18n ? window.i18n.t('msg.pleaseNameSeller') : 'Bitte Name Verkäufer angeben.');
+            alert(window.i18n ? window.i18n.tOr('msg.pleaseNameSeller', 'Bitte Name Verkäufer angeben.') : 'Bitte Name Verkäufer angeben.');
             return;
         }
         if (!validateIBAN(sellerIbanRaw)) {
-            alert(window.i18n ? window.i18n.t('msg.pleaseValidIban') : 'Bitte eine gültige IBAN eingeben.');
+            alert(window.i18n ? window.i18n.tOr('msg.pleaseValidIban', 'Bitte eine gültige IBAN eingeben.') : 'Bitte eine gültige IBAN eingeben.');
             return;
         }
         if (!phone) {
-            alert(window.i18n ? window.i18n.t('msg.pleasePhone') : 'Bitte Mobilnummer angeben.');
+            alert(window.i18n ? window.i18n.tOr('msg.pleasePhone', 'Bitte Mobilnummer angeben.') : 'Bitte Mobilnummer angeben.');
             return;
         }
     }
     if (!param) {
-        alert(window.i18n ? window.i18n.t('msg.pleaseObject') : 'Bitte Objekt angeben.');
+        alert(window.i18n ? window.i18n.tOr('msg.pleaseObject', 'Bitte Objekt angeben.') : 'Bitte Objekt angeben.');
         return;
     }
     if (isNaN(price) || price <= 0) {
-        alert(window.i18n ? window.i18n.t('msg.pleasePrice') : 'Bitte einen gültigen Preis angeben.');
+        alert(window.i18n ? window.i18n.tOr('msg.pleasePrice', 'Bitte einen gültigen Preis angeben.') : 'Bitte einen gültigen Preis angeben.');
         return;
     }
     const paramLabel = (getSettings().paramLabel || 'Objekt').trim() || 'Objekt';
     if (isParamInUse(param, editId || null)) {
-        alert(window.i18n ? window.i18n.t('msg.duplicateParam', [paramLabel]) : ('Ein anderes Objekt hat bereits den gleichen ' + paramLabel + '-Wert. Bitte einen eindeutigen Wert verwenden.'));
+        alert(window.i18n ? window.i18n.tOr('msg.duplicateParam', 'Ein anderes Objekt hat bereits den gleichen ' + paramLabel + '-Wert. Bitte einen eindeutigen Wert verwenden.', [paramLabel]) : ('Ein anderes Objekt hat bereits den gleichen ' + paramLabel + '-Wert. Bitte einen eindeutigen Wert verwenden.'));
         return;
     }
 
@@ -896,8 +896,8 @@ function renderSellerList() {
     if (filtered.length === 0) {
         const total = items.length;
         const emptyMsg = total === 0
-            ? (window.i18n ? window.i18n.t('empty.noObjects', [paramLabel]) : ('Noch keine Objekte. Klicken Sie auf „Neues ' + paramLabel + ' anlegen".'))
-            : (hasFilter ? (window.i18n ? window.i18n.t('empty.noMatches', [paramLabel]) : ('Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.')) : (window.i18n ? window.i18n.t('empty.noMatchesShort') : 'Keine Treffer.'));
+            ? (window.i18n ? window.i18n.tOr('empty.noObjects', 'Noch keine Objekte. Klicken Sie auf „Neues ' + paramLabel + ' anlegen".', [paramLabel]) : ('Noch keine Objekte. Klicken Sie auf „Neues ' + paramLabel + ' anlegen".'))
+            : (hasFilter ? (window.i18n ? window.i18n.tOr('empty.noMatches', 'Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.', [paramLabel]) : ('Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.')) : (window.i18n ? window.i18n.tOr('empty.noMatchesShort', 'Keine Treffer.') : 'Keine Treffer.'));
         sellerListEl.innerHTML = '<div class="seller-empty">' + emptyMsg + '</div>';
         return;
     }
@@ -906,24 +906,24 @@ function renderSellerList() {
         const badges = [];
         if (item.paid) {
             const methodKey = item.paidMethod === 'bar' ? 'form.bar' : 'form.electronic';
-            const methodLabel = window.i18n ? window.i18n.t(methodKey) : (item.paidMethod === 'bar' ? 'Bar' : 'Elektronisch');
-            badges.push('<span class="seller-badge seller-badge-paid">' + (window.i18n ? window.i18n.t('badge.paid', [methodLabel]) : ('Bezahlt (' + methodLabel.toLowerCase() + ')')) + '</span>');
+            const methodLabel = window.i18n ? window.i18n.tOr(methodKey, item.paidMethod === 'bar' ? 'Bar' : 'Elektronisch') : (item.paidMethod === 'bar' ? 'Bar' : 'Elektronisch');
+            badges.push('<span class="seller-badge seller-badge-paid">' + (window.i18n ? window.i18n.tOr('badge.paid', 'Bezahlt (' + methodLabel.toLowerCase() + ')', [methodLabel]) : ('Bezahlt (' + methodLabel.toLowerCase() + ')')) + '</span>');
         }
-        if (item.sellerPaid) badges.push('<span class="seller-badge seller-badge-seller-paid">' + (window.i18n ? window.i18n.t('badge.sellerPaid') : 'an Verkäufer gezahlt') + '</span>');
-        if (item.deleted) badges.push('<span class="seller-badge seller-badge-deleted">' + (window.i18n ? window.i18n.t('badge.deleted') : 'Gelöscht') + '</span>');
+        if (item.sellerPaid) badges.push('<span class="seller-badge seller-badge-seller-paid">' + (window.i18n ? window.i18n.tOr('badge.sellerPaid', 'an Verkäufer gezahlt') : 'an Verkäufer gezahlt') + '</span>');
+        if (item.deleted) badges.push('<span class="seller-badge seller-badge-deleted">' + (window.i18n ? window.i18n.tOr('badge.deleted', 'Gelöscht') : 'Gelöscht') + '</span>');
         const hasSeller = !!((item.sellerName || '').trim() && (item.sellerIban || '').trim());
         const canSelectForSellerPay = item.paid && !item.sellerPaid && hasSeller && !item.deleted;
-        const selectLabel = window.i18n ? window.i18n.t('action.select') : 'Auswählen';
+        const selectLabel = window.i18n ? window.i18n.tOr('action.select', 'Auswählen') : 'Auswählen';
         const selectCb = canSelectForSellerPay
             ? `<label class="seller-item-select"><input type="checkbox" class="seller-select-cb" data-id="${escapeHtml(item.id)}" ${selectedSellerItemIds.has(item.id) ? 'checked' : ''}> ${escapeHtml(selectLabel)}</label>`
             : '';
-        const paySellerLabel = window.i18n ? window.i18n.t('action.paySeller') : 'An Verkäufer zahlen';
+        const paySellerLabel = window.i18n ? window.i18n.tOr('action.paySeller', 'An Verkäufer zahlen') : 'An Verkäufer zahlen';
         const paySellerBtn = hasSeller
             ? `<button type="button" class="btn-small btn-pay-seller" data-action="paySeller" data-id="${escapeHtml(item.id)}">${escapeHtml(paySellerLabel)}</button>`
             : '';
-        const editLabel = window.i18n ? window.i18n.t('action.edit') : 'Bearbeiten';
-        const payLabel = window.i18n ? window.i18n.t('action.pay') : 'Bezahlen';
-        const deleteLabel = window.i18n ? window.i18n.t('action.delete') : 'Löschen';
+        const editLabel = window.i18n ? window.i18n.tOr('action.edit', 'Bearbeiten') : 'Bearbeiten';
+        const payLabel = window.i18n ? window.i18n.tOr('action.pay', 'Bezahlen') : 'Bezahlen';
+        const deleteLabel = window.i18n ? window.i18n.tOr('action.delete', 'Löschen') : 'Löschen';
         const actions = item.deleted ? '' : `
             <div class="seller-item-actions">
                 <button type="button" class="btn-small btn-edit" data-action="edit" data-id="${escapeHtml(item.id)}">${escapeHtml(editLabel)}</button>
@@ -972,14 +972,14 @@ function openSettingsOverlay() {
     if (weroLinkEl) weroLinkEl.value = s.weroLink || '';
     if (window.i18n) {
         const appTitleEl2 = document.getElementById('settingsAppTitle');
-        if (appTitleEl2) appTitleEl2.placeholder = window.i18n.t('settings.placeholderAppTitle');
+        if (appTitleEl2) appTitleEl2.placeholder = window.i18n.tOr('settings.placeholderAppTitle', 'leer lassen = Standardtitel');
         const appSubtitleEl2 = document.getElementById('settingsAppSubtitle');
-        if (appSubtitleEl2) appSubtitleEl2.placeholder = window.i18n.t('settings.placeholderAppSubtitle');
-        document.getElementById('settingsRecipientName').placeholder = window.i18n.t('settings.placeholderName');
-        document.getElementById('settingsIban').placeholder = window.i18n.t('settings.placeholderIban');
-        document.getElementById('settingsUsageTemplate').placeholder = window.i18n.t('settings.placeholderUsage');
-        document.getElementById('settingsParamLabel').placeholder = window.i18n.t('settings.placeholderParamLabel');
-        document.getElementById('settingsWeroLink').placeholder = window.i18n.t('settings.placeholderWero');
+        if (appSubtitleEl2) appSubtitleEl2.placeholder = window.i18n.tOr('settings.placeholderAppSubtitle', 'leer lassen = Standarduntertitel');
+        document.getElementById('settingsRecipientName').placeholder = window.i18n.tOr('settings.placeholderName', 'Max Mustermann');
+        document.getElementById('settingsIban').placeholder = window.i18n.tOr('settings.placeholderIban', 'DE89370400440532013000');
+        document.getElementById('settingsUsageTemplate').placeholder = window.i18n.tOr('settings.placeholderUsage', 'Rechnung $objekt');
+        document.getElementById('settingsParamLabel').placeholder = window.i18n.tOr('settings.placeholderParamLabel', 'z.B. Objekt');
+        document.getElementById('settingsWeroLink').placeholder = window.i18n.tOr('settings.placeholderWero', 'https://wero.me/...');
     }
     const btnRemoveLogo = document.getElementById('btnRemoveLogo');
     if (btnRemoveLogo) btnRemoveLogo.disabled = !(s.appLogoDataUrl && String(s.appLogoDataUrl).trim());
@@ -994,14 +994,14 @@ function closeSettingsOverlay() {
 function refreshSettingsFormTranslations() {
     if (!window.i18n) return;
     const appTitleEl = document.getElementById('settingsAppTitle');
-    if (appTitleEl) appTitleEl.placeholder = window.i18n.t('settings.placeholderAppTitle');
+    if (appTitleEl) appTitleEl.placeholder = window.i18n.tOr('settings.placeholderAppTitle', 'leer lassen = Standardtitel');
     const appSubtitleEl = document.getElementById('settingsAppSubtitle');
-    if (appSubtitleEl) appSubtitleEl.placeholder = window.i18n.t('settings.placeholderAppSubtitle');
-    document.getElementById('settingsRecipientName').placeholder = window.i18n.t('settings.placeholderName');
-    document.getElementById('settingsIban').placeholder = window.i18n.t('settings.placeholderIban');
-    document.getElementById('settingsUsageTemplate').placeholder = window.i18n.t('settings.placeholderUsage');
-    document.getElementById('settingsParamLabel').placeholder = window.i18n.t('settings.placeholderParamLabel');
-    document.getElementById('settingsWeroLink').placeholder = window.i18n.t('settings.placeholderWero');
+    if (appSubtitleEl) appSubtitleEl.placeholder = window.i18n.tOr('settings.placeholderAppSubtitle', 'leer lassen = Standarduntertitel');
+    document.getElementById('settingsRecipientName').placeholder = window.i18n.tOr('settings.placeholderName', 'Max Mustermann');
+    document.getElementById('settingsIban').placeholder = window.i18n.tOr('settings.placeholderIban', 'DE89370400440532013000');
+    document.getElementById('settingsUsageTemplate').placeholder = window.i18n.tOr('settings.placeholderUsage', 'Rechnung $objekt');
+    document.getElementById('settingsParamLabel').placeholder = window.i18n.tOr('settings.placeholderParamLabel', 'z.B. Objekt');
+    document.getElementById('settingsWeroLink').placeholder = window.i18n.tOr('settings.placeholderWero', 'https://wero.me/...');
 }
 
 function handleSettingsSubmit(e) {
@@ -1010,7 +1010,7 @@ function handleSettingsSubmit(e) {
     const prev = getSettings();
     const iban = fd.get('iban').trim().toUpperCase().replace(/\s/g, '');
     if (!validateIBAN(iban)) {
-        alert(window.i18n ? window.i18n.t('msg.enterValidIban') : 'Bitte geben Sie eine gültige IBAN ein.');
+        alert(window.i18n ? window.i18n.tOr('msg.enterValidIban', 'Bitte geben Sie eine gültige IBAN ein.') : 'Bitte geben Sie eine gültige IBAN ein.');
         return;
     }
     const commissionVal = fd.get('commissionPercent');
@@ -1027,7 +1027,7 @@ function handleSettingsSubmit(e) {
         appSubtitle: (fd.get('appSubtitle') || '').toString().trim()
     };
     if (settings.usageTemplate.indexOf('$objekt') === -1) {
-        alert(window.i18n ? window.i18n.t('msg.usageMustContain') : 'Der Verwendungszweck muss den Platzhalter $objekt enthalten.');
+        alert(window.i18n ? window.i18n.tOr('msg.usageMustContain', 'Der Verwendungszweck muss den Platzhalter $objekt enthalten.') : 'Der Verwendungszweck muss den Platzhalter $objekt enthalten.');
         return;
     }
     if (!saveSettings(settings)) return;
@@ -1039,8 +1039,8 @@ function handleSettingsSubmit(e) {
 
 function applyBrandingFromSettings() {
     const s = getSettings();
-    const titleDefault = window.i18n ? window.i18n.t('app.title') : 'E-Basar!';
-    const subtitleDefault = window.i18n ? window.i18n.t('app.subtitle') : '';
+    const titleDefault = window.i18n ? window.i18n.tOr('app.title', 'E-Basar!') : 'E-Basar!';
+    const subtitleDefault = window.i18n ? window.i18n.tOr('app.subtitle', 'Bargeldloses Kassensystem für Basare') : '';
     const title = (s.appTitle || '').trim() || titleDefault;
     const subtitle = (s.appSubtitle || '').trim() || subtitleDefault;
 
@@ -1072,7 +1072,7 @@ function handleLogoFileSelected(e) {
     const file = input && input.files && input.files[0] ? input.files[0] : null;
     if (!file) return;
     if (!file.type || file.type.indexOf('image/') !== 0) {
-        alert(window.i18n ? window.i18n.t('msg.invalidImage') : 'Bitte eine Bilddatei auswählen.');
+        alert(window.i18n ? window.i18n.tOr('msg.invalidImage', 'Bitte eine gültige Bilddatei auswählen.') : 'Bitte eine Bilddatei auswählen.');
         if (input) input.value = '';
         return;
     }
@@ -1083,7 +1083,7 @@ function handleLogoFileSelected(e) {
         applyBrandingFromSettings();
         if (input) input.value = '';
     }).catch(function () {
-        alert(window.i18n ? window.i18n.t('msg.invalidImage') : 'Bitte eine Bilddatei auswählen.');
+        alert(window.i18n ? window.i18n.tOr('msg.invalidImage', 'Bitte eine gültige Bilddatei auswählen.') : 'Bitte eine Bilddatei auswählen.');
         if (input) input.value = '';
     });
 }
@@ -1145,7 +1145,7 @@ function resizeImageDataUrl(dataUrl, mimeType, maxWidth, maxHeight) {
 function handleWeroScan() {
     // In einer echten Web-App würde hier die Kamera geöffnet, um einen QR-Code zu scannen.
     // Da dies eine terminalbasierte Umgebung ist, simulieren wir den Scan durch eine Eingabeaufforderung.
-    const scannedLink = prompt(window.i18n ? window.i18n.t('msg.weroScanPrompt') : 'Bitte scannen Sie den WERO QR-Code oder geben Sie den Zahlungslink hier ein:');
+    const scannedLink = prompt(window.i18n ? window.i18n.tOr('msg.weroScanPrompt', 'Bitte scannen Sie den WERO QR-Code oder geben Sie den Zahlungslink hier ein:') : 'Bitte scannen Sie den WERO QR-Code oder geben Sie den Zahlungslink hier ein:');
     if (scannedLink) {
         const weroInput = document.getElementById('settingsWeroLink');
         if (weroInput) {
@@ -1239,7 +1239,7 @@ function generateQRCode(data) {
     }, function (error) {
         if (error) {
             console.error('Error generating QR code:', error);
-            alert(window.i18n ? window.i18n.t('msg.qrError') : 'Fehler beim Generieren des QR Codes.');
+            alert(window.i18n ? window.i18n.tOr('msg.qrError', 'Fehler beim Generieren des QR Codes.') : 'Fehler beim Generieren des QR Codes.');
             return;
         }
         displayTransferDetails(data);
@@ -1279,7 +1279,7 @@ function switchPaySellerPanel(panel) {
     const paramEl = document.getElementById('weroDetailParam');
     if (nameEl) nameEl.textContent = s.recipientName || '-';
     if (amountEl) amountEl.textContent = data && typeof data.amount === 'number' ? formatAmountDE(data.amount) + ' EUR' : '-';
-    const paramLabel = s.paramLabel || (window.i18n ? window.i18n.t('table.object') : 'Objekt');
+    const paramLabel = s.paramLabel || (window.i18n ? window.i18n.tOr('table.object', 'Objekt') : 'Objekt');
     if (paramLabelEl) paramLabelEl.textContent = paramLabel + ':';
     if (paramEl) paramEl.textContent = (data && data.param) || '-';
 
@@ -1302,13 +1302,13 @@ function displayTransferDetails(data) {
     const titleEl = qrOverlayTitle || document.getElementById('qrOverlayTitle');
     if (titleEl) {
         if (data.type === 'pay' || data.type === 'direct') {
-            titleEl.textContent = window.i18n ? window.i18n.t('overlay.payByBuyer') : 'Bezahlung durch Käufer';
+            titleEl.textContent = window.i18n ? window.i18n.tOr('overlay.payByBuyer', 'Bezahlung durch Käufer') : 'Bezahlung durch Käufer';
             titleEl.style.color = '';
         } else if (data.type === 'paySeller') {
-            titleEl.textContent = window.i18n ? window.i18n.t('overlay.payToSeller') : 'Bezahlung AN VERKÄUFER';
+            titleEl.textContent = window.i18n ? window.i18n.tOr('overlay.payToSeller', 'Bezahlung AN VERKÄUFER') : 'Bezahlung AN VERKÄUFER';
             titleEl.style.color = 'red';
         } else {
-            titleEl.textContent = window.i18n ? window.i18n.t('overlay.titleQR') : 'QR Code für Überweisung';
+            titleEl.textContent = window.i18n ? window.i18n.tOr('overlay.titleQR', 'QR Code für Überweisung') : 'QR Code für Überweisung';
             titleEl.style.color = '';
         }
     }
@@ -1371,15 +1371,15 @@ function closeObjectsOverlay() {
 }
 
 function renderObjectsTable(items, paramLabel) {
-    const emptyLabel = window.i18n ? window.i18n.t('objects.empty') : 'Keine Einträge';
-    const yesLabel = window.i18n ? window.i18n.t('yes') : 'Ja';
-    const noLabel = window.i18n ? window.i18n.t('no') : 'Nein';
-    const thSeller = window.i18n ? window.i18n.t('table.seller') : 'Verkäufer';
-    const thIban = window.i18n ? window.i18n.t('table.iban') : 'IBAN';
-    const thAmount = window.i18n ? window.i18n.t('table.amount') : 'Betrag';
-    const thTel = window.i18n ? window.i18n.t('table.tel') : 'Tel';
-    const thPaid = window.i18n ? window.i18n.t('table.paid') : 'Bezahlt';
-    const thPaidToSeller = window.i18n ? window.i18n.t('table.paidToSeller') : 'An Verkäufer gezahlt';
+    const emptyLabel = window.i18n ? window.i18n.tOr('objects.empty', 'Keine Einträge') : 'Keine Einträge';
+    const yesLabel = window.i18n ? window.i18n.tOr('yes', 'Ja') : 'Ja';
+    const noLabel = window.i18n ? window.i18n.tOr('no', 'Nein') : 'Nein';
+    const thSeller = window.i18n ? window.i18n.tOr('table.seller', 'Verkäufer') : 'Verkäufer';
+    const thIban = window.i18n ? window.i18n.tOr('table.iban', 'IBAN') : 'IBAN';
+    const thAmount = window.i18n ? window.i18n.tOr('table.amount', 'Betrag') : 'Betrag';
+    const thTel = window.i18n ? window.i18n.tOr('table.tel', 'Tel') : 'Tel';
+    const thPaid = window.i18n ? window.i18n.tOr('table.paid', 'Bezahlt') : 'Bezahlt';
+    const thPaidToSeller = window.i18n ? window.i18n.tOr('table.paidToSeller', 'An Verkäufer gezahlt') : 'An Verkäufer gezahlt';
     if (!items.length) return '<p class="objects-empty">' + emptyLabel + '</p>';
     var rows = items.map(function (item) {
         return '<tr>' +
@@ -1421,7 +1421,7 @@ function showHistory() {
     const historyList = document.getElementById('historyList');
     
     if (history.length === 0) {
-        historyList.innerHTML = '<div class="history-empty">' + (window.i18n ? window.i18n.t('history.empty') : 'Noch keine QR Codes generiert') + '</div>';
+        historyList.innerHTML = '<div class="history-empty">' + (window.i18n ? window.i18n.tOr('history.empty', 'Noch keine QR Codes generiert') : 'Noch keine QR Codes generiert') + '</div>';
     } else {
         historyList.innerHTML = history.map((item, index) => createHistoryItem(item, index)).join('');
     }
@@ -1432,7 +1432,7 @@ function showHistory() {
 function exportHistoryToPDF() {
     const history = getHistory();
     if (!history || history.length === 0) {
-        alert(window.i18n ? window.i18n.t('msg.noHistoryExport') : 'Es gibt keine Einträge zum Exportieren.');
+        alert(window.i18n ? window.i18n.tOr('msg.noHistoryExport', 'Es gibt keine Einträge zum Exportieren.') : 'Es gibt keine Einträge zum Exportieren.');
         return;
     }
     // Sicherstellen, dass die History sichtbar und gerendert ist
@@ -1449,14 +1449,14 @@ function createHistoryItem(item, index) {
     const paramLabel = item.paramLabel || '';
     const param = item.param || '';
     const title = (item.type === 'paySeller')
-        ? (window.i18n ? window.i18n.t('history.sellerPayment', [paramLabel, param]).trim() : ('Verkäuferbezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param))
+        ? (window.i18n ? window.i18n.tOr('history.sellerPayment', ('Verkäuferbezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param).trim(), [paramLabel, param]).trim() : ('Verkäuferbezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param))
         : (paramLabel || param)
-            ? (window.i18n ? window.i18n.t('history.payment', [paramLabel, param]).trim() : ('Bezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param))
-            : (window.i18n ? window.i18n.t('history.transfer', [index + 1]) : ('Überweisung #' + (index + 1)));
-    const lblRecipient = window.i18n ? window.i18n.t('history.recipient') : 'Empfänger';
-    const lblIban = window.i18n ? window.i18n.t('history.iban') : 'IBAN';
-    const lblAmount = window.i18n ? window.i18n.t('history.amount') : 'Betrag';
-    const lblSubject = window.i18n ? window.i18n.t('history.subject') : 'Betreff';
+            ? (window.i18n ? window.i18n.tOr('history.payment', ('Bezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param).trim(), [paramLabel, param]).trim() : ('Bezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param))
+            : (window.i18n ? window.i18n.tOr('history.transfer', 'Überweisung #' + (index + 1), [index + 1]) : ('Überweisung #' + (index + 1)));
+    const lblRecipient = window.i18n ? window.i18n.tOr('history.recipient', 'Empfänger') : 'Empfänger';
+    const lblIban = window.i18n ? window.i18n.tOr('history.iban', 'IBAN') : 'IBAN';
+    const lblAmount = window.i18n ? window.i18n.tOr('history.amount', 'Betrag') : 'Betrag';
+    const lblSubject = window.i18n ? window.i18n.tOr('history.subject', 'Betreff') : 'Betreff';
     return `
         <div class="history-item">
             <div class="history-item-header">
@@ -1583,7 +1583,7 @@ function importData(file) {
         try {
             const payload = JSON.parse(reader.result);
             if (payload.version !== EXPORT_VERSION || !payload.data) {
-                alert(window.i18n ? window.i18n.t('msg.invalidBackup') : 'Ungültige oder veraltete Backup-Datei.');
+                alert(window.i18n ? window.i18n.tOr('msg.invalidBackup', 'Ungültige oder veraltete Backup-Datei.') : 'Ungültige oder veraltete Backup-Datei.');
                 return;
             }
             const d = payload.data;
@@ -1592,20 +1592,20 @@ function importData(file) {
             if (d[MODE_KEY] != null) localStorage.setItem(MODE_KEY, String(d[MODE_KEY]));
             if (d[SELLER_ITEMS_KEY] != null) localStorage.setItem(SELLER_ITEMS_KEY, typeof d[SELLER_ITEMS_KEY] === 'string' ? d[SELLER_ITEMS_KEY] : JSON.stringify(d[SELLER_ITEMS_KEY]));
             closeSettingsOverlay();
-            alert(window.i18n ? window.i18n.t('msg.importSuccess') : 'Backup wurde eingelesen. Die Seite wird neu geladen.');
+            alert(window.i18n ? window.i18n.tOr('msg.importSuccess', 'Backup wurde eingelesen. Die Seite wird neu geladen.') : 'Backup wurde eingelesen. Die Seite wird neu geladen.');
             location.reload();
         } catch (err) {
-            alert(window.i18n ? window.i18n.t('msg.importError', [err.message || 'Ungültiges Format']) : ('Fehler beim Einlesen der Datei: ' + (err.message || 'Ungültiges Format')));
+            alert(window.i18n ? window.i18n.tOr('msg.importError', 'Fehler beim Einlesen der Datei: ' + (err.message || 'Ungültiges Format'), [err.message || 'Ungültiges Format']) : ('Fehler beim Einlesen der Datei: ' + (err.message || 'Ungültiges Format')));
         }
     };
     reader.readAsText(file, 'UTF-8');
 }
 
 function resetAllData() {
-    const confirmation = confirm(window.i18n ? window.i18n.t('msg.confirmResetAll') : 'Sind Sie sicher, dass Sie ALLE Daten unwiderruflich löschen möchten? Dies umfasst das Protokoll, alle Verkäufer-Objekte und Ihre Einstellungen.');
+    const confirmation = confirm(window.i18n ? window.i18n.tOr('msg.confirmResetAll', 'Sind Sie sicher, dass Sie ALLE Daten unwiderruflich löschen möchten? Dies umfasst das Protokoll, alle Verkäufer-Objekte und Ihre Einstellungen.') : 'Sind Sie sicher, dass Sie ALLE Daten unwiderruflich löschen möchten? Dies umfasst das Protokoll, alle Verkäufer-Objekte und Ihre Einstellungen.');
     if (confirmation) {
         localStorage.clear();
-        alert(window.i18n ? window.i18n.t('msg.resetDone') : 'Alle Daten wurden gelöscht. Die Seite wird nun neu geladen.');
+        alert(window.i18n ? window.i18n.tOr('msg.resetDone', 'Alle Daten wurden gelöscht. Die Seite wird nun neu geladen.') : 'Alle Daten wurden gelöscht. Die Seite wird nun neu geladen.');
         location.reload();
     }
 }
