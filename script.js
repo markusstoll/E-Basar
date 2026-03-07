@@ -1,4 +1,4 @@
-const APP_VERSION = '0.9.0';
+const APP_VERSION = '0.9.1';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -1360,7 +1360,7 @@ function exportCsv() {
     }
     const s = getSettings();
     const commission = (s.commissionPercent != null && s.commissionPercent !== '') ? Number(s.commissionPercent) : 10;
-    const header = ['Parameter', 'Verkäufername', 'Bezahlt (bar) (Betrag)', 'Bezahlt (elektronisch) (Betrag)', 'Zahlung an Verkäufer (elektronisch) (Betrag)'];
+    const header = ['Parameter', 'Verkäufer Name', 'Verkäufer IBAN', 'Bezahlt (bar)', 'Bezahlt (elektronisch)', 'Zahlung an Verkäufer (elektronisch)'];
     const rows = items.map(function (item) {
         const price = Number(item.price);
         const barAmount = item.paid && item.paidMethod === 'bar' ? price.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
@@ -1369,6 +1369,7 @@ function exportCsv() {
         return [
             csvEscape(item.param || ''),
             csvEscape(item.sellerName || ''),
+            csvEscape(item.sellerIban || ''),
             csvEscape(barAmount),
             csvEscape(electronicAmount),
             csvEscape(sellerPayout)
