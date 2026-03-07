@@ -210,6 +210,8 @@ function setupEventListeners() {
     });
 
     viewHistoryBtn.addEventListener('click', showHistory);
+    const btnCsvExport = document.getElementById('btnCsvExport');
+    if (btnCsvExport) btnCsvExport.addEventListener('click', exportCsv);
     if (btnResetAll) btnResetAll.addEventListener('click', resetAllData);
     const btnResetWegedaten = document.getElementById('btnResetWegedaten');
     if (btnResetWegedaten) btnResetWegedaten.addEventListener('click', resetWegedatenOnly);
@@ -1340,6 +1342,48 @@ function updateFooterSums() {
 }
 
 const EXPORT_VERSION = 1;
+
+/** Escape a CSV cell (semicolon-separated): wrap in quotes if needed, double quotes inside. */
+function csvEscape(val) {
+    const s = String(val == null ? '' : val);
+    if (/[;"\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+}
+
+function exportCsv() {
+    const items = getSellerItems().filter(function (item) {
+        return !item.deleted && (item.paid || item.sellerPaid);
+    });
+    if (items.length === 0) {
+        alert(window.i18n ? window.i18n.tOr('msg.noCsvExport', 'Keine Objekte mit Zahlungsstatus zum Exportieren.') : 'Keine Objekte mit Zahlungsstatus zum Exportieren.');
+        return;
+    }
+    const s = getSettings();
+    const commission = (s.commissionPercent != null && s.commissionPercent !== '') ? Number(s.commissionPercent) : 10;
+    const header = ['Parameter', 'Verkäufername', 'Bezahlt (bar) (Betrag)', 'Bezahlt (elektronisch) (Betrag)', 'Zahlung an Verkäufer (elektronisch) (Betrag)'];
+    const rows = items.map(function (item) {
+        const price = Number(item.price);
+        const barAmount = item.paid && item.paidMethod === 'bar' ? price.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+        const electronicAmount = item.paid && item.paidMethod === 'elektronisch' ? price.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+        const sellerPayout = item.sellerPaid ? (Math.round(price * (1 - commission / 100) * 100) / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+        return [
+            csvEscape(item.param || ''),
+            csvEscape(item.sellerName || ''),
+            csvEscape(barAmount),
+            csvEscape(electronicAmount),
+            csvEscape(sellerPayout)
+        ].join(';');
+    });
+    const csv = '\uFEFF' + header.map(csvEscape).join(';') + '\r\n' + rows.join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'E-Basar-Export-' + timestamp + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+}
 
 function exportData() {
     const payload = {

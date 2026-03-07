@@ -56,8 +56,11 @@
 
         <footer>
             <div class="footer-content">
-                <button type="button" id="viewObjects" class="btn-secondary">Export</button>
-                <button type="button" id="viewHistory" class="btn-secondary">Protokoll</button>
+                <div class="footer-buttons">
+                    <button type="button" id="viewObjects" class="btn-secondary">Export</button>
+                    <button type="button" id="viewHistory" class="btn-secondary">Protokoll</button>
+                    <button type="button" id="btnCsvExport" class="btn-secondary">CSV-Export</button>
+                </div>
                 <table id="footerSums" class="footer-sums-table">
                     <tr><td class="footer-sum-label">Summe bezahlt:</td><td class="footer-sum-value"><span id="sumPaid">0,00</span> EUR</td></tr>
                     <tr><td class="footer-sum-label">An Verkäufer gezahlt:</td><td class="footer-sum-value"><span id="sumSellerPaid">0,00</span> EUR</td></tr>
