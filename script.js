@@ -1348,6 +1348,14 @@ function formatDate(isoString) {
 }
 
 function closeQROverlay() {
+    const data = currentOverlayData;
+    const needsPaymentConfirm = data && data.type === 'pay' && !data.paidAlready;
+    const needsPayoutConfirm = data && data.type === 'paySeller' && !data.sellerPaidAlready;
+    if (needsPaymentConfirm) {
+        if (!confirm(window.i18n ? window.i18n.tOr('msg.closeWithoutPaid', 'Wirklich schließen, ohne als bezahlt zu markieren?') : 'Wirklich schließen, ohne als bezahlt zu markieren?')) return;
+    } else if (needsPayoutConfirm) {
+        if (!confirm(window.i18n ? window.i18n.tOr('msg.closeWithoutPayout', 'Wirklich schließen, ohne die Auszahlung an den Verkäufer als erfasst zu markieren?') : 'Wirklich schließen, ohne die Auszahlung an den Verkäufer als erfasst zu markieren?')) return;
+    }
     overlay.classList.add('hidden');
 }
 

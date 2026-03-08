@@ -151,6 +151,8 @@
   "msg.selectedCount": "{0} selected",
   "msg.selectedDifferentSellers": "Selection: different sellers – only one seller at a time.",
   "msg.confirmDeleteItem": "Really mark this item as deleted?",
+  "msg.closeWithoutPaid": "Close without marking as paid?",
+  "msg.closeWithoutPayout": "Close without marking the payout to the seller as recorded?",
   "msg.pleaseNameSeller": "Please enter seller name.",
   "msg.pleaseValidIban": "Please enter a valid IBAN.",
   "msg.pleasePhone": "Please enter mobile number.",

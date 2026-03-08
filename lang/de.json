@@ -151,6 +151,8 @@
   "msg.selectedCount": "{0} ausgewählt",
   "msg.selectedDifferentSellers": "Auswahl: unterschiedliche Verkäufer – nur ein Verkäufer auswählbar.",
   "msg.confirmDeleteItem": "Dieses Objekt wirklich als gelöscht markieren?",
+  "msg.closeWithoutPaid": "Wirklich schließen, ohne als bezahlt zu markieren?",
+  "msg.closeWithoutPayout": "Wirklich schließen, ohne die Auszahlung an den Verkäufer als erfasst zu markieren?",
   "msg.pleaseNameSeller": "Bitte Name Verkäufer angeben.",
   "msg.pleaseValidIban": "Bitte eine gültige IBAN eingeben.",
   "msg.pleasePhone": "Bitte Mobilnummer angeben.",
