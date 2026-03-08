@@ -1,4 +1,4 @@
-const APP_VERSION = '0.9.6';
+const APP_VERSION = '0.9.7';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -132,6 +132,7 @@ function setupEventListeners() {
             setSellerPaid(currentPayItemId, 'elektronisch');
             currentPayItemId = null;
         }
+        if (currentOverlayData) currentOverlayData.paidAlready = true;
         closeQROverlay();
     });
     if (overlayPayDoneCash) overlayPayDoneCash.addEventListener('click', function () {
@@ -139,6 +140,7 @@ function setupEventListeners() {
             setSellerPaid(currentPayItemId, 'bar');
             currentPayItemId = null;
         }
+        if (currentOverlayData) currentOverlayData.paidAlready = true;
         closeQROverlay();
     });
     if (overlayPaySellerDone) overlayPaySellerDone.addEventListener('click', function () {
@@ -154,6 +156,7 @@ function setupEventListeners() {
             setSellerPaidSeller(currentPaySellerItemId);
             currentPaySellerItemId = null;
         }
+        if (currentOverlayData) currentOverlayData.sellerPaidAlready = true;
         closeQROverlay();
     });
     const overlayPaySellerNotify = document.getElementById('overlayPaySellerNotify');
