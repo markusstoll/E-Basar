@@ -1,4 +1,4 @@
-const APP_VERSION = '0.9.7';
+const APP_VERSION = '0.9.9';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -144,7 +144,15 @@ function setupEventListeners() {
         closeQROverlay();
     });
     if (overlayPaySellerDone) overlayPaySellerDone.addEventListener('click', function () {
+        var barCheck = document.getElementById('overlayPaySellerBarPaidCheckbox');
+        var barRow = document.getElementById('overlayPaySellerBarPaidRow');
+        var markBarPaid = barRow && !barRow.classList.contains('hidden') && barCheck && barCheck.checked;
         if (currentPaySellerItemIds && currentPaySellerItemIds.length > 0) {
+            if (markBarPaid) {
+                currentPaySellerItemIds.forEach(function (id) {
+                    setSellerPaid(id, 'bar');
+                });
+            }
             currentPaySellerItemIds.forEach(function (id) {
                 setSellerPaidSeller(id);
                 selectedSellerItemIds.delete(id);
@@ -153,12 +161,23 @@ function setupEventListeners() {
             renderSellerList();
             updateFooterSums();
         } else if (currentPaySellerItemId) {
+            if (markBarPaid) setSellerPaid(currentPaySellerItemId, 'bar');
             setSellerPaidSeller(currentPaySellerItemId);
             currentPaySellerItemId = null;
         }
         if (currentOverlayData) currentOverlayData.sellerPaidAlready = true;
         closeQROverlay();
     });
+    const overlayPaySellerBarPaidCheckbox = document.getElementById('overlayPaySellerBarPaidCheckbox');
+    if (overlayPaySellerBarPaidCheckbox) {
+        overlayPaySellerBarPaidCheckbox.addEventListener('change', function () {
+            var btnDone = document.getElementById('overlayPaySellerDone');
+            var btnNotify = document.getElementById('overlayPaySellerNotify');
+            var active = this.checked;
+            if (btnDone) btnDone.disabled = !active;
+            if (btnNotify) btnNotify.disabled = !active;
+        });
+    }
     const overlayPaySellerNotify = document.getElementById('overlayPaySellerNotify');
     if (overlayPaySellerNotify) overlayPaySellerNotify.addEventListener('click', function () {
         if (!currentOverlayData || currentOverlayData.type !== 'paySeller') return;
@@ -752,7 +771,8 @@ function openPaySellerOverlay(id) {
         type: 'paySeller',
         param: item.param,
         paramLabel: s.paramLabel || '',
-        sellerPaidAlready: !!item.sellerPaid
+        sellerPaidAlready: !!item.sellerPaid,
+        paidByBuyerAlready: !!item.paid
     };
     generateQRCode(transferData);
     saveToHistory(transferData);
@@ -789,6 +809,7 @@ function openPaySellerOverlayMultiple(ids) {
         param: subject,
         paramLabel: s.paramLabel || '',
         sellerPaidAlready: false,
+        paidByBuyerAlready: selected.every(function (i) { return !!i.paid; }),
         multipleItemIds: ids
     };
     generateQRCode(transferData);
@@ -1237,6 +1258,23 @@ function generateQRCode(data) {
     const overlayPaySellerAction = document.getElementById('overlayPaySellerAction');
     if (overlayPayActions) overlayPayActions.classList.toggle('hidden', data.type !== 'pay' || data.paidAlready);
     if (overlayPaySellerAction) overlayPaySellerAction.classList.toggle('hidden', data.type !== 'paySeller' || data.sellerPaidAlready);
+
+    if (data.type === 'paySeller' && !data.sellerPaidAlready) {
+        const barRow = document.getElementById('overlayPaySellerBarPaidRow');
+        const barCheck = document.getElementById('overlayPaySellerBarPaidCheckbox');
+        const btnDone = document.getElementById('overlayPaySellerDone');
+        const btnNotify = document.getElementById('overlayPaySellerNotify');
+        if (data.paidByBuyerAlready) {
+            if (barRow) barRow.classList.add('hidden');
+            if (btnDone) btnDone.disabled = false;
+            if (btnNotify) btnNotify.disabled = false;
+        } else {
+            if (barRow) barRow.classList.remove('hidden');
+            if (barCheck) barCheck.checked = false;
+            if (btnDone) btnDone.disabled = true;
+            if (btnNotify) btnNotify.disabled = true;
+        }
+    }
 
     const qrData = generateEPCQRCode(data);
     const ctx = qrCanvas.getContext('2d');

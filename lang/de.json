@@ -60,6 +60,7 @@
   "overlay.payoutCaptured": "Auszahlung erfasst?",
   "overlay.paidToSeller": "An Verkäufer ausgezahlt",
   "overlay.notifySeller": "Verkäufer informieren",
+  "overlay.barPaid": "bar bezahlt",
   "settings.title": "Einstellungen",
   "settings.language": "Sprache",
   "settings.appTitle": "App-Titel (optional)",

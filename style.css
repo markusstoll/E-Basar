@@ -456,6 +456,14 @@ footer {
     color: #333;
 }
 
+.overlay-pay-seller-bar-row {
+    margin-bottom: 12px;
+}
+
+.overlay-pay-seller-bar-row.hidden {
+    display: none;
+}
+
 .overlay-status-buttons {
     display: flex;
     flex-wrap: wrap;
@@ -509,6 +517,19 @@ footer {
     font-weight: 600;
     box-sizing: border-box;
     flex-shrink: 0;
+}
+
+.overlay-status-buttons .btn-primary:disabled,
+.overlay-status-buttons .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.overlay-status-buttons .btn-primary:disabled:hover,
+.overlay-status-buttons .btn-secondary:disabled:hover {
+    transform: none;
+    box-shadow: none;
 }
 
 .overlay-status-buttons .btn-seller-notify {

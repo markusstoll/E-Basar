@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="app.title">E-Basar!</title>
-    <link rel="stylesheet" href="style.css?v=0.9.7">
+    <link rel="stylesheet" href="style.css?v=0.9.9">
 </head>
 <body>
     <div class="container">
         <header>
-            <span class="app-version">v0.9.7</span>
+            <span class="app-version">v0.9.9</span>
             <button id="settingsBtn" class="settings-btn" aria-label="Einstellungen" data-i18n="aria.settings" data-i18n-attr="aria-label">⚙</button>
             <div class="header-branding">
                 <img id="appLogo" class="app-logo hidden" alt="">
@@ -148,6 +148,12 @@
             </div>
             <div id="overlayPaySellerAction" class="overlay-status-actions hidden">
                 <p class="overlay-status-label" data-i18n="overlay.payoutCaptured">Auszahlung erfasst?</p>
+                <div id="overlayPaySellerBarPaidRow" class="overlay-pay-seller-bar-row hidden">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="overlayPaySellerBarPaidCheckbox" autocomplete="off">
+                        <span data-i18n="overlay.barPaid">bar bezahlt</span>
+                    </label>
+                </div>
                 <div class="overlay-status-buttons">
                     <button type="button" id="overlayPaySellerDone" class="btn-primary" data-i18n="overlay.paidToSeller">An Verkäufer ausgezahlt</button>
                     <button type="button" id="overlayPaySellerNotify" class="btn-secondary btn-seller-notify" data-i18n="overlay.notifySeller">Verkäufer informieren</button>
@@ -345,9 +351,9 @@
     </div>
 
 <!-- QR-Bibliothek lokal (unterstützt lange EPC-Strings, funktioniert mit file://) -->
-    <script src="lib/qrcode.min.js?v=0.9.7"></script>
-    <script src="i18n.js?v=0.9.7"></script>
-    <script src="script.js?v=0.9.7"></script>
+    <script src="lib/qrcode.min.js?v=0.9.9"></script>
+    <script src="i18n.js?v=0.9.9"></script>
+    <script src="script.js?v=0.9.9"></script>
 </body>
 </html>
 
