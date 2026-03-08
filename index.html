@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="app.title">E-Basar!</title>
-    <link rel="stylesheet" href="style.css?v=0.8.0">
+    <link rel="stylesheet" href="style.css?v=0.9.3">
 </head>
 <body>
     <div class="container">
         <header>
-            <span class="app-version">v0.8.0</span>
+            <span class="app-version">v0.9.3</span>
             <button id="settingsBtn" class="settings-btn" aria-label="Einstellungen" data-i18n="aria.settings" data-i18n-attr="aria-label">⚙</button>
             <div class="header-branding">
                 <img id="appLogo" class="app-logo hidden" alt="">
@@ -61,15 +61,18 @@
 
         <footer>
             <div class="footer-content">
-                <button type="button" id="viewObjects" class="btn-secondary" data-i18n="button.export">Export</button>
-                <button type="button" id="viewHistory" class="btn-secondary" data-i18n="button.history">Protokoll</button>
+<div class="footer-buttons">
+                    <button type="button" id="viewObjects" class="btn-secondary" data-i18n="button.export">Export</button>
+                    <button type="button" id="viewHistory" class="btn-secondary" data-i18n="button.history">Protokoll</button>
+                    <button type="button" id="btnCsvExport" class="btn-secondary" data-i18n="button.csvExport">CSV-Export</button>
+                </div>
                 <table id="footerSums" class="footer-sums-table">
                     <tr><td class="footer-sum-label" data-i18n="footer.sumPaid">Summe bezahlt:</td><td class="footer-sum-value"><span id="sumPaid">0,00</span> EUR</td></tr>
                     <tr><td class="footer-sum-label" data-i18n="footer.sumSellerPaid">An Verkäufer gezahlt:</td><td class="footer-sum-value"><span id="sumSellerPaid">0,00</span> EUR</td></tr>
                     <tr><td class="footer-sum-label" data-i18n="footer.sumBar">Summe Barzahlungen:</td><td class="footer-sum-value"><span id="sumBar">0,00</span> EUR</td></tr>
                     <tr><td class="footer-sum-label" data-i18n="footer.sumElectronicNoIban">Summe bargeldlose Zahlungen ohne reg. Verkäufer:</td><td class="footer-sum-value"><span id="sumElectronicNoIban">0,00</span> EUR</td></tr>
                     <tr><td class="footer-sum-label" data-i18n="footer.balanceCash">Bilanz Kasse:</td><td class="footer-sum-value"><span id="balanceCash">0,00</span> EUR</td></tr>
-                    <tr><td class="footer-sum-label" data-i18n="footer.sumPendingToSeller">Möglicher Kassenausgleich durch Barzahlung:</td><td class="footer-sum-value"><span id="sumPendingToSeller">0,00</span> EUR</td></tr>
+                    <tr><td class="footer-sum-label" data-i18n="footer.sumPendingToSeller">Möglicher Ausgleich durch Barzahlung:</td><td class="footer-sum-value"><span id="sumPendingToSeller">0,00</span> EUR</td></tr>
                 </table>
             </div>
         </footer>
@@ -226,6 +229,7 @@
                     <input type="file" id="importFileInput" accept=".json,application/json" class="settings-import-input">
                     <button type="button" id="btnImportData" class="btn-danger" data-i18n="settings.importButton">Backup einlesen (überschreibt Bestand)</button>
                 </div>
+<button type="button" id="btnResetWegedaten" class="btn-danger" data-i18n="settings.resetWegedaten">Nur Verlaufsdaten löschen (Protokoll + Objekte)</button>
                 <button type="button" id="btnResetAll" class="btn-danger" data-i18n="settings.deleteAll">Alle Daten löschen</button>
             </div>
         </div>
@@ -340,9 +344,10 @@
         </div>
     </div>
 
-    <script src="lib/qrcode.min.js?v=0.8.0"></script>
-    <script src="i18n.js?v=0.8.0"></script>
-    <script src="script.js?v=0.8.0"></script>
+<!-- QR-Bibliothek lokal (unterstützt lange EPC-Strings, funktioniert mit file://) -->
+    <script src="lib/qrcode.min.js?v=0.9.3"></script>
+    <script src="i18n.js?v=0.9.3"></script>
+    <script src="script.js?v=0.9.3"></script>
 </body>
 </html>
 

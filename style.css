@@ -294,9 +294,21 @@ footer {
 .footer-content {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     flex-wrap: wrap;
     gap: 15px;
+}
+
+.footer-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.footer-buttons .btn-secondary {
+    margin: 0;
+    width: 100%;
+    min-width: 140px;
 }
 
 .footer-sums-table {
