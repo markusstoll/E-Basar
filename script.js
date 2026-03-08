@@ -1567,6 +1567,10 @@ function formatCsvAmount(num) {
     return num.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function csvT(key, fallback) {
+    return window.i18n ? window.i18n.tOr(key, fallback) : fallback;
+}
+
 function exportCsv() {
     const allItems = getSellerItems().filter(function (item) {
         return !item.deleted && (item.paid || item.sellerPaid);
@@ -1579,12 +1583,20 @@ function exportCsv() {
     const commission = (s.commissionPercent != null && s.commissionPercent !== '') ? Number(s.commissionPercent) : 10;
     const paramLabel = (s.paramLabel || 'Objekt').trim() || 'Objekt';
     const sections = [];
+    const sellerName = csvT('csv.sellerName', 'Verkäufer Name');
+    const sellerIban = csvT('csv.sellerIban', 'Verkäufer IBAN');
+    const paidBar = csvT('csv.paidBar', 'Bezahlt (bar)');
+    const paidElectronic = csvT('csv.paidElectronic', 'Bezahlt (elektronisch)');
+    const payoutElectronic = csvT('csv.payoutToSellerElectronic', 'Zahlung an Verkäufer (elektronisch)');
+    const payoutBar = csvT('csv.payoutToSellerBar', 'Zahlung an Verkäufer (bar)');
+    const sumLabel = csvT('csv.sum', 'Summe');
+    const impactLabel = csvT('csv.impactOnTill', 'Auswirkung auf Kassenbestand');
 
-    // --- Report 1: Bezahlung bar, Zahlung an Verkäufer elektronisch. Ohne Spalte "Bezahlt (elektronisch)". Summenzeile + Auswirkung (Summe bar)
+    // --- Report 1: Bezahlung bar, Zahlung an Verkäufer elektronisch
     const items1 = allItems.filter(function (item) {
         return item.paid && item.paidMethod === 'bar' && item.sellerPaid;
     });
-    const header1 = [paramLabel, 'Verkäufer Name', 'Verkäufer IBAN', 'Bezahlt (bar)', 'Zahlung an Verkäufer (elektronisch)'];
+    const header1 = [paramLabel, sellerName, sellerIban, paidBar, payoutElectronic];
     let sumBar1 = 0;
     const rows1 = items1.map(function (item) {
         const price = Number(item.price);
@@ -1593,23 +1605,23 @@ function exportCsv() {
         sumBar1 += barAmt;
         return [csvEscape(item.param || ''), csvEscape(item.sellerName || ''), csvEscape(item.sellerIban || ''), csvEscape(formatCsvAmount(barAmt)), csvEscape(formatCsvAmount(sellerPayout))].join(';');
     });
-    const sumRow1 = ['', '', 'Summe', formatCsvAmount(sumBar1), items1.length ? formatCsvAmount(items1.reduce(function (acc, i) {
+    const sumRow1 = ['', '', sumLabel, formatCsvAmount(sumBar1), items1.length ? formatCsvAmount(items1.reduce(function (acc, i) {
         return acc + Math.round(Number(i.price) * (1 - commission / 100) * 100) / 100;
     }, 0)) : '0,00'].join(';');
-    const impact1 = ['Auswirkung auf Kassenbestand', '', '', formatCsvAmount(sumBar1), ''].join(';');
+    const impact1 = [impactLabel, '', '', formatCsvAmount(sumBar1), ''].join(';');
     sections.push([
-        '1. Bezahlung bar, Zahlung an Verkäufer elektronisch',
+        csvT('csv.report1Title', '1. Bezahlung bar, Zahlung an Verkäufer elektronisch'),
         header1.map(csvEscape).join(';'),
         rows1.join('\r\n'),
         sumRow1,
         impact1
     ].filter(Boolean).join('\r\n'));
 
-    // --- Report 2: Bezahlung elektronisch, Zahlung an Verkäufer bar (!sellerPaid = Barzahlung geht nicht über unsere Kasse)
+    // --- Report 2: Bezahlung elektronisch, Zahlung an Verkäufer bar (!sellerPaid)
     const items2 = allItems.filter(function (item) {
         return item.paid && item.paidMethod === 'elektronisch' && !item.sellerPaid;
     });
-    const header2 = [paramLabel, 'Verkäufer Name', 'Verkäufer IBAN', 'Bezahlt (elektronisch)', 'Zahlung an Verkäufer (bar)'];
+    const header2 = [paramLabel, sellerName, sellerIban, paidElectronic, payoutBar];
     const rows2 = items2.map(function (item) {
         const price = Number(item.price);
         const sellerPayout = Math.round(price * (1 - commission / 100) * 100) / 100;
@@ -1618,31 +1630,31 @@ function exportCsv() {
     const sumSellerPayout2 = items2.reduce(function (acc, i) {
         return acc + Math.round(Number(i.price) * (1 - commission / 100) * 100) / 100;
     }, 0);
-    const sumRow2 = ['', '', 'Summe', formatCsvAmount(items2.reduce(function (acc, i) { return acc + Number(i.price); }, 0)), formatCsvAmount(sumSellerPayout2)].join(';');
-    const impact2 = ['Auswirkung auf Kassenbestand', '', '', '', formatCsvAmount(-1 * sumSellerPayout2)].join(';');
+    const sumRow2 = ['', '', sumLabel, formatCsvAmount(items2.reduce(function (acc, i) { return acc + Number(i.price); }, 0)), formatCsvAmount(sumSellerPayout2)].join(';');
+    const impact2 = [impactLabel, '', '', '', formatCsvAmount(-1 * sumSellerPayout2)].join(';');
     sections.push([
-        '2. Bezahlung elektronisch, Zahlung an Verkäufer bar',
+        csvT('csv.report2Title', '2. Bezahlung elektronisch, Zahlung an Verkäufer bar'),
         header2.map(csvEscape).join(';'),
         rows2.join('\r\n'),
         sumRow2,
         impact2
     ].filter(Boolean).join('\r\n'));
 
-    // --- Report 3: Bezahlung elektronisch, Zahlung an Verkäufer elektronisch. Ohne Spalte "Bezahlt (bar)". Summenzeile
+    // --- Report 3: Bezahlung elektronisch, Zahlung an Verkäufer elektronisch
     const items3 = allItems.filter(function (item) {
         return item.paid && item.paidMethod === 'elektronisch' && item.sellerPaid;
     });
-    const header3 = [paramLabel, 'Verkäufer Name', 'Verkäufer IBAN', 'Bezahlt (elektronisch)', 'Zahlung an Verkäufer (elektronisch)'];
+    const header3 = [paramLabel, sellerName, sellerIban, paidElectronic, payoutElectronic];
     const rows3 = items3.map(function (item) {
         const price = Number(item.price);
         const sellerPayout = Math.round(price * (1 - commission / 100) * 100) / 100;
         return [csvEscape(item.param || ''), csvEscape(item.sellerName || ''), csvEscape(item.sellerIban || ''), csvEscape(formatCsvAmount(price)), csvEscape(formatCsvAmount(sellerPayout))].join(';');
     });
-    const sumRow3 = ['', '', 'Summe', items3.reduce(function (acc, i) { return acc + Number(i.price); }, 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), items3.length ? formatCsvAmount(items3.reduce(function (acc, i) {
+    const sumRow3 = ['', '', sumLabel, items3.reduce(function (acc, i) { return acc + Number(i.price); }, 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), items3.length ? formatCsvAmount(items3.reduce(function (acc, i) {
         return acc + Math.round(Number(i.price) * (1 - commission / 100) * 100) / 100;
     }, 0)) : '0,00'].join(';');
     sections.push([
-        '3. Bezahlung elektronisch, Zahlung an Verkäufer elektronisch',
+        csvT('csv.report3Title', '3. Bezahlung elektronisch, Zahlung an Verkäufer elektronisch'),
         header3.map(csvEscape).join(';'),
         rows3.join('\r\n'),
         sumRow3
