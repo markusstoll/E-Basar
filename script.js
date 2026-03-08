@@ -633,6 +633,7 @@ function handleSellerQuickFormSubmit(e) {
     addSellerItem({ sellerName: '', sellerIban: '', param: param.trim(), price, phone: '' });
     closeSellerQuickFormOverlay();
     if (sellerFilterParamEl) sellerFilterParamEl.value = param.trim();
+    if (showPaidCheckbox) showPaidCheckbox.checked = true;
     renderSellerList();
 }
 
@@ -866,6 +867,8 @@ function handleSellerFormSubmit(e) {
         });
     }
     closeSellerFormOverlay();
+    if (sellerFilterParamEl) sellerFilterParamEl.value = (param || '').trim();
+    if (showPaidCheckbox) showPaidCheckbox.checked = true;
     renderSellerList();
 }
 
