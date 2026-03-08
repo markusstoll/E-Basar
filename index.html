@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="app.title">E-Basar!</title>
-    <link rel="stylesheet" href="style.css?v=0.9.3">
+    <link rel="stylesheet" href="style.css?v=0.9.6">
 </head>
 <body>
     <div class="container">
         <header>
-            <span class="app-version">v0.9.3</span>
+            <span class="app-version">v0.9.6</span>
             <button id="settingsBtn" class="settings-btn" aria-label="Einstellungen" data-i18n="aria.settings" data-i18n-attr="aria-label">⚙</button>
             <div class="header-branding">
                 <img id="appLogo" class="app-logo hidden" alt="">
@@ -64,7 +64,7 @@
 <div class="footer-buttons">
                     <button type="button" id="viewObjects" class="btn-secondary" data-i18n="button.export">Export</button>
                     <button type="button" id="viewHistory" class="btn-secondary" data-i18n="button.history">Protokoll</button>
-                    <button type="button" id="btnCsvExport" class="btn-secondary" data-i18n="button.csvExport">CSV-Export</button>
+                    <button type="button" id="btnCsvExport" class="btn-secondary" data-i18n="button.report">Report</button>
                 </div>
                 <table id="footerSums" class="footer-sums-table">
                     <tr><td class="footer-sum-label" data-i18n="footer.sumPaid">Summe bezahlt:</td><td class="footer-sum-value"><span id="sumPaid">0,00</span> EUR</td></tr>
@@ -345,9 +345,9 @@
     </div>
 
 <!-- QR-Bibliothek lokal (unterstützt lange EPC-Strings, funktioniert mit file://) -->
-    <script src="lib/qrcode.min.js?v=0.9.3"></script>
-    <script src="i18n.js?v=0.9.3"></script>
-    <script src="script.js?v=0.9.3"></script>
+    <script src="lib/qrcode.min.js?v=0.9.6"></script>
+    <script src="i18n.js?v=0.9.6"></script>
+    <script src="script.js?v=0.9.6"></script>
 </body>
 </html>
 

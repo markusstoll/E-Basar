@@ -1,4 +1,4 @@
-const APP_VERSION = '0.9.3';
+const APP_VERSION = '0.9.6';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -257,7 +257,7 @@ function setupEventListeners() {
 
     viewHistoryBtn.addEventListener('click', showHistory);
     const btnCsvExport = document.getElementById('btnCsvExport');
-    if (btnCsvExport) btnCsvExport.addEventListener('click', exportCsv);
+    if (btnCsvExport) btnCsvExport.addEventListener('click', openReport);
     if (btnResetAll) btnResetAll.addEventListener('click', resetAllData);
     const btnResetWegedaten = document.getElementById('btnResetWegedaten');
     if (btnResetWegedaten) btnResetWegedaten.addEventListener('click', resetWegedatenOnly);
@@ -1582,18 +1582,15 @@ function csvT(key, fallback) {
     return window.i18n ? window.i18n.tOr(key, fallback) : fallback;
 }
 
-function exportCsv() {
+/** Returns report data (tables with title, headers, rows, sumRow, impactRow) and CSV string, or null if no items. */
+function getReportData() {
     const allItems = getSellerItems().filter(function (item) {
         return !item.deleted && (item.paid || item.sellerPaid);
     });
-    if (allItems.length === 0) {
-        alert(window.i18n ? window.i18n.tOr('msg.noCsvExport', 'Keine Objekte mit Zahlungsstatus zum Exportieren.') : 'Keine Objekte mit Zahlungsstatus zum Exportieren.');
-        return;
-    }
+    if (allItems.length === 0) return null;
     const s = getSettings();
     const commission = (s.commissionPercent != null && s.commissionPercent !== '') ? Number(s.commissionPercent) : 10;
     const paramLabel = (s.paramLabel || 'Objekt').trim() || 'Objekt';
-    const sections = [];
     const sellerName = csvT('csv.sellerName', 'Verkäufer Name');
     const sellerIban = csvT('csv.sellerIban', 'Verkäufer IBAN');
     const paidBar = csvT('csv.paidBar', 'Bezahlt (bar)');
@@ -1602,77 +1599,136 @@ function exportCsv() {
     const payoutBar = csvT('csv.payoutToSellerBar', 'Zahlung an Verkäufer (bar)');
     const sumLabel = csvT('csv.sum', 'Summe');
     const impactLabel = csvT('csv.impactOnTill', 'Auswirkung auf Kassenbestand');
+    const impactOnAccountLabel = csvT('csv.impactOnAccount', 'Auswirkung auf Konto');
+    const tables = [];
 
-    // --- Report 1: Bezahlung bar, Zahlung an Verkäufer elektronisch
-    const items1 = allItems.filter(function (item) {
-        return item.paid && item.paidMethod === 'bar' && item.sellerPaid;
-    });
-    const header1 = [paramLabel, sellerName, sellerIban, paidBar, payoutElectronic];
+    // Report 1: Auswirkung auf Konto = unter Spalte 5: neg. Wert der Summe darüber
+    const items1 = allItems.filter(function (item) { return item.paid && item.paidMethod === 'bar' && item.sellerPaid; });
     let sumBar1 = 0;
     const rows1 = items1.map(function (item) {
         const price = Number(item.price);
-        const barAmt = price;
         const sellerPayout = Math.round(price * (1 - commission / 100) * 100) / 100;
-        sumBar1 += barAmt;
-        return [csvEscape(item.param || ''), csvEscape(item.sellerName || ''), csvEscape(item.sellerIban || ''), csvEscape(formatCsvAmount(barAmt)), csvEscape(formatCsvAmount(sellerPayout))].join(';');
+        sumBar1 += price;
+        return [item.param || '', item.sellerName || '', item.sellerIban || '', formatCsvAmount(price), formatCsvAmount(sellerPayout)];
     });
-    const sumRow1 = ['', '', sumLabel, formatCsvAmount(sumBar1), items1.length ? formatCsvAmount(items1.reduce(function (acc, i) {
-        return acc + Math.round(Number(i.price) * (1 - commission / 100) * 100) / 100;
-    }, 0)) : '0,00'].join(';');
-    const impact1 = [impactLabel, '', '', formatCsvAmount(sumBar1), ''].join(';');
-    sections.push([
-        csvT('csv.report1Title', '1. Bezahlung bar, Zahlung an Verkäufer elektronisch'),
-        header1.map(csvEscape).join(';'),
-        rows1.join('\r\n'),
-        sumRow1,
-        impact1
-    ].filter(Boolean).join('\r\n'));
+    const sumPayout1 = items1.reduce(function (acc, i) { return acc + Math.round(Number(i.price) * (1 - commission / 100) * 100) / 100; }, 0);
+    tables.push({
+        title: csvT('csv.report1Title', '1. Bezahlung bar, Zahlung an Verkäufer elektronisch'),
+        headers: [paramLabel, sellerName, sellerIban, paidBar, payoutElectronic],
+        rows: rows1,
+        sumRow: ['', '', sumLabel, formatCsvAmount(sumBar1), formatCsvAmount(sumPayout1)],
+        impactRow: [impactLabel, '', '', formatCsvAmount(sumBar1), ''],
+        impactOnAccountRow: [impactOnAccountLabel, '', '', '', formatCsvAmount(-sumPayout1)]
+    });
 
-    // --- Report 2: Bezahlung elektronisch, Zahlung an Verkäufer bar (!sellerPaid)
-    const items2 = allItems.filter(function (item) {
-        return item.paid && item.paidMethod === 'elektronisch' && !item.sellerPaid;
-    });
-    const header2 = [paramLabel, sellerName, sellerIban, paidElectronic, payoutBar];
+    // Report 2: Auswirkung auf Konto = unter Spalte 4: Wert der Summe darüber
+    const items2 = allItems.filter(function (item) { return item.paid && item.paidMethod === 'elektronisch' && !item.sellerPaid; });
+    const sumSellerPayout2 = items2.reduce(function (acc, i) { return acc + Math.round(Number(i.price) * (1 - commission / 100) * 100) / 100; }, 0);
+    const sumElectronic2 = items2.reduce(function (acc, i) { return acc + Number(i.price); }, 0);
     const rows2 = items2.map(function (item) {
         const price = Number(item.price);
         const sellerPayout = Math.round(price * (1 - commission / 100) * 100) / 100;
-        return [csvEscape(item.param || ''), csvEscape(item.sellerName || ''), csvEscape(item.sellerIban || ''), csvEscape(formatCsvAmount(price)), csvEscape(formatCsvAmount(sellerPayout))].join(';');
+        return [item.param || '', item.sellerName || '', item.sellerIban || '', formatCsvAmount(price), formatCsvAmount(sellerPayout)];
     });
-    const sumSellerPayout2 = items2.reduce(function (acc, i) {
-        return acc + Math.round(Number(i.price) * (1 - commission / 100) * 100) / 100;
-    }, 0);
-    const sumRow2 = ['', '', sumLabel, formatCsvAmount(items2.reduce(function (acc, i) { return acc + Number(i.price); }, 0)), formatCsvAmount(sumSellerPayout2)].join(';');
-    const impact2 = [impactLabel, '', '', '', formatCsvAmount(-1 * sumSellerPayout2)].join(';');
-    sections.push([
-        csvT('csv.report2Title', '2. Bezahlung elektronisch, Zahlung an Verkäufer bar'),
-        header2.map(csvEscape).join(';'),
-        rows2.join('\r\n'),
-        sumRow2,
-        impact2
-    ].filter(Boolean).join('\r\n'));
+    tables.push({
+        title: csvT('csv.report2Title', '2. Bezahlung elektronisch, Zahlung an Verkäufer bar'),
+        headers: [paramLabel, sellerName, sellerIban, paidElectronic, payoutBar],
+        rows: rows2,
+        sumRow: ['', '', sumLabel, formatCsvAmount(sumElectronic2), formatCsvAmount(sumSellerPayout2)],
+        impactRow: [impactLabel, '', '', '', formatCsvAmount(-1 * sumSellerPayout2)],
+        impactOnAccountRow: [impactOnAccountLabel, '', '', formatCsvAmount(sumElectronic2), '']
+    });
 
-    // --- Report 3: Bezahlung elektronisch, Zahlung an Verkäufer elektronisch
-    const items3 = allItems.filter(function (item) {
-        return item.paid && item.paidMethod === 'elektronisch' && item.sellerPaid;
-    });
-    const header3 = [paramLabel, sellerName, sellerIban, paidElectronic, payoutElectronic];
+    // Report 3: Auswirkung auf Konto = unter Spalte 4: Summe Spalte 4 minus Summe Spalte 5
+    const items3 = allItems.filter(function (item) { return item.paid && item.paidMethod === 'elektronisch' && item.sellerPaid; });
+    const sumPayout3 = items3.reduce(function (acc, i) { return acc + Math.round(Number(i.price) * (1 - commission / 100) * 100) / 100; }, 0);
+    const sumPrice3 = items3.reduce(function (acc, i) { return acc + Number(i.price); }, 0);
     const rows3 = items3.map(function (item) {
         const price = Number(item.price);
         const sellerPayout = Math.round(price * (1 - commission / 100) * 100) / 100;
-        return [csvEscape(item.param || ''), csvEscape(item.sellerName || ''), csvEscape(item.sellerIban || ''), csvEscape(formatCsvAmount(price)), csvEscape(formatCsvAmount(sellerPayout))].join(';');
+        return [item.param || '', item.sellerName || '', item.sellerIban || '', formatCsvAmount(price), formatCsvAmount(sellerPayout)];
     });
-    const sumRow3 = ['', '', sumLabel, items3.reduce(function (acc, i) { return acc + Number(i.price); }, 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), items3.length ? formatCsvAmount(items3.reduce(function (acc, i) {
-        return acc + Math.round(Number(i.price) * (1 - commission / 100) * 100) / 100;
-    }, 0)) : '0,00'].join(';');
-    sections.push([
-        csvT('csv.report3Title', '3. Bezahlung elektronisch, Zahlung an Verkäufer elektronisch'),
-        header3.map(csvEscape).join(';'),
-        rows3.join('\r\n'),
-        sumRow3
-    ].filter(Boolean).join('\r\n'));
+    tables.push({
+        title: csvT('csv.report3Title', '3. Bezahlung elektronisch, Zahlung an Verkäufer elektronisch'),
+        headers: [paramLabel, sellerName, sellerIban, paidElectronic, payoutElectronic],
+        rows: rows3,
+        sumRow: ['', '', sumLabel, formatCsvAmount(sumPrice3), formatCsvAmount(sumPayout3)],
+        impactRow: null,
+        impactOnAccountRow: [impactOnAccountLabel, '', '', formatCsvAmount(sumPrice3 - sumPayout3), '']
+    });
 
+    // Build CSV string
+    const sections = tables.map(function (t) {
+        const headerLine = t.headers.map(function (h) { return csvEscape(h); }).join(';');
+        const dataLines = t.rows.map(function (row) { return row.map(function (c) { return csvEscape(c); }).join(';'); }).join('\r\n');
+        const sumLine = t.sumRow.map(function (c) { return csvEscape(c); }).join(';');
+        const lines = [t.title, headerLine, dataLines, sumLine];
+        if (t.impactRow) lines.push(t.impactRow.map(function (c) { return csvEscape(c); }).join(';'));
+        if (t.impactOnAccountRow) lines.push(t.impactOnAccountRow.map(function (c) { return csvEscape(c); }).join(';'));
+        return lines.join('\r\n');
+    });
     const csv = '\uFEFF' + sections.join('\r\n\r\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    return { tables: tables, csv: csv };
+}
+
+function openReport() {
+    const data = getReportData();
+    if (!data) {
+        alert(window.i18n ? window.i18n.tOr('msg.noCsvExport', 'Keine Objekte mit Zahlungsstatus zum Exportieren.') : 'Keine Objekte mit Zahlungsstatus zum Exportieren.');
+        return;
+    }
+    const exportCsvLabel = window.i18n ? window.i18n.tOr('report.exportCsv', 'Export als CSV') : 'Export als CSV';
+    const tableStyles = 'border-collapse: collapse; width: 100%; margin-bottom: 2rem; font-size: 14px;';
+    const thStyles = 'border: 1px solid #333; background: #667eea; color: #fff; padding: 10px 12px; text-align: left;';
+    const tdStyles = 'border: 1px solid #ccc; padding: 8px 12px;';
+    const sumStyles = 'border: 1px solid #333; padding: 8px 12px; font-weight: bold; background: #f0f0f0;';
+    const impactStyles = 'border: 1px solid #333; padding: 8px 12px; font-weight: bold; background: #fff3cd;';
+    const titleStyles = 'font-size: 1.1rem; margin-bottom: 0.75rem; color: #333;';
+    let body = '';
+    data.tables.forEach(function (t) {
+        body += '<h2 class="report-table-title" style="' + titleStyles + '">' + escapeHtml(t.title) + '</h2>';
+        body += '<table class="report-table" style="' + tableStyles + '"><thead><tr>';
+        t.headers.forEach(function (h) { body += '<th style="' + thStyles + '">' + escapeHtml(h) + '</th>'; });
+        body += '</tr></thead><tbody>';
+        t.rows.forEach(function (row) {
+            body += '<tr>';
+            row.forEach(function (c) { body += '<td style="' + tdStyles + '">' + escapeHtml(c) + '</td>'; });
+            body += '</tr>';
+        });
+        body += '<tr>';
+        t.sumRow.forEach(function (c) { body += '<td style="' + sumStyles + '">' + escapeHtml(c) + '</td>'; });
+        body += '</tr>';
+        if (t.impactRow) {
+            body += '<tr>';
+            t.impactRow.forEach(function (c) { body += '<td style="' + impactStyles + '">' + escapeHtml(c) + '</td>'; });
+            body += '</tr>';
+        }
+        if (t.impactOnAccountRow) {
+            body += '<tr>';
+            t.impactOnAccountRow.forEach(function (c) { body += '<td style="' + impactStyles + '">' + escapeHtml(c) + '</td>'; });
+            body += '</tr>';
+        }
+        body += '</tbody></table>';
+    });
+    const csvEscaped = data.csv.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/<\/script>/gi, '<\\/script>');
+    const html = '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Report</title><style>.report-table th:nth-child(4), .report-table th:nth-child(5), .report-table td:nth-child(4), .report-table td:nth-child(5) { text-align: right; }</style></head><body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem;">' +
+        '<h1 style="margin-bottom: 1.5rem;">Report</h1>' + body +
+        '<p style="margin-top: 2rem;"><button type="button" id="btnExportCsv" style="padding: 10px 20px; font-size: 16px; background: #667eea; color: #fff; border: none; border-radius: 8px; cursor: pointer;">' + escapeHtml(exportCsvLabel) + '</button></p>' +
+        '<script>window.__REPORT_CSV = \'' + csvEscaped + '\'; document.getElementById("btnExportCsv").onclick = function() { var blob = new Blob([window.__REPORT_CSV], { type: "text/csv;charset=utf-8" }); var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "E-Basar-Export-" + new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19) + ".csv"; a.click(); URL.revokeObjectURL(a.href); };<\/script></body></html>';
+    const w = window.open('', '_blank');
+    if (w) {
+        w.document.write(html);
+        w.document.close();
+    }
+}
+
+function exportCsv() {
+    const data = getReportData();
+    if (!data) {
+        alert(window.i18n ? window.i18n.tOr('msg.noCsvExport', 'Keine Objekte mit Zahlungsstatus zum Exportieren.') : 'Keine Objekte mit Zahlungsstatus zum Exportieren.');
+        return;
+    }
+    const blob = new Blob([data.csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     const a = document.createElement('a');
