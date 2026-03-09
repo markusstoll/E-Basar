@@ -1795,7 +1795,7 @@ function exportData() {
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const filename = 'SofortUeberw-Backup-' + timestamp + '.json';
+    const filename = 'EBasar-Backup-' + timestamp + '.json';
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;

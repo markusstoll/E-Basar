@@ -43,7 +43,7 @@
   "overlay.titleQR": "QR Code für Überweisung",
   "overlay.payByBuyer": "Bezahlung durch Käufer",
   "overlay.payToSeller": "Bezahlung AN VERKÄUFER",
-  "overlay.sofort": "Sofortüberweisung",
+  "overlay.sofort": "Echtzeitüberweisung",
   "overlay.wero": "WERO Zahlung",
   "overlay.detailsTitle": "Überweisungsdetails",
   "overlay.recipient": "Empfänger:",
