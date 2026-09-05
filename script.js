@@ -41,6 +41,7 @@ const sellerFilterParamEl = document.getElementById('sellerFilterParam');
 const sellerFilterSellerEl = document.getElementById('sellerFilterSeller');
 const sellerEditIdInput = document.getElementById('sellerEditId');
 const showPaidCheckbox = document.getElementById('showPaid');
+const showReimbursedCheckbox = document.getElementById('showReimbursed');
 const showDeletedCheckbox = document.getElementById('showDeleted');
 
 // Current overlay data (for switching to WERO panel when "Bezahlung durch Käufer")
@@ -90,6 +91,7 @@ function setupEventListeners() {
     });
     document.getElementById('btnFillFromLast').addEventListener('click', fillSellerFormFromLast);
     function syncShowPaidWithSearch() {
+        if (getMode() === 'payout') return;
         const hasSearch = !!((sellerFilterParamEl && sellerFilterParamEl.value.trim()) || (sellerFilterSellerEl && sellerFilterSellerEl.value.trim()));
         if (showPaidCheckbox) showPaidCheckbox.checked = hasSearch;
     }
@@ -110,6 +112,7 @@ function setupEventListeners() {
         if (sellerFilterSellerEl) { sellerFilterSellerEl.value = ''; sellerFilterSellerEl.focus(); syncShowPaidWithSearch(); renderSellerList(); }
     });
     if (showPaidCheckbox) showPaidCheckbox.addEventListener('change', () => renderSellerList());
+    if (showReimbursedCheckbox) showReimbursedCheckbox.addEventListener('change', () => renderSellerList());
     if (showDeletedCheckbox) showDeletedCheckbox.addEventListener('change', () => renderSellerList());
     sellerListEl.addEventListener('click', handleSellerListClick);
     const btnPaySelectedToSeller = document.getElementById('btnPaySelectedToSeller');
@@ -388,8 +391,19 @@ function setModeUI(mode) {
     document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-mode') === mode);
     });
-    if (panelSeller) panelSeller.classList.toggle('hidden', mode !== 'seller' && mode !== 'sell');
-    if (mode === 'seller' || mode === 'sell') renderSellerList();
+    const isPayout = mode === 'payout';
+    const labelShowPaid = document.getElementById('labelShowPaid');
+    const labelShowReimbursed = document.getElementById('labelShowReimbursed');
+    const btnNewSeller = document.getElementById('btnNewSeller');
+    if (labelShowPaid) labelShowPaid.classList.toggle('hidden', isPayout);
+    if (labelShowReimbursed) labelShowReimbursed.classList.toggle('hidden', !isPayout);
+    if (btnNewSeller) btnNewSeller.classList.toggle('hidden', isPayout);
+
+    if (panelSeller) panelSeller.classList.toggle('hidden', mode !== 'seller' && mode !== 'sell' && mode !== 'payout');
+    if (mode === 'seller' || mode === 'sell' || mode === 'payout') {
+        selectedSellerItemIds.clear();
+        renderSellerList();
+    }
 }
 
 function switchMode(mode) {
@@ -400,7 +414,7 @@ function switchMode(mode) {
 function getSellerItems() {
     const json = localStorage.getItem(SELLER_ITEMS_KEY);
     const items = json ? JSON.parse(json) : [];
-    // Migration: ältere Einträge ohne paid/deleted/sellerPaid/paidMethod
+    // Migration: ältere Einträge ohne paid/deleted/sellerPaid/paidMethod/paidAt
     let changed = false;
     items.forEach(item => {
         if (item.paid === undefined) { item.paid = false; changed = true; }
@@ -408,6 +422,10 @@ function getSellerItems() {
         if (item.sellerPaid === undefined) { item.sellerPaid = false; changed = true; }
         if (item.paid && (item.paidMethod === undefined || item.paidMethod === null)) {
             item.paidMethod = 'elektronisch';
+            changed = true;
+        }
+        if (item.paid && !item.paidAt) {
+            item.paidAt = item.createdAt || new Date().toISOString();
             changed = true;
         }
     });
@@ -454,8 +472,21 @@ function updateSellerItem(id, data) {
     const items = getSellerItems();
     const idx = items.findIndex(i => i.id === id);
     if (idx === -1) return;
+    const oldItem = items[idx];
+    let paidAt = oldItem.paidAt;
+    if (data.paid && !paidAt) {
+        paidAt = new Date().toISOString();
+    } else if (!data.paid) {
+        paidAt = null;
+    }
+    let sellerPaidAt = oldItem.sellerPaidAt;
+    if (data.sellerPaid && !sellerPaidAt) {
+        sellerPaidAt = new Date().toISOString();
+    } else if (!data.sellerPaid) {
+        sellerPaidAt = null;
+    }
     items[idx] = {
-        ...items[idx],
+        ...oldItem,
         sellerName: data.sellerName.trim(),
         sellerIban: data.sellerIban.trim().toUpperCase().replace(/\s/g, ''),
         param: data.param.trim(),
@@ -463,7 +494,9 @@ function updateSellerItem(id, data) {
         phone: data.phone.trim(),
         paid: data.paid,
         paidMethod: data.paidMethod,
-        sellerPaid: data.sellerPaid
+        paidAt: paidAt,
+        sellerPaid: data.sellerPaid,
+        sellerPaidAt: sellerPaidAt
     };
     saveSellerItems(items);
     updateFooterSums();
@@ -475,6 +508,7 @@ function setSellerPaid(id, method) {
     if (item) {
         item.paid = true;
         item.paidMethod = method === 'bar' ? 'bar' : 'elektronisch';
+        item.paidAt = item.paidAt || new Date().toISOString();
         saveSellerItems(items);
         renderSellerList();
         updateFooterSums();
@@ -485,7 +519,8 @@ function setSellerPaidSeller(id) {
     const items = getSellerItems();
     const item = items.find(i => i.id === id);
     if (item) { 
-        item.sellerPaid = true; 
+        item.sellerPaid = true;
+        item.sellerPaidAt = item.sellerPaidAt || new Date().toISOString();
         saveSellerItems(items); 
         renderSellerList(); 
         updateFooterSums();
@@ -604,6 +639,12 @@ function openSellerFormOverlay(editId) {
         if (statusContainer) statusContainer.classList.add('hidden');
         if (toggleRow) toggleRow.classList.add('hidden');
         setSellerFormSellerBlockVisible(true);
+        const paidCb = document.getElementById('sellerEditPaid');
+        if (paidCb) paidCb.checked = false;
+        const sellerPaidCb = document.getElementById('sellerEditSellerPaid');
+        if (sellerPaidCb) sellerPaidCb.checked = false;
+        const paidMethodRow = document.getElementById('sellerPaidMethodRow');
+        if (paidMethodRow) paidMethodRow.classList.add('hidden');
     }
     sellerFormOverlay.classList.remove('hidden');
 }
@@ -897,16 +938,24 @@ function handleSellerFormSubmit(e) {
 }
 
 function renderSellerList() {
+    const mode = getMode();
+    const isPayout = mode === 'payout';
     const paramFilter = (sellerFilterParamEl && sellerFilterParamEl.value) ? sellerFilterParamEl.value.trim().toLowerCase() : '';
     const sellerFilter = (sellerFilterSellerEl && sellerFilterSellerEl.value) ? sellerFilterSellerEl.value.trim().toLowerCase() : '';
     const hasFilter = !!(paramFilter || sellerFilter);
     const showPaid = showPaidCheckbox && showPaidCheckbox.checked;
+    const showReimbursed = showReimbursedCheckbox && showReimbursedCheckbox.checked;
     const showDeleted = showDeletedCheckbox && showDeletedCheckbox.checked;
     const paramLabel = (getSettings().paramLabel || 'Objekt');
     const items = getSellerItems();
 
     let filtered = items.filter(item => {
-        if (!showPaid && item.paid && (item.sellerPaid || !(item.sellerIban || '').trim())) return false;
+        if (isPayout) {
+            if (!item.paid) return false;
+            if (!showReimbursed && item.sellerPaid) return false;
+        } else {
+            if (!showPaid && item.paid && (item.sellerPaid || !(item.sellerIban || '').trim())) return false;
+        }
         if (item.deleted && !showDeleted) return false;
         if (paramFilter) {
             const itemParam = (item.param || '').trim().toLowerCase();
@@ -923,12 +972,32 @@ function renderSellerList() {
         return true;
     });
 
+    if (isPayout) {
+        filtered.sort((a, b) => {
+            const dateA = a.paidAt || a.createdAt || '';
+            const dateB = b.paidAt || b.createdAt || '';
+            return dateA.localeCompare(dateB);
+        });
+    }
+
     if (!sellerListEl) return;
     if (filtered.length === 0) {
-        const total = items.length;
-        const emptyMsg = total === 0
-            ? (window.i18n ? window.i18n.tOr('empty.noObjects', 'Noch keine Objekte. Klicken Sie auf „Neues ' + paramLabel + ' anlegen".', [paramLabel]) : ('Noch keine Objekte. Klicken Sie auf „Neues ' + paramLabel + ' anlegen".'))
-            : (hasFilter ? (window.i18n ? window.i18n.tOr('empty.noMatches', 'Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.', [paramLabel]) : ('Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.')) : (window.i18n ? window.i18n.tOr('empty.noMatchesShort', 'Keine Treffer.') : 'Keine Treffer.'));
+        let emptyMsg = '';
+        if (isPayout) {
+            const paidCount = items.filter(i => i.paid && (!i.deleted || showDeleted)).length;
+            if (paidCount === 0) {
+                emptyMsg = window.i18n ? window.i18n.tOr('empty.noPaidItems', 'Noch keine bezahlten Objekte vorhanden.') : 'Noch keine bezahlten Objekte vorhanden.';
+            } else if (!showReimbursed && items.some(i => i.paid && i.sellerPaid && (!i.deleted || showDeleted))) {
+                emptyMsg = window.i18n ? window.i18n.tOr('empty.noPayoutPending', 'Keine offenen Erstattungen. Alle bezahlten Objekte wurden bereits an die Verkäufer erstattet.') : 'Keine offenen Erstattungen. Alle bezahlten Objekte wurden bereits an die Verkäufer erstattet.';
+            } else {
+                emptyMsg = hasFilter ? (window.i18n ? window.i18n.tOr('empty.noMatches', 'Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.', [paramLabel]) : ('Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.')) : (window.i18n ? window.i18n.tOr('empty.noMatchesShort', 'Keine Treffer.') : 'Keine Treffer.');
+            }
+        } else {
+            const total = items.length;
+            emptyMsg = total === 0
+                ? (window.i18n ? window.i18n.tOr('empty.noObjects', 'Noch keine Objekte. Klicken Sie auf „Neues ' + paramLabel + ' anlegen".', [paramLabel]) : ('Noch keine Objekte. Klicken Sie auf „Neues ' + paramLabel + ' anlegen".'))
+                : (hasFilter ? (window.i18n ? window.i18n.tOr('empty.noMatches', 'Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.', [paramLabel]) : ('Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.')) : (window.i18n ? window.i18n.tOr('empty.noMatchesShort', 'Keine Treffer.') : 'Keine Treffer.'));
+        }
         sellerListEl.innerHTML = '<div class="seller-empty">' + emptyMsg + '</div>';
         return;
     }
@@ -955,10 +1024,11 @@ function renderSellerList() {
         const editLabel = window.i18n ? window.i18n.tOr('action.edit', 'Bearbeiten') : 'Bearbeiten';
         const payLabel = window.i18n ? window.i18n.tOr('action.pay', 'Bezahlen') : 'Bezahlen';
         const deleteLabel = window.i18n ? window.i18n.tOr('action.delete', 'Löschen') : 'Löschen';
+        const payBtn = isPayout ? '' : `<button type="button" class="btn-small btn-pay" data-action="pay" data-id="${escapeHtml(item.id)}">${escapeHtml(payLabel)}</button>`;
         const actions = item.deleted ? '' : `
             <div class="seller-item-actions">
                 <button type="button" class="btn-small btn-edit" data-action="edit" data-id="${escapeHtml(item.id)}">${escapeHtml(editLabel)}</button>
-                <button type="button" class="btn-small btn-pay" data-action="pay" data-id="${escapeHtml(item.id)}">${escapeHtml(payLabel)}</button>
+                ${payBtn}
                 ${paySellerBtn}
                 <button type="button" class="btn-small btn-delete" data-action="delete" data-id="${escapeHtml(item.id)}">${escapeHtml(deleteLabel)}</button>
             </div>
@@ -966,6 +1036,10 @@ function renderSellerList() {
         const displayName = (item.sellerName || '').trim() || '—';
         const displayIban = (item.sellerIban || '').trim() ? formatIBAN(item.sellerIban) : '—';
         const displayPhone = (item.phone || '').trim() || '—';
+        const paidDateText = item.paidAt ? formatDate(item.paidAt) : '';
+        const paidDateDetail = paidDateText
+            ? '<span>' + (window.i18n ? window.i18n.tOr('detail.paidAt', 'Bezahlt: ' + paidDateText, [paidDateText]) : ('Bezahlt: ' + paidDateText)) + '</span>'
+            : '';
         return `
         <div class="seller-item ${item.deleted ? 'seller-item-deleted' : ''} ${item.paid ? 'seller-item-paid' : ''} ${item.sellerPaid ? 'seller-item-seller-paid' : ''}">
             <div class="seller-item-header">
@@ -977,6 +1051,7 @@ function renderSellerList() {
             <div class="seller-item-details">
                 <span>IBAN: ${displayIban}</span>
                 <span>Tel: ${escapeHtml(displayPhone)}</span>
+                ${paidDateDetail}
             </div>
             ${actions}
         </div>

@@ -921,6 +921,13 @@ footer {
     height: 18px;
 }
 
+.checkbox-label.hidden,
+#labelShowPaid.hidden,
+#labelShowReimbursed.hidden,
+#btnNewSeller.hidden {
+    display: none;
+}
+
 .seller-selection-bar {
     display: flex;
     align-items: center;
@@ -1117,7 +1124,8 @@ footer {
 
 #sellerFormSellerBlock.hidden,
 #sellerFormToggleSellerRow.hidden,
-#sellerFormSellerPaidRow.hidden {
+#sellerFormSellerPaidRow.hidden,
+#sellerStatusContainer.hidden {
     display: none;
 }
 

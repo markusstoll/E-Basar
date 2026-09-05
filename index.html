@@ -21,11 +21,12 @@
             <div class="mode-switch">
                 <button type="button" id="modeSeller" class="mode-btn" data-mode="seller" data-i18n="mode.seller">Verkäufer erfassen</button>
                 <button type="button" id="modeSell" class="mode-btn active" data-mode="sell" data-i18n="mode.sell">Verkaufen</button>
+                <button type="button" id="modePayout" class="mode-btn" data-mode="payout" data-i18n="mode.payout">An Verkäufer erstatten</button>
             </div>
         </header>
 
         <main>
-            <!-- Modus: Verkäufer erfassen + Verkaufen (gleiche Liste) -->
+            <!-- Modus: Verkäufer erfassen + Verkaufen + An Verkäufer erstatten (gleiche Liste mit modusspezifischem Filter) -->
             <section id="panelSeller" class="mode-panel hidden">
                 <div class="seller-toolbar">
                     <div class="seller-search-row">
@@ -43,8 +44,9 @@
                         </div>
                     </div>
                     <div class="seller-visibility">
-                        <label class="checkbox-label"><input type="checkbox" id="showPaid"> <span data-i18n="visibility.showPaid">Bezahlte einblenden</span></label>
-                        <label class="checkbox-label"><input type="checkbox" id="showDeleted"> <span data-i18n="visibility.showDeleted">Gelöschte einblenden</span></label>
+                        <label class="checkbox-label" id="labelShowPaid"><input type="checkbox" id="showPaid"> <span data-i18n="visibility.showPaid">Bezahlte einblenden</span></label>
+                        <label class="checkbox-label hidden" id="labelShowReimbursed"><input type="checkbox" id="showReimbursed"> <span data-i18n="visibility.showReimbursed">Bereits erstattete einblenden</span></label>
+                        <label class="checkbox-label" id="labelShowDeleted"><input type="checkbox" id="showDeleted"> <span data-i18n="visibility.showDeleted">Gelöschte einblenden</span></label>
                     </div>
                     <p class="seller-toolbar-hint" data-i18n="toolbar.hint">Bei „verkauft, noch nicht an Verkäufer gezahlt“ können Sie Objekte desselben Verkäufers per Checkbox auswählen und dann gemeinsam „An Verkäufer zahlen“ ausführen.</p>
                     <button type="button" id="btnNewSeller" class="btn-primary">Neues Objekt anlegen</button>
