@@ -474,7 +474,7 @@
                     }
                 },
                 {
-                    name: 'Objekte mit unterschiedlicher IBAN können NICHT ausgewählt werden und sind disabled',
+                    name: 'Auswahl eines Selektionshakens filtert Ansicht automatisch durch Eintragen der IBAN ins Filterfeld',
                     fn(t) {
                         t.reset();
                         const itemA1 = t.app.addSellerItem({ sellerName: 'Verkäufer A', sellerIban: 'DE89370400440532013000', param: 'Rad A1', price: 100 });
@@ -488,12 +488,59 @@
                         
                         t.setMode('payout');
                         
+                        // Vor der Auswahl: Filterfeld ist leer, alle Objekte werden gerendert
+                        let html = t.getRenderedHtml();
+                        t.assertTrue(html.includes('Rad A1') && html.includes('Rad B1'), 'Vor Auswahl sind alle Objekte sichtbar');
+                        
                         // Item A1 auswählen
+                        t.assertTrue(t.app.toggleSellerSelection(itemA1.id, true), 'Item A1 ausgewählt');
+                        
+                        // Filterfeld muss automatisch mit formatierter IBAN befüllt sein
+                        const filterVal = t.getElementById('sellerFilterSeller').value;
+                        t.assertTrue(filterVal.includes('DE89') && filterVal.includes('3704'), 'IBAN muss automatisch im Filterfeld stehen');
+                        
+                        // Nach Rendern: Nur noch Items mit gleicher IBAN sichtbar
+                        t.app.renderSellerList();
+                        html = t.getRenderedHtml();
+                        t.assertTrue(html.includes('Rad A1'), 'Rad A1 muss sichtbar sein');
+                        t.assertTrue(html.includes('Rad A2'), 'Rad A2 (gleiche IBAN) muss sichtbar sein');
+                        t.assertFalse(html.includes('Rad B1'), 'Rad B1 (andere IBAN) muss herausgefiltert sein');
+                        t.assertFalse(html.includes('Rad B2'), 'Rad B2 (andere IBAN) muss herausgefiltert sein');
+                        
+                        // Deselektieren von Item A1: Filterfeld wird automatisch wieder geleert
+                        t.app.toggleSellerSelection(itemA1.id, false);
+                        t.assertEqual(t.getElementById('sellerFilterSeller').value, '', 'Filterfeld muss nach vollständiger Abwahl geleert werden');
+                        t.app.renderSellerList();
+                        html = t.getRenderedHtml();
+                        t.assertTrue(html.includes('Rad B1'), 'Nach Abwahl sind andere Verkäufer wieder sichtbar');
+                    }
+                },
+                {
+                    name: 'Objekte mit unterschiedlicher IBAN können NICHT ausgewählt werden und sind disabled (auch bei gelöschtem Filter)',
+                    fn(t) {
+                        t.reset();
+                        const itemA1 = t.app.addSellerItem({ sellerName: 'Verkäufer A', sellerIban: 'DE89370400440532013000', param: 'Rad A1', price: 100 });
+                        t.app.setSellerPaid(itemA1.id, 'bar');
+                        const itemA2 = t.app.addSellerItem({ sellerName: 'Verkäufer A', sellerIban: 'DE89370400440532013000', param: 'Rad A2', price: 80 });
+                        t.app.setSellerPaid(itemA2.id, 'bar');
+                        const itemB1 = t.app.addSellerItem({ sellerName: 'Verkäufer B', sellerIban: 'DE02100100100155635399', param: 'Rad B1', price: 120 });
+                        t.app.setSellerPaid(itemB1.id, 'bar');
+                        const itemB2 = t.app.addSellerItem({ sellerName: 'Verkäufer B', sellerIban: 'DE02100100100155635399', param: 'Rad B2', price: 110 });
+                        t.app.setSellerPaid(itemB2.id, 'bar');
+                        
+                        t.setMode('payout');
+                        
+                        // Item A1 auswählen (setzt automatisch IBAN ins Filterfeld)
                         t.assertTrue(t.app.toggleSellerSelection(itemA1.id, true), 'Item A1 muss ausgewählt werden können');
                         
-                        // Versuch, Item B1 (andere IBAN) auszuwählen -> muss fehlschlagen
+                        // Filter manuell leeren (Simulation: Anwender löscht den Filter)
+                        const filterInput = t.getElementById('sellerFilterSeller');
+                        if (filterInput) filterInput.value = '';
+                        t.app.renderSellerList();
+                        
+                        // Versuch, Item B1 (andere IBAN) auszuwählen -> muss trotz leerem Filter fehlschlagen!
                         const okB = t.app.toggleSellerSelection(itemB1.id, true);
-                        t.assertFalse(okB, 'Item B1 mit anderer IBAN darf NICHT ausgewählt werden können');
+                        t.assertFalse(okB, 'Item B1 mit anderer IBAN darf trotz gelöschtem Filter NICHT ausgewählt werden können');
                         
                         const selected = t.app.getSelectedSellerItemIds();
                         t.assertEqual(selected.length, 1, 'Nur Item A1 darf in der Auswahl sein');
@@ -501,7 +548,6 @@
                         t.assertFalse(selected.includes(itemB1.id), 'Item B1 darf nicht in der Auswahl sein');
                         
                         // DOM-Prüfung: Checkbox von Item B1 und B2 muss disabled sein
-                        t.app.renderSellerList();
                         const html = t.getRenderedHtml();
                         t.assertTrue(html.includes('seller-item-select disabled'), 'Klasse .disabled muss auf dem Label für abweichende IBAN vorhanden sein');
                         t.assertTrue(html.includes('disabled'), 'Checkbox für abweichende IBAN muss disabled sein');

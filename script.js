@@ -741,9 +741,26 @@ function toggleSellerSelection(id, checked) {
             }
         }
         selectedSellerItemIds.add(id);
+
+        // Ansicht automatisch auf Einträge mit gleicher IBAN filtern
+        if (sellerFilterSellerEl) {
+            sellerFilterSellerEl.value = formatIBAN(item.sellerIban);
+        }
+        if (sellerFilterParamEl) {
+            sellerFilterParamEl.value = '';
+        }
+
         return true;
     } else {
         selectedSellerItemIds.delete(id);
+        // Wenn alle abgewählt wurden, Filter zurücksetzen falls er noch der IBAN entsprach
+        if (selectedSellerItemIds.size === 0 && sellerFilterSellerEl) {
+            const normFilter = normalizeIbanForCompare(sellerFilterSellerEl.value);
+            const normItem = normalizeIbanForCompare(item.sellerIban);
+            if (normFilter === normItem) {
+                sellerFilterSellerEl.value = '';
+            }
+        }
         return false;
     }
 }
@@ -1012,7 +1029,9 @@ function renderSellerList() {
             const name = (item.sellerName || '').toLowerCase();
             const iban = (item.sellerIban || '').toLowerCase().replace(/\s/g, '');
             const searchIn = param + ' ' + name + ' ' + iban;
-            const match = searchIn.includes(sellerFilter) || (sellerFilter.indexOf(' ') !== -1 && searchIn.includes(sellerFilter.replace(/\s/g, '')));
+            const match = searchIn.includes(sellerFilter) || 
+                          (sellerFilter.indexOf(' ') !== -1 && searchIn.includes(sellerFilter.replace(/\s/g, ''))) ||
+                          (normalizeIbanForCompare(item.sellerIban).includes(normalizeIbanForCompare(sellerFilter)));
             if (!match) return false;
         }
         return true;
