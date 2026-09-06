@@ -499,6 +499,9 @@
 
     <!-- 4. Test Runner Controller -->
     <script>
+        // Suppress modal alerts during test execution
+        window.alert = () => {};
+
         const btnRun = document.getElementById('btnRunTests');
         const suitesContainer = document.getElementById('suitesContainer');
         const badgeTotal = document.getElementById('badgeTotal');
@@ -608,6 +611,13 @@
                         getFooterSum(id) {
                             const el = document.getElementById(id);
                             return el ? el.textContent.trim() : '';
+                        },
+                        getRenderedHtml() {
+                            const el = document.getElementById('sellerList');
+                            return el ? el.innerHTML : '';
+                        },
+                        querySelector(sel) {
+                            return document.querySelector(sel);
                         },
                         getElementById(id) {
                             return document.getElementById(id);

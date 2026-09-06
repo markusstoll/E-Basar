@@ -975,6 +975,16 @@ footer {
     flex-shrink: 0;
 }
 
+.seller-item-select.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.seller-item-select.disabled .seller-select-cb {
+    cursor: not-allowed;
+}
+
+
 .seller-list {
     display: flex;
     flex-direction: column;

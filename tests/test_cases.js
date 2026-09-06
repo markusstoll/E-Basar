@@ -383,6 +383,167 @@
                     }
                 }
             ]
+        },
+        {
+            name: '8. Mehrfachauswahl & Auszahlung (payout vs. sell)',
+            tests: [
+                {
+                    name: 'Im Modus Verkaufen (sell) sind Mehrfachauswahl und „An Verkäufer zahlen“ deaktiviert',
+                    fn(t) {
+                        t.reset();
+                        const item1 = t.app.addSellerItem({ sellerName: 'S1', sellerIban: 'DE89370400440532013000', param: 'Rad 1', price: 100 });
+                        t.app.setSellerPaid(item1.id, 'bar');
+                        const item2 = t.app.addSellerItem({ sellerName: 'S1', sellerIban: 'DE89370400440532013000', param: 'Rad 2', price: 50 });
+                        
+                        t.setMode('sell');
+                        t.setShowPaid(true); // damit auch bezahlte angezeigt werden
+                        
+                        const html = t.getRenderedHtml();
+                        t.assertFalse(html.includes('seller-select-cb'), 'In sell darf keine Mehrfachauswahl-Checkbox vorhanden sein');
+                        t.assertFalse(html.includes('data-action="paySeller"'), 'In sell darf kein „An Verkäufer zahlen“-Button vorhanden sein');
+                        
+                        const hint = t.querySelector('.seller-toolbar-hint');
+                        if (hint) {
+                            t.assertTrue(hint.classList.contains('hidden'), 'Hinweistext zur Mehrfachauswahl muss in sell hidden sein');
+                        }
+                    }
+                },
+                {
+                    name: 'Im Modus „An Verkäufer erstatten“ (payout) sind Mehrfachauswahl und Auszahlung aktiv wenn mehrere mit gleicher IBAN da sind',
+                    fn(t) {
+                        t.reset();
+                        const item1 = t.app.addSellerItem({ sellerName: 'S1', sellerIban: 'DE89370400440532013000', param: 'Rad 1', price: 100 });
+                        t.app.setSellerPaid(item1.id, 'bar');
+                        const item2 = t.app.addSellerItem({ sellerName: 'S1', sellerIban: 'DE89370400440532013000', param: 'Rad 2', price: 60 });
+                        t.app.setSellerPaid(item2.id, 'bar');
+                        
+                        t.setMode('payout');
+                        const html = t.getRenderedHtml();
+                        
+                        t.assertTrue(html.includes('seller-select-cb'), 'In payout muss Mehrfachauswahl-Checkbox vorhanden sein, wenn mehrere mit gleicher IBAN da sind');
+                        t.assertTrue(html.includes('data-action="paySeller"'), 'In payout muss „An Verkäufer zahlen“-Button vorhanden sein');
+                        
+                        const hint = t.querySelector('.seller-toolbar-hint');
+                        if (hint) {
+                            t.assertFalse(hint.classList.contains('hidden'), 'Hinweistext zur Mehrfachauswahl darf in payout nicht hidden sein');
+                        }
+                    }
+                },
+                {
+                    name: 'Ein einzelnes Objekt ohne weitere Einträge mit gleicher IBAN hat KEINEN Selektionshaken',
+                    fn(t) {
+                        t.reset();
+                        const itemSingle = t.app.addSellerItem({ sellerName: 'Alleiniger Verkäufer', sellerIban: 'DE89370400440532013000', param: 'Einzelrad', price: 200 });
+                        t.app.setSellerPaid(itemSingle.id, 'bar');
+                        
+                        t.setMode('payout');
+                        const html = t.getRenderedHtml();
+                        
+                        // Auszahl-Button muss da sein
+                        t.assertTrue(html.includes('data-action="paySeller"'), 'Button „An Verkäufer zahlen“ muss für Einzelobjekt vorhanden sein');
+                        // Aber KEINE Mehrfachauswahl-Checkbox!
+                        t.assertFalse(html.includes('seller-select-cb'), 'Einzelobjekt ohne weitere Einträge gleicher IBAN darf KEINE Checkbox haben');
+                        
+                        // toggleSellerSelection muss false liefern
+                        const ok = t.app.toggleSellerSelection(itemSingle.id, true);
+                        t.assertFalse(ok, 'Einzelobjekt darf nicht über Mehrfachauswahl selektiert werden können');
+                        t.assertEqual(t.app.getSelectedSellerItemIds().length, 0, 'Auswahl muss leer sein');
+                    }
+                },
+                {
+                    name: 'Objekte mit gleicher IBAN können zusammen ausgewählt werden',
+                    fn(t) {
+                        t.reset();
+                        const item1 = t.app.addSellerItem({ sellerName: 'S1', sellerIban: 'DE89370400440532013000', param: 'Rad 1', price: 100 });
+                        t.app.setSellerPaid(item1.id, 'bar');
+                        const item2 = t.app.addSellerItem({ sellerName: 'S1', sellerIban: 'DE89 3704 0044 0532 0130 00', param: 'Rad 2', price: 80 }); // Formatierungsvariante
+                        t.app.setSellerPaid(item2.id, 'elektronisch');
+                        
+                        t.setMode('payout');
+                        
+                        const ok1 = t.app.toggleSellerSelection(item1.id, true);
+                        t.assertTrue(ok1, 'Erstes Objekt mit IBAN muss selektierbar sein');
+                        
+                        const ok2 = t.app.toggleSellerSelection(item2.id, true);
+                        t.assertTrue(ok2, 'Zweites Objekt mit gleicher IBAN muss selektierbar sein');
+                        
+                        const selected = t.app.getSelectedSellerItemIds();
+                        t.assertEqual(selected.length, 2, 'Beide Objekte müssen ausgewählt sein');
+                        t.assertTrue(selected.includes(item1.id), 'Item 1 in Auswahl');
+                        t.assertTrue(selected.includes(item2.id), 'Item 2 in Auswahl');
+                    }
+                },
+                {
+                    name: 'Objekte mit unterschiedlicher IBAN können NICHT ausgewählt werden und sind disabled',
+                    fn(t) {
+                        t.reset();
+                        const itemA1 = t.app.addSellerItem({ sellerName: 'Verkäufer A', sellerIban: 'DE89370400440532013000', param: 'Rad A1', price: 100 });
+                        t.app.setSellerPaid(itemA1.id, 'bar');
+                        const itemA2 = t.app.addSellerItem({ sellerName: 'Verkäufer A', sellerIban: 'DE89370400440532013000', param: 'Rad A2', price: 80 });
+                        t.app.setSellerPaid(itemA2.id, 'bar');
+                        const itemB1 = t.app.addSellerItem({ sellerName: 'Verkäufer B', sellerIban: 'DE02100100100155635399', param: 'Rad B1', price: 120 });
+                        t.app.setSellerPaid(itemB1.id, 'bar');
+                        const itemB2 = t.app.addSellerItem({ sellerName: 'Verkäufer B', sellerIban: 'DE02100100100155635399', param: 'Rad B2', price: 110 });
+                        t.app.setSellerPaid(itemB2.id, 'bar');
+                        
+                        t.setMode('payout');
+                        
+                        // Item A1 auswählen
+                        t.assertTrue(t.app.toggleSellerSelection(itemA1.id, true), 'Item A1 muss ausgewählt werden können');
+                        
+                        // Versuch, Item B1 (andere IBAN) auszuwählen -> muss fehlschlagen
+                        const okB = t.app.toggleSellerSelection(itemB1.id, true);
+                        t.assertFalse(okB, 'Item B1 mit anderer IBAN darf NICHT ausgewählt werden können');
+                        
+                        const selected = t.app.getSelectedSellerItemIds();
+                        t.assertEqual(selected.length, 1, 'Nur Item A1 darf in der Auswahl sein');
+                        t.assertTrue(selected.includes(itemA1.id), 'Item A1 ist in der Auswahl');
+                        t.assertFalse(selected.includes(itemB1.id), 'Item B1 darf nicht in der Auswahl sein');
+                        
+                        // DOM-Prüfung: Checkbox von Item B1 und B2 muss disabled sein
+                        t.app.renderSellerList();
+                        const html = t.getRenderedHtml();
+                        t.assertTrue(html.includes('seller-item-select disabled'), 'Klasse .disabled muss auf dem Label für abweichende IBAN vorhanden sein');
+                        t.assertTrue(html.includes('disabled'), 'Checkbox für abweichende IBAN muss disabled sein');
+                    }
+                },
+                {
+                    name: 'Objekt ohne IBAN kann nicht für Auszahlung ausgewählt werden',
+                    fn(t) {
+                        t.reset();
+                        const itemNoIban = t.app.addSellerItem({ sellerName: '', sellerIban: '', param: 'Spende Rad', price: 50 });
+                        t.app.setSellerPaid(itemNoIban.id, 'bar');
+                        
+                        t.setMode('payout');
+                        const ok = t.app.toggleSellerSelection(itemNoIban.id, true);
+                        t.assertFalse(ok, 'Objekt ohne IBAN darf nicht ausgewählt werden können');
+                        t.assertEqual(t.app.getSelectedSellerItemIds().length, 0, 'Auswahl muss leer sein');
+                    }
+                },
+                {
+                    name: 'Moduswechsel weg von payout leert die Mehrfachauswahl und verbirgt die Auswahlleiste',
+                    fn(t) {
+                        t.reset();
+                        const item1 = t.app.addSellerItem({ sellerName: 'S1', sellerIban: 'DE89370400440532013000', param: 'Rad 1', price: 100 });
+                        t.app.setSellerPaid(item1.id, 'bar');
+                        const item2 = t.app.addSellerItem({ sellerName: 'S1', sellerIban: 'DE89370400440532013000', param: 'Rad 2', price: 50 });
+                        t.app.setSellerPaid(item2.id, 'bar');
+                        
+                        t.setMode('payout');
+                        t.app.toggleSellerSelection(item1.id, true);
+                        t.app.updateSellerSelectionBar();
+                        
+                        t.assertEqual(t.app.getSelectedSellerItemIds().length, 1, '1 Item ausgewählt');
+                        const bar = t.getElementById('sellerSelectionBar');
+                        t.assertFalse(bar.classList.contains('hidden'), 'Auswahlleiste muss sichtbar sein');
+                        
+                        // Moduswechsel zu sell
+                        t.setMode('sell');
+                        t.assertEqual(t.app.getSelectedSellerItemIds().length, 0, 'Auswahl muss nach Wechsel zu sell geleert sein');
+                        t.assertTrue(bar.classList.contains('hidden'), 'Auswahlleiste muss nach Wechsel zu sell verborgen sein');
+                    }
+                }
+            ]
         }
     ];
 

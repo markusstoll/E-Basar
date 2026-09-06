@@ -395,13 +395,16 @@ function setModeUI(mode) {
     const labelShowPaid = document.getElementById('labelShowPaid');
     const labelShowReimbursed = document.getElementById('labelShowReimbursed');
     const btnNewSeller = document.getElementById('btnNewSeller');
+    const toolbarHint = document.querySelector('.seller-toolbar-hint');
     if (labelShowPaid) labelShowPaid.classList.toggle('hidden', isPayout);
     if (labelShowReimbursed) labelShowReimbursed.classList.toggle('hidden', !isPayout);
     if (btnNewSeller) btnNewSeller.classList.toggle('hidden', isPayout);
+    if (toolbarHint) toolbarHint.classList.toggle('hidden', !isPayout);
 
     if (panelSeller) panelSeller.classList.toggle('hidden', mode !== 'seller' && mode !== 'sell' && mode !== 'payout');
     if (mode === 'seller' || mode === 'sell' || mode === 'payout') {
         selectedSellerItemIds.clear();
+        updateSellerSelectionBar();
         renderSellerList();
     }
 }
@@ -704,22 +707,44 @@ function normalizeIbanForCompare(iban) {
     return (iban || '').trim().toUpperCase().replace(/\s/g, '');
 }
 
+function getSelectedSellerItemIds() {
+    return Array.from(selectedSellerItemIds);
+}
+
+function clearSelectedSellerItemIds() {
+    selectedSellerItemIds.clear();
+}
+
 function toggleSellerSelection(id, checked) {
     const items = getSellerItems();
     const item = items.find(i => i.id === id);
-    if (!item) return;
+    if (!item) return false;
     if (checked) {
+        const hasIban = !!(item.sellerIban && item.sellerIban.trim());
+        if (!hasIban || !item.paid || item.sellerPaid || item.deleted) {
+            return false;
+        }
+        // Mehrfachauswahl ist nur sinnvoll, wenn es mindestens ein weiteres offenes Objekt mit dieser IBAN gibt
+        const norm = normalizeIbanForCompare(item.sellerIban);
+        const openSameIbanCount = items.filter(i => i.paid && !i.sellerPaid && !i.deleted && normalizeIbanForCompare(i.sellerIban) === norm).length;
+        if (openSameIbanCount <= 1) {
+            return false;
+        }
         if (selectedSellerItemIds.size > 0) {
             const firstId = selectedSellerItemIds.values().next().value;
             const first = items.find(i => i.id === firstId);
             if (first && normalizeIbanForCompare(first.sellerIban) !== normalizeIbanForCompare(item.sellerIban)) {
-                alert(window.i18n ? window.i18n.tOr('msg.onlySameSeller', 'Nur Objekte desselben Verkäufers (gleiche IBAN) auswählbar.') : 'Nur Objekte desselben Verkäufers (gleiche IBAN) auswählbar.');
-                return;
+                if (typeof alert === 'function') {
+                    alert(window.i18n ? window.i18n.tOr('msg.onlySameSeller', 'Nur Objekte desselben Verkäufers (gleiche IBAN) auswählbar.') : 'Nur Objekte desselben Verkäufers (gleiche IBAN) auswählbar.');
+                }
+                return false;
             }
         }
         selectedSellerItemIds.add(id);
+        return true;
     } else {
         selectedSellerItemIds.delete(id);
+        return false;
     }
 }
 
@@ -949,6 +974,25 @@ function renderSellerList() {
     const paramLabel = (getSettings().paramLabel || 'Objekt');
     const items = getSellerItems();
 
+    // Anzahl offener auszahlbarer Objekte je IBAN ermitteln (für Mehrfachauswahl-Checkboxen)
+    const openPayableIbanCounts = new Map();
+    items.forEach(i => {
+        if (i.paid && !i.sellerPaid && !i.deleted && (i.sellerIban || '').trim()) {
+            const norm = normalizeIbanForCompare(i.sellerIban);
+            if (norm) {
+                openPayableIbanCounts.set(norm, (openPayableIbanCounts.get(norm) || 0) + 1);
+            }
+        }
+    });
+
+    // Ausgewählte IDs bereinigen, falls einzelne Objekte nicht mehr mehrfach-auswählbar sind
+    for (const id of Array.from(selectedSellerItemIds)) {
+        const it = items.find(i => i.id === id);
+        if (!it || !it.paid || it.sellerPaid || it.deleted || !it.sellerIban || (openPayableIbanCounts.get(normalizeIbanForCompare(it.sellerIban)) || 0) <= 1) {
+            selectedSellerItemIds.delete(id);
+        }
+    }
+
     let filtered = items.filter(item => {
         if (isPayout) {
             if (!item.paid) return false;
@@ -1014,13 +1058,26 @@ function renderSellerList() {
         if (item.sellerPaid) badges.push('<span class="seller-badge seller-badge-seller-paid">' + (window.i18n ? window.i18n.tOr('badge.sellerPaid', 'an Verkäufer gezahlt') : 'an Verkäufer gezahlt') + '</span>');
         if (item.deleted) badges.push('<span class="seller-badge seller-badge-deleted">' + (window.i18n ? window.i18n.tOr('badge.deleted', 'Gelöscht') : 'Gelöscht') + '</span>');
         const hasSeller = !!((item.sellerName || '').trim() && (item.sellerIban || '').trim());
-        const canSelectForSellerPay = item.paid && !item.sellerPaid && hasSeller && !item.deleted;
+        const normIban = hasSeller ? normalizeIbanForCompare(item.sellerIban) : '';
+        const hasMultipleWithSameIban = hasSeller && (openPayableIbanCounts.get(normIban) || 0) > 1;
+        // Mehrfachauswahl NUR im Modus "payout" UND nur wenn es weitere offene Objekte mit gleicher IBAN gibt!
+        const canSelectForSellerPay = isPayout && item.paid && !item.sellerPaid && hasSeller && !item.deleted && hasMultipleWithSameIban;
         const selectLabel = window.i18n ? window.i18n.tOr('action.select', 'Auswählen') : 'Auswählen';
-        const selectCb = canSelectForSellerPay
-            ? `<label class="seller-item-select"><input type="checkbox" class="seller-select-cb" data-id="${escapeHtml(item.id)}" ${selectedSellerItemIds.has(item.id) ? 'checked' : ''}> ${escapeHtml(selectLabel)}</label>`
-            : '';
+        let selectCb = '';
+        if (canSelectForSellerPay) {
+            const isChecked = selectedSellerItemIds.has(item.id);
+            let isDisabled = false;
+            if (selectedSellerItemIds.size > 0 && !isChecked) {
+                const firstId = selectedSellerItemIds.values().next().value;
+                const firstItem = items.find(i => i.id === firstId);
+                if (firstItem && normalizeIbanForCompare(firstItem.sellerIban) !== normalizeIbanForCompare(item.sellerIban)) {
+                    isDisabled = true;
+                }
+            }
+            selectCb = `<label class="seller-item-select ${isDisabled ? 'disabled' : ''}"><input type="checkbox" class="seller-select-cb" data-id="${escapeHtml(item.id)}" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled title="' + (window.i18n ? window.i18n.tOr('msg.onlySameSeller', 'Nur Objekte desselben Verkäufers (gleiche IBAN) auswählbar.') : 'Nur Objekte desselben Verkäufers (gleiche IBAN) auswählbar.') + '"' : ''}> ${escapeHtml(selectLabel)}</label>`;
+        }
         const paySellerLabel = window.i18n ? window.i18n.tOr('action.paySeller', 'An Verkäufer zahlen') : 'An Verkäufer zahlen';
-        const paySellerBtn = hasSeller
+        const paySellerBtn = (isPayout && hasSeller && !item.sellerPaid)
             ? `<button type="button" class="btn-small btn-pay-seller" data-action="paySeller" data-id="${escapeHtml(item.id)}">${escapeHtml(paySellerLabel)}</button>`
             : '';
         const editLabel = window.i18n ? window.i18n.tOr('action.edit', 'Bearbeiten') : 'Bearbeiten';
@@ -1957,6 +2014,10 @@ if (typeof module !== 'undefined' && module.exports) {
         renderSellerList,
         updateFooterSums,
         openSellerFormOverlay,
-        closeSellerFormOverlay
+        closeSellerFormOverlay,
+        toggleSellerSelection,
+        getSelectedSellerItemIds,
+        clearSelectedSellerItemIds,
+        updateSellerSelectionBar
     };
 }

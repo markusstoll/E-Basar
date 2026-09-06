@@ -136,7 +136,11 @@ class MockDocument {
         return [];
     }
     querySelector(selector) {
-        return new MockElement('div');
+        if (!this.elementsBySelector) this.elementsBySelector = new Map();
+        if (!this.elementsBySelector.has(selector)) {
+            this.elementsBySelector.set(selector, new MockElement('div'));
+        }
+        return this.elementsBySelector.get(selector);
     }
     addEventListener(event, fn) {
         if (!this.eventListeners.has(event)) this.eventListeners.set(event, []);
@@ -237,6 +241,9 @@ for (const suite of testSuites) {
                 mockDoc.getElementById('showReimbursed').checked = false;
                 mockDoc.getElementById('showDeleted').checked = false;
                 mockDoc.getElementById('sellerList').innerHTML = '';
+                if (typeof app.clearSelectedSellerItemIds === 'function') {
+                    app.clearSelectedSellerItemIds();
+                }
                 app.setMode('sell');
             },
             setMode(mode) {
@@ -277,6 +284,12 @@ for (const suite of testSuites) {
             getFooterSum(id) {
                 const el = mockDoc.getElementById(id);
                 return el ? el.textContent.trim() : '';
+            },
+            getRenderedHtml() {
+                return mockDoc.getElementById('sellerList').innerHTML || '';
+            },
+            querySelector(sel) {
+                return mockDoc.querySelector(sel);
             },
             getElementById(id) {
                 return mockDoc.getElementById(id);
