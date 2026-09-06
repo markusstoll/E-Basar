@@ -473,13 +473,13 @@ function updateSellerItem(id, data) {
     const idx = items.findIndex(i => i.id === id);
     if (idx === -1) return;
     const oldItem = items[idx];
-    let paidAt = oldItem.paidAt;
+    let paidAt = data.paidAt || oldItem.paidAt;
     if (data.paid && !paidAt) {
         paidAt = new Date().toISOString();
     } else if (!data.paid) {
         paidAt = null;
     }
-    let sellerPaidAt = oldItem.sellerPaidAt;
+    let sellerPaidAt = data.sellerPaidAt || oldItem.sellerPaidAt;
     if (data.sellerPaid && !sellerPaidAt) {
         sellerPaidAt = new Date().toISOString();
     } else if (!data.sellerPaid) {
@@ -1929,3 +1929,34 @@ function resetAllData() {
     }
 }
 
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        STORAGE_KEY,
+        SETTINGS_KEY,
+        MODE_KEY,
+        SELLER_ITEMS_KEY,
+        validateIBAN,
+        formatIBAN,
+        formatAmountDE,
+        formatDate,
+        normalizeIbanForCompare,
+        isParamInUse,
+        getSettings,
+        saveSettings,
+        getSellerItems,
+        saveSellerItems,
+        addSellerItem,
+        updateSellerItem,
+        setSellerPaid,
+        setSellerPaidSeller,
+        setSellerDeleted,
+        getMode,
+        setMode,
+        setModeUI,
+        switchMode,
+        renderSellerList,
+        updateFooterSums,
+        openSellerFormOverlay,
+        closeSellerFormOverlay
+    };
+}

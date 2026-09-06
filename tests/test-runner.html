@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Basar – Test Suite & Regressionstests</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f4f6f9;
+            color: #333;
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 32px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .btn-run {
+            background: #fff;
+            color: #667eea;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-run:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-run:active {
+            transform: translateY(0);
+        }
+
+        /* Summary Bar */
+        .summary-bar {
+            padding: 20px 28px;
+            background: #fafbfc;
+            border-bottom: 1px solid #e1e4e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stat-badge {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-total {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+
+        .badge-passed {
+            background: #def7ec;
+            color: #03543f;
+        }
+
+        .badge-failed {
+            background: #fde8e8;
+            color: #9b1c1c;
+        }
+
+        .badge-duration {
+            background: #e1effe;
+            color: #1e429f;
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #edf2f7;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #48bb78;
+            transition: width 0.2s;
+        }
+
+        .progress-bar.has-error {
+            background: #f56565;
+        }
+
+        /* Suites & Tests */
+        .suites-container {
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .suite-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .suite-header {
+            background: #f7fafc;
+            padding: 14px 18px;
+            font-weight: 600;
+            font-size: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .suite-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+
+        .suite-badge.success {
+            background: #def7ec;
+            color: #03543f;
+        }
+
+        .suite-badge.failure {
+            background: #fde8e8;
+            color: #9b1c1c;
+        }
+
+        .test-list {
+            list-style: none;
+        }
+
+        .test-item {
+            padding: 12px 18px;
+            border-bottom: 1px solid #edf2f7;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .test-item:last-child {
+            border-bottom: none;
+        }
+
+        .test-icon {
+            font-size: 16px;
+            line-height: 1.4;
+            flex-shrink: 0;
+        }
+
+        .test-icon.pass {
+            color: #38a169;
+        }
+
+        .test-icon.fail {
+            color: #e53e3e;
+        }
+
+        .test-content {
+            flex: 1;
+        }
+
+        .test-title {
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .test-time {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-left: 8px;
+        }
+
+        .test-error {
+            margin-top: 6px;
+            padding: 10px 14px;
+            background: #fff5f5;
+            border-left: 3px solid #e53e3e;
+            border-radius: 4px;
+            font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            color: #c53030;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        iframe {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border: 0;
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>E-Basar – Test Suite</h1>
+                <p>Automatisierte Regressionstests für Datenmodell, Filterlogik, Abrechnung & Masken</p>
+            </div>
+            <button type="button" id="btnRunTests" class="btn-run">Tests starten</button>
+        </header>
+
+        <div class="progress-bar-container">
+            <div id="progressBar" class="progress-bar"></div>
+        </div>
+
+        <div class="summary-bar">
+            <div class="stats">
+                <span class="stat-badge badge-total" id="badgeTotal">0 Tests</span>
+                <span class="stat-badge badge-passed" id="badgePassed">0 bestanden</span>
+                <span class="stat-badge badge-failed" id="badgeFailed">0 fehlgeschlagen</span>
+            </div>
+            <span class="stat-badge badge-duration" id="badgeDuration">0 ms</span>
+        </div>
+
+        <main class="suites-container" id="suitesContainer">
+            <p style="text-align: center; color: #718096; padding: 40px 0;">Klicken Sie auf „Tests starten“, um die Regressionstests auszuführen.</p>
+        </main>
+    </div>
+
+    <!-- Hidden iframe loading the full app in a real browser DOM context -->
+    <iframe id="appFrame" src="../index.html"></iframe>
+
+    <!-- Test Definitions -->
+    <script src="test_cases.js"></script>
+
+    <script>
+        const btnRun = document.getElementById('btnRunTests');
+        const appFrame = document.getElementById('appFrame');
+        const suitesContainer = document.getElementById('suitesContainer');
+        const badgeTotal = document.getElementById('badgeTotal');
+        const badgePassed = document.getElementById('badgePassed');
+        const badgeFailed = document.getElementById('badgeFailed');
+        const badgeDuration = document.getElementById('badgeDuration');
+        const progressBar = document.getElementById('progressBar');
+
+        let isFrameLoaded = false;
+        appFrame.addEventListener('load', () => {
+            isFrameLoaded = true;
+        });
+
+        btnRun.addEventListener('click', runAllTests);
+
+        async function runAllTests() {
+            if (!isFrameLoaded) {
+                await new Promise(res => {
+                    appFrame.addEventListener('load', res, { once: true });
+                });
+            }
+
+            const win = appFrame.contentWindow;
+            const doc = appFrame.contentDocument;
+            const app = win; // In the iframe, functions are globals on win
+
+            btnRun.disabled = true;
+            btnRun.textContent = 'Läuft...';
+            suitesContainer.innerHTML = '';
+            progressBar.style.width = '0%';
+            progressBar.classList.remove('has-error');
+
+            const suites = window.testSuites || [];
+            let total = 0;
+            let passed = 0;
+            let failed = 0;
+
+            for (const s of suites) total += s.tests.length;
+
+            const startTime = performance.now();
+            let executed = 0;
+
+            for (const suite of suites) {
+                const card = document.createElement('div');
+                card.className = 'suite-card';
+
+                const header = document.createElement('div');
+                header.className = 'suite-header';
+                header.innerHTML = `<span>${escapeHtml(suite.name)}</span><span class="suite-badge" id="badge-${suite.name.replace(/\s+/g, '')}">Läuft...</span>`;
+                card.appendChild(header);
+
+                const list = document.createElement('ul');
+                list.className = 'test-list';
+
+                let suiteFailed = 0;
+
+                for (const test of suite.tests) {
+                    const testContext = {
+                        app,
+                        reset() {
+                            win.localStorage.clear();
+                            const paramEl = doc.getElementById('sellerFilterParam');
+                            if (paramEl) paramEl.value = '';
+                            const sellerEl = doc.getElementById('sellerFilterSeller');
+                            if (sellerEl) sellerEl.value = '';
+                            const paidCb = doc.getElementById('showPaid');
+                            if (paidCb) paidCb.checked = false;
+                            const reimbursedCb = doc.getElementById('showReimbursed');
+                            if (reimbursedCb) reimbursedCb.checked = false;
+                            const deletedCb = doc.getElementById('showDeleted');
+                            if (deletedCb) deletedCb.checked = false;
+                            const listEl = doc.getElementById('sellerList');
+                            if (listEl) listEl.innerHTML = '';
+                            win.setMode('sell');
+                        },
+                        setMode(mode) {
+                            win.setMode(mode);
+                        },
+                        setShowPaid(bool) {
+                            const cb = doc.getElementById('showPaid');
+                            if (cb) cb.checked = bool;
+                            win.renderSellerList();
+                        },
+                        setShowReimbursed(bool) {
+                            const cb = doc.getElementById('showReimbursed');
+                            if (cb) cb.checked = bool;
+                            win.renderSellerList();
+                        },
+                        setShowDeleted(bool) {
+                            const cb = doc.getElementById('showDeleted');
+                            if (cb) cb.checked = bool;
+                            win.renderSellerList();
+                        },
+                        getRenderedItems() {
+                            win.renderSellerList();
+                            const html = doc.getElementById('sellerList').innerHTML;
+                            if (!html || html.includes('seller-empty')) return [];
+                            const allItems = win.getSellerItems();
+                            const matches = Array.from(html.matchAll(/data-id="([^"]+)"/g));
+                            const seenIds = new Set();
+                            const orderedIds = [];
+                            for (const m of matches) {
+                                if (!seenIds.has(m[1])) {
+                                    seenIds.add(m[1]);
+                                    orderedIds.push(m[1]);
+                                }
+                            }
+                            return orderedIds.map(id => allItems.find(i => i.id === id)).filter(Boolean);
+                        },
+                        getFooterSum(id) {
+                            const el = doc.getElementById(id);
+                            return el ? el.textContent.trim() : '';
+                        },
+                        getElementById(id) {
+                            return doc.getElementById(id);
+                        },
+                        assert(cond, msg = 'Assertion failed') {
+                            if (!cond) throw new Error(msg);
+                        },
+                        assertTrue(val, msg = 'Expected true') {
+                            if (val !== true) throw new Error(`${msg} (erhalten: ${val})`);
+                        },
+                        assertFalse(val, msg = 'Expected false') {
+                            if (val !== false) throw new Error(`${msg} (erhalten: ${val})`);
+                        },
+                        assertEqual(actual, expected, msg = '') {
+                            if (actual !== expected) {
+                                throw new Error(`${msg} - Erwartet: ${JSON.stringify(expected)}, Erhalten: ${JSON.stringify(actual)}`);
+                            }
+                        },
+                        assertDeepEqual(actual, expected, msg = '') {
+                            const a = JSON.stringify(actual);
+                            const e = JSON.stringify(expected);
+                            if (a !== e) {
+                                throw new Error(`${msg} - Erwartet: ${e}, Erhalten: ${a}`);
+                            }
+                        }
+                    };
+
+                    // Also make global `document` inside test point to iframe doc
+                    const origDoc = window.document;
+                    window.document = doc;
+
+                    const itemLi = document.createElement('li');
+                    itemLi.className = 'test-item';
+
+                    const tStart = performance.now();
+                    let err = null;
+                    try {
+                        test.fn(testContext);
+                        passed++;
+                    } catch (e) {
+                        err = e;
+                        failed++;
+                        suiteFailed++;
+                        progressBar.classList.add('has-error');
+                    } finally {
+                        window.document = origDoc;
+                    }
+                    const tDuration = Math.round(performance.now() - tStart);
+                    executed++;
+
+                    if (!err) {
+                        itemLi.innerHTML = `
+                            <span class="test-icon pass">✔</span>
+                            <div class="test-content">
+                                <span class="test-title">${escapeHtml(test.name)}</span>
+                                <span class="test-time">${tDuration} ms</span>
+                            </div>
+                        `;
+                    } else {
+                        itemLi.innerHTML = `
+                            <span class="test-icon fail">✖</span>
+                            <div class="test-content">
+                                <span class="test-title" style="color: #c53030;">${escapeHtml(test.name)}</span>
+                                <span class="test-time">${tDuration} ms</span>
+                                <div class="test-error">${escapeHtml(err.stack || err.message)}</div>
+                            </div>
+                        `;
+                    }
+                    list.appendChild(itemLi);
+
+                    // Update stats
+                    const pct = Math.round((executed / total) * 100);
+                    progressBar.style.width = pct + '%';
+                    badgeTotal.textContent = `${total} Tests`;
+                    badgePassed.textContent = `${passed} bestanden`;
+                    badgeFailed.textContent = `${failed} fehlgeschlagen`;
+                    badgeDuration.textContent = `${Math.round(performance.now() - startTime)} ms`;
+                }
+
+                card.appendChild(list);
+                const sBadge = card.querySelector('.suite-badge');
+                if (suiteFailed === 0) {
+                    sBadge.className = 'suite-badge success';
+                    sBadge.textContent = `${suite.tests.length} / ${suite.tests.length} OK`;
+                } else {
+                    sBadge.className = 'suite-badge failure';
+                    sBadge.textContent = `${suiteFailed} Fehler`;
+                }
+
+                suitesContainer.appendChild(card);
+            }
+
+            btnRun.disabled = false;
+            btnRun.textContent = 'Tests erneut ausführen';
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // Auto-run tests when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>
