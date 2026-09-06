@@ -953,6 +953,8 @@ function renderSellerList() {
         if (isPayout) {
             if (!item.paid) return false;
             if (!showReimbursed && item.sellerPaid) return false;
+        } else if (mode === 'sell') {
+            if (!showPaid && item.paid) return false;
         } else {
             if (!showPaid && item.paid && (item.sellerPaid || !(item.sellerIban || '').trim())) return false;
         }
