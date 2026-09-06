@@ -20,7 +20,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 920px;
             margin: 0 auto;
             background: #fff;
             border-radius: 16px;
@@ -29,7 +29,7 @@
         }
 
         header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: #fff;
             padding: 32px 28px;
             display: flex;
@@ -42,6 +42,7 @@
         header h1 {
             font-size: 24px;
             font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         header p {
@@ -52,18 +53,19 @@
 
         .btn-run {
             background: #fff;
-            color: #667eea;
+            color: #4f46e5;
             border: none;
             padding: 12px 24px;
             font-size: 15px;
             font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
-            transition: transform 0.1s, box-shadow 0.2s;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
         }
 
         .btn-run:hover {
+            background: #f8fafc;
             transform: translateY(-1px);
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
         }
@@ -72,93 +74,79 @@
             transform: translateY(0);
         }
 
-        /* Summary Bar */
+        .btn-run:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .progress-bar-container {
+            background: #e2e8f0;
+            height: 6px;
+            width: 100%;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: #10b981;
+            height: 100%;
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .progress-bar.has-error {
+            background: #ef4444;
+        }
+
         .summary-bar {
-            padding: 20px 28px;
-            background: #fafbfc;
-            border-bottom: 1px solid #e1e4e8;
+            padding: 16px 28px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .stats {
             display: flex;
-            gap: 20px;
-            align-items: center;
+            gap: 16px;
         }
 
         .stat-badge {
-            font-size: 14px;
-            font-weight: 600;
-            padding: 6px 14px;
-            border-radius: 20px;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 13px;
         }
 
-        .badge-total {
-            background: #edf2f7;
-            color: #4a5568;
-        }
+        .badge-total { background: #e2e8f0; color: #475569; }
+        .badge-passed { background: #dcfce7; color: #166534; }
+        .badge-failed { background: #fee2e2; color: #991b1b; }
+        .badge-duration { background: #ede9fe; color: #5b21b6; }
 
-        .badge-passed {
-            background: #def7ec;
-            color: #03543f;
-        }
-
-        .badge-failed {
-            background: #fde8e8;
-            color: #9b1c1c;
-        }
-
-        .badge-duration {
-            background: #e1effe;
-            color: #1e429f;
-        }
-
-        /* Progress Bar */
-        .progress-bar-container {
-            width: 100%;
-            height: 6px;
-            background: #edf2f7;
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: #48bb78;
-            transition: width 0.2s;
-        }
-
-        .progress-bar.has-error {
-            background: #f56565;
-        }
-
-        /* Suites & Tests */
         .suites-container {
-            padding: 28px;
+            padding: 24px 28px;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
 
         .suite-card {
+            background: #fff;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
             overflow: hidden;
-            background: #fff;
         }
 
         .suite-header {
-            background: #f7fafc;
             padding: 14px 18px;
-            font-weight: 600;
-            font-size: 15px;
+            background: #f8fafc;
             border-bottom: 1px solid #e2e8f0;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -167,19 +155,12 @@
         .suite-badge {
             font-size: 12px;
             font-weight: 600;
-            padding: 3px 10px;
-            border-radius: 12px;
+            padding: 3px 8px;
+            border-radius: 6px;
         }
 
-        .suite-badge.success {
-            background: #def7ec;
-            color: #03543f;
-        }
-
-        .suite-badge.failure {
-            background: #fde8e8;
-            color: #9b1c1c;
-        }
+        .suite-badge.pass { background: #dcfce7; color: #166534; }
+        .suite-badge.fail { background: #fee2e2; color: #991b1b; }
 
         .test-list {
             list-style: none;
@@ -187,7 +168,7 @@
 
         .test-item {
             padding: 12px 18px;
-            border-bottom: 1px solid #edf2f7;
+            border-bottom: 1px solid #f1f5f9;
             display: flex;
             align-items: flex-start;
             gap: 12px;
@@ -200,52 +181,52 @@
 
         .test-icon {
             font-size: 16px;
-            line-height: 1.4;
+            line-height: 1;
+            margin-top: 2px;
             flex-shrink: 0;
         }
 
-        .test-icon.pass {
-            color: #38a169;
-        }
-
-        .test-icon.fail {
-            color: #e53e3e;
-        }
+        .test-icon.pass { color: #10b981; }
+        .test-icon.fail { color: #ef4444; }
 
         .test-content {
             flex: 1;
         }
 
         .test-title {
+            color: #334155;
             font-weight: 500;
-            color: #2d3748;
         }
 
         .test-time {
             font-size: 12px;
-            color: #a0aec0;
+            color: #94a3b8;
             margin-left: 8px;
         }
 
         .test-error {
-            margin-top: 6px;
+            margin-top: 8px;
             padding: 10px 14px;
-            background: #fff5f5;
-            border-left: 3px solid #e53e3e;
-            border-radius: 4px;
-            font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            color: #b91c1c;
+            font-family: monospace;
             font-size: 12px;
-            color: #c53030;
             white-space: pre-wrap;
             word-break: break-word;
         }
 
-        iframe {
-            position: absolute;
-            width: 0;
-            height: 0;
-            border: 0;
-            visibility: hidden;
+        /* Sandbox container is completely hidden and isolated */
+        #testAppSandbox {
+            display: none !important;
+            visibility: hidden !important;
+            position: absolute !important;
+            left: -99999px !important;
+            top: -99999px !important;
+            width: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
         }
     </style>
 </head>
@@ -254,9 +235,9 @@
         <header>
             <div>
                 <h1>E-Basar – Test Suite</h1>
-                <p>Automatisierte Regressionstests für Datenmodell, Filterlogik, Abrechnung & Masken</p>
+                <p>Automatisierte Regressionstests (funktioniert lokal per file:// und über Webserver)</p>
             </div>
-            <button type="button" id="btnRunTests" class="btn-run">Tests starten</button>
+            <button type="button" id="btnRunTests" class="btn-run">Tests erneut ausführen</button>
         </header>
 
         <div class="progress-bar-container">
@@ -273,19 +254,252 @@
         </div>
 
         <main class="suites-container" id="suitesContainer">
-            <p style="text-align: center; color: #718096; padding: 40px 0;">Klicken Sie auf „Tests starten“, um die Regressionstests auszuführen.</p>
+            <p style="text-align: center; color: #718096; padding: 40px 0;">Tests werden initialisiert...</p>
         </main>
     </div>
 
-    <!-- Hidden iframe loading the full app in a real browser DOM context -->
-    <iframe id="appFrame" src="../index.html"></iframe>
+    <!-- Hidden in-page sandbox matching index.html structure for direct script execution without iframe/CORS issues -->
+    <div id="testAppSandbox" aria-hidden="true">
+        <div class="container">
+            <header>
+                <span class="app-version">v0.9.9</span>
+                <button id="settingsBtn" class="settings-btn" aria-label="Einstellungen">⚙</button>
+                <div class="header-branding">
+                    <img id="appLogo" class="app-logo hidden" alt="">
+                    <div class="header-title-block">
+                        <h1 id="appTitleHeading">E-Basar!</h1>
+                        <p id="appSubtitleText">Bargeldloses Kassensystem für Basare</p>
+                    </div>
+                </div>
+                <div class="mode-switch">
+                    <button type="button" id="modeSeller" class="mode-btn" data-mode="seller">Verkäufer erfassen</button>
+                    <button type="button" id="modeSell" class="mode-btn active" data-mode="sell">Verkaufen</button>
+                    <button type="button" id="modePayout" class="mode-btn" data-mode="payout">An Verkäufer erstatten</button>
+                </div>
+            </header>
 
-    <!-- Test Definitions -->
+            <main>
+                <section id="panelSeller" class="mode-panel hidden">
+                    <div class="seller-toolbar">
+                        <div class="seller-search-row">
+                            <label for="sellerFilterParam" id="sellerFilterParamLabel">Objekt (exakt)</label>
+                            <div class="search-field-with-clear">
+                                <input type="text" id="sellerFilterParam" class="seller-filter" placeholder="" autocomplete="off">
+                                <button type="button" id="btnClearFilterParam" class="btn-clear-search">×</button>
+                            </div>
+                        </div>
+                        <div class="seller-search-row">
+                            <label for="sellerFilterSeller">Suche</label>
+                            <div class="search-field-with-clear">
+                                <input type="text" id="sellerFilterSeller" class="seller-filter" placeholder="Objekt, Verkäufer, IBAN" autocomplete="off">
+                                <button type="button" id="btnClearFilterSeller" class="btn-clear-search">×</button>
+                            </div>
+                        </div>
+                        <div class="seller-visibility">
+                            <label class="checkbox-label" id="labelShowPaid"><input type="checkbox" id="showPaid"> <span>Bezahlte einblenden</span></label>
+                            <label class="checkbox-label hidden" id="labelShowReimbursed"><input type="checkbox" id="showReimbursed"> <span>Bereits erstattete einblenden</span></label>
+                            <label class="checkbox-label" id="labelShowDeleted"><input type="checkbox" id="showDeleted"> <span>Gelöschte einblenden</span></label>
+                        </div>
+                        <button type="button" id="btnNewSeller" class="btn-primary">Neues Objekt anlegen</button>
+                    </div>
+                    <div id="sellerList" class="seller-list"></div>
+                    <div id="sellerSelectionBar" class="seller-selection-bar hidden">
+                        <span id="sellerSelectionBarText"></span>
+                        <button type="button" id="btnPaySelectedToSeller" class="btn-primary">Alle selektierten an Verkäufer zahlen</button>
+                    </div>
+                </section>
+            </main>
+
+            <footer>
+                <div class="footer-content">
+                    <div class="footer-buttons">
+                        <button type="button" id="viewObjects" class="btn-secondary">Export</button>
+                        <button type="button" id="viewHistory" class="btn-secondary">Protokoll</button>
+                        <button type="button" id="btnCsvExport" class="btn-secondary">Report</button>
+                    </div>
+                    <table id="footerSums" class="footer-sums-table">
+                        <tr><td class="footer-sum-label">Summe bezahlt:</td><td class="footer-sum-value"><span id="sumPaid">0,00</span> EUR</td></tr>
+                        <tr><td class="footer-sum-label">An Verkäufer gezahlt:</td><td class="footer-sum-value"><span id="sumSellerPaid">0,00</span> EUR</td></tr>
+                        <tr><td class="footer-sum-label">Summe Barzahlungen:</td><td class="footer-sum-value"><span id="sumBar">0,00</span> EUR</td></tr>
+                        <tr><td class="footer-sum-label">Summe bargeldlose Zahlungen ohne reg. Verkäufer:</td><td class="footer-sum-value"><span id="sumElectronicNoIban">0,00</span> EUR</td></tr>
+                        <tr><td class="footer-sum-label">Bilanz Kasse:</td><td class="footer-sum-value"><span id="balanceCash">0,00</span> EUR</td></tr>
+                        <tr><td class="footer-sum-label">Möglicher Ausgleich durch Barzahlung:</td><td class="footer-sum-value"><span id="sumPendingToSeller">0,00</span> EUR</td></tr>
+                    </table>
+                </div>
+            </footer>
+        </div>
+
+        <!-- Overlays -->
+        <div id="overlay" class="overlay hidden">
+            <button id="closeOverlay" class="close-btn">&times;</button>
+            <h2 id="qrOverlayTitle">QR Code</h2>
+            <div id="overlaySellerSwitch" class="overlay-seller-switch hidden">
+                <button type="button" id="overlayBtnSofort" class="overlay-switch-btn active" data-panel="sofort">Sofortüberweisung</button>
+                <button type="button" id="overlayBtnWero" class="overlay-switch-btn" data-panel="wero">WERO Zahlung</button>
+            </div>
+            <div id="overlayPanelSofort" class="overlay-panel">
+                <canvas id="qrCanvas"></canvas>
+                <span id="detailName"></span>
+                <span id="detailIban"></span>
+                <span id="detailAmount"></span>
+                <span id="detailSubject"></span>
+                <span id="detailDate"></span>
+            </div>
+            <div id="overlayPanelWero" class="overlay-panel hidden">
+                <canvas id="weroQrCanvas"></canvas>
+                <span id="weroDetailName"></span>
+                <span id="weroDetailAmount"></span>
+                <span id="weroDetailParam"></span>
+                <strong id="weroDetailParamLabel"></strong>
+            </div>
+            <div id="overlayPayActions" class="overlay-status-actions hidden">
+                <button type="button" id="overlayPayDoneElectronic">Bezahlt (elektronisch)</button>
+                <button type="button" id="overlayPayDoneCash">Bezahlt (bar)</button>
+            </div>
+            <div id="overlayPaySellerAction" class="overlay-status-actions hidden">
+                <div id="overlayPaySellerBarPaidRow" class="overlay-pay-seller-bar-row hidden">
+                    <input type="checkbox" id="overlayPaySellerBarPaidCheckbox" autocomplete="off">
+                </div>
+                <button type="button" id="overlayPaySellerDone">An Verkäufer ausgezahlt</button>
+                <button type="button" id="overlayPaySellerNotify">Verkäufer informieren</button>
+            </div>
+        </div>
+
+        <div id="settingsOverlay" class="overlay hidden">
+            <button id="closeSettings" class="close-btn">&times;</button>
+            <form id="settingsForm" class="form">
+                <select id="settingsLanguage" name="language"><option value="de">Deutsch</option></select>
+                <input type="text" id="settingsAppTitle" name="appTitle">
+                <input type="text" id="settingsAppSubtitle" name="appSubtitle">
+                <input type="file" id="settingsLogo" name="logo">
+                <button type="button" id="btnRemoveLogo">Remove</button>
+                <input type="text" id="settingsRecipientName" name="recipientName" required>
+                <input type="text" id="settingsIban" name="iban" required>
+                <input type="text" id="settingsUsageTemplate" name="usageTemplate" required>
+                <input type="text" id="settingsParamLabel" name="paramLabel" required>
+                <input type="number" id="settingsCommissionPercent" name="commissionPercent">
+                <input type="text" id="settingsWeroLink" name="weroLink">
+                <button type="button" id="btnScanWero">📷</button>
+                <button type="submit">Speichern</button>
+            </form>
+            <button type="button" id="btnExportData">Backup herunterladen</button>
+            <input type="file" id="importFileInput">
+            <button type="button" id="btnImportData">Backup einlesen</button>
+            <button type="button" id="btnResetWegedaten">Nur Verlaufsdaten löschen</button>
+            <button type="button" id="btnResetAll">Alle Daten löschen</button>
+        </div>
+
+        <div id="sellerFormOverlay" class="overlay hidden">
+            <button id="closeSellerForm" class="close-btn">&times;</button>
+            <h2 id="sellerFormTitle">Neues Objekt erfassen</h2>
+            <form id="sellerForm" class="form">
+                <input type="hidden" id="sellerEditId" name="sellerEditId" value="">
+                <div id="sellerFormToggleSellerRow" class="form-group hidden">
+                    <button type="button" id="btnToggleSellerCapture" class="btn-secondary">Verkäufer nacherfassen</button>
+                </div>
+                <div id="sellerFormSellerBlock">
+                    <input type="text" id="sellerName" name="sellerName" required>
+                    <div class="form-group" id="sellerIbanGroup">
+                        <input type="text" id="sellerIban" name="sellerIban" required>
+                        <span id="sellerIbanError"></span>
+                    </div>
+                    <a href="#" id="btnSellerTestSms">Testnachricht</a>
+                    <input type="tel" id="sellerPhone" name="sellerPhone" required>
+                </div>
+                <input type="text" id="sellerParam" name="sellerParam" required>
+                <input type="number" id="sellerPrice" name="sellerPrice" required step="0.01">
+                <div id="sellerStatusContainer" class="form-group hidden">
+                    <input type="checkbox" id="sellerEditPaid" name="paid">
+                    <div id="sellerPaidMethodRow" class="seller-paid-method-row hidden">
+                        <button type="button" class="btn-paid-method" data-method="elektronisch" id="btnPaidElectronic">Elektronisch</button>
+                        <button type="button" class="btn-paid-method" data-method="bar" id="btnPaidBar">Bar</button>
+                    </div>
+                    <input type="hidden" id="sellerEditPaidMethod" name="paidMethod" value="elektronisch">
+                    <div id="sellerFormSellerPaidRow" class="form-group seller-form-seller-paid-row">
+                        <input type="checkbox" id="sellerEditSellerPaid" name="sellerPaid">
+                    </div>
+                </div>
+                <button type="button" id="btnFillFromLast">Aus letzter Eingabe</button>
+                <button type="submit" id="btnSellerSubmit">Speichern</button>
+            </form>
+        </div>
+
+        <div id="sellerQuickFormOverlay" class="overlay hidden">
+            <button id="closeSellerQuickForm" class="close-btn">&times;</button>
+            <h2 id="sellerQuickFormTitle">Neues Objekt anlegen</h2>
+            <form id="sellerQuickForm" class="form">
+                <input type="text" id="quickParam" name="quickParam" required>
+                <input type="number" id="quickPrice" name="quickPrice" required step="0.01">
+                <button type="submit" id="btnQuickSellerSubmit">Speichern</button>
+            </form>
+        </div>
+
+        <div id="objectsOverlay" class="overlay hidden">
+            <button id="closeObjects" class="close-btn">&times;</button>
+            <button type="button" id="printObjects">Drucken</button>
+            <div id="objectsListActive"></div>
+            <div id="objectsListDeleted"></div>
+        </div>
+
+        <div id="historyOverlay" class="overlay hidden">
+            <button id="closeHistory" class="close-btn">&times;</button>
+            <button id="exportHistory">Als PDF exportieren</button>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <!-- 1. Isolate localStorage so test execution NEVER touches or corrupts real user data on file:// -->
+    <script>
+        (function() {
+            const memoryStorage = new Map();
+            const isolatedStorage = {
+                getItem(key) {
+                    return memoryStorage.has(key) ? memoryStorage.get(key) : null;
+                },
+                setItem(key, value) {
+                    memoryStorage.set(key, String(value));
+                },
+                removeItem(key) {
+                    memoryStorage.delete(key);
+                },
+                clear() {
+                    memoryStorage.clear();
+                },
+                key(index) {
+                    return Array.from(memoryStorage.keys())[index] || null;
+                },
+                get length() {
+                    return memoryStorage.size;
+                }
+            };
+
+            try {
+                Object.defineProperty(window, 'localStorage', {
+                    value: isolatedStorage,
+                    configurable: true,
+                    writable: true
+                });
+            } catch (e) {
+                Storage.prototype.getItem = function(k) { return isolatedStorage.getItem(k); };
+                Storage.prototype.setItem = function(k, v) { return isolatedStorage.setItem(k, v); };
+                Storage.prototype.removeItem = function(k) { return isolatedStorage.removeItem(k); };
+                Storage.prototype.clear = function() { return isolatedStorage.clear(); };
+            }
+
+            window.__isolatedTestStorage = isolatedStorage;
+        })();
+    </script>
+
+    <!-- 2. Load Application Scripts directly (works 100% on file:// and http://) -->
+    <script src="../i18n.js"></script>
+    <script src="../script.js"></script>
+
+    <!-- 3. Load Test Definitions -->
     <script src="test_cases.js"></script>
 
+    <!-- 4. Test Runner Controller -->
     <script>
         const btnRun = document.getElementById('btnRunTests');
-        const appFrame = document.getElementById('appFrame');
         const suitesContainer = document.getElementById('suitesContainer');
         const badgeTotal = document.getElementById('badgeTotal');
         const badgePassed = document.getElementById('badgePassed');
@@ -293,24 +507,17 @@
         const badgeDuration = document.getElementById('badgeDuration');
         const progressBar = document.getElementById('progressBar');
 
-        let isFrameLoaded = false;
-        appFrame.addEventListener('load', () => {
-            isFrameLoaded = true;
-        });
-
         btnRun.addEventListener('click', runAllTests);
 
-        async function runAllTests() {
-            if (!isFrameLoaded) {
-                await new Promise(res => {
-                    appFrame.addEventListener('load', res, { once: true });
-                });
-            }
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
 
-            const win = appFrame.contentWindow;
-            const doc = appFrame.contentDocument;
-            const app = win; // In the iframe, functions are globals on win
-
+        function runAllTests() {
             btnRun.disabled = true;
             btnRun.textContent = 'Läuft...';
             suitesContainer.innerHTML = '';
@@ -333,7 +540,7 @@
 
                 const header = document.createElement('div');
                 header.className = 'suite-header';
-                header.innerHTML = `<span>${escapeHtml(suite.name)}</span><span class="suite-badge" id="badge-${suite.name.replace(/\s+/g, '')}">Läuft...</span>`;
+                header.innerHTML = `<span>${escapeHtml(suite.name)}</span><span class="suite-badge" id="badge-${suite.name.replace(/[^a-zA-Z0-9]/g, '')}">Läuft...</span>`;
                 card.appendChild(header);
 
                 const list = document.createElement('ul');
@@ -343,63 +550,67 @@
 
                 for (const test of suite.tests) {
                     const testContext = {
-                        app,
+                        app: window,
                         reset() {
-                            win.localStorage.clear();
-                            const paramEl = doc.getElementById('sellerFilterParam');
+                            if (window.__isolatedTestStorage) {
+                                window.__isolatedTestStorage.clear();
+                            } else {
+                                window.localStorage.clear();
+                            }
+                            const paramEl = document.getElementById('sellerFilterParam');
                             if (paramEl) paramEl.value = '';
-                            const sellerEl = doc.getElementById('sellerFilterSeller');
+                            const sellerEl = document.getElementById('sellerFilterSeller');
                             if (sellerEl) sellerEl.value = '';
-                            const paidCb = doc.getElementById('showPaid');
+                            const paidCb = document.getElementById('showPaid');
                             if (paidCb) paidCb.checked = false;
-                            const reimbursedCb = doc.getElementById('showReimbursed');
+                            const reimbursedCb = document.getElementById('showReimbursed');
                             if (reimbursedCb) reimbursedCb.checked = false;
-                            const deletedCb = doc.getElementById('showDeleted');
+                            const deletedCb = document.getElementById('showDeleted');
                             if (deletedCb) deletedCb.checked = false;
-                            const listEl = doc.getElementById('sellerList');
+                            const listEl = document.getElementById('sellerList');
                             if (listEl) listEl.innerHTML = '';
-                            win.setMode('sell');
+                            if (typeof window.setMode === 'function') window.setMode('sell');
                         },
                         setMode(mode) {
-                            win.setMode(mode);
+                            if (typeof window.setMode === 'function') window.setMode(mode);
                         },
                         setShowPaid(bool) {
-                            const cb = doc.getElementById('showPaid');
+                            const cb = document.getElementById('showPaid');
                             if (cb) cb.checked = bool;
-                            win.renderSellerList();
+                            if (typeof window.renderSellerList === 'function') window.renderSellerList();
                         },
                         setShowReimbursed(bool) {
-                            const cb = doc.getElementById('showReimbursed');
+                            const cb = document.getElementById('showReimbursed');
                             if (cb) cb.checked = bool;
-                            win.renderSellerList();
+                            if (typeof window.renderSellerList === 'function') window.renderSellerList();
                         },
                         setShowDeleted(bool) {
-                            const cb = doc.getElementById('showDeleted');
+                            const cb = document.getElementById('showDeleted');
                             if (cb) cb.checked = bool;
-                            win.renderSellerList();
+                            if (typeof window.renderSellerList === 'function') window.renderSellerList();
                         },
                         getRenderedItems() {
-                            win.renderSellerList();
-                            const html = doc.getElementById('sellerList').innerHTML;
+                            if (typeof window.renderSellerList === 'function') window.renderSellerList();
+                            const html = document.getElementById('sellerList').innerHTML;
                             if (!html || html.includes('seller-empty')) return [];
-                            const allItems = win.getSellerItems();
+                            const allItems = window.getSellerItems ? window.getSellerItems() : [];
                             const matches = Array.from(html.matchAll(/data-id="([^"]+)"/g));
                             const seenIds = new Set();
                             const orderedIds = [];
                             for (const m of matches) {
                                 if (!seenIds.has(m[1])) {
-                                    seenIds.add(m[1]);
-                                    orderedIds.push(m[1]);
+                                  seenIds.add(m[1]);
+                                  orderedIds.push(m[1]);
                                 }
                             }
                             return orderedIds.map(id => allItems.find(i => i.id === id)).filter(Boolean);
                         },
                         getFooterSum(id) {
-                            const el = doc.getElementById(id);
+                            const el = document.getElementById(id);
                             return el ? el.textContent.trim() : '';
                         },
                         getElementById(id) {
-                            return doc.getElementById(id);
+                            return document.getElementById(id);
                         },
                         assert(cond, msg = 'Assertion failed') {
                             if (!cond) throw new Error(msg);
@@ -424,10 +635,6 @@
                         }
                     };
 
-                    // Also make global `document` inside test point to iframe doc
-                    const origDoc = window.document;
-                    window.document = doc;
-
                     const itemLi = document.createElement('li');
                     itemLi.className = 'test-item';
 
@@ -441,8 +648,6 @@
                         failed++;
                         suiteFailed++;
                         progressBar.classList.add('has-error');
-                    } finally {
-                        window.document = origDoc;
                     }
                     const tDuration = Math.round(performance.now() - tStart);
                     executed++;
@@ -467,7 +672,6 @@
                     }
                     list.appendChild(itemLi);
 
-                    // Update stats
                     const pct = Math.round((executed / total) * 100);
                     progressBar.style.width = pct + '%';
                     badgeTotal.textContent = `${total} Tests`;
@@ -479,13 +683,12 @@
                 card.appendChild(list);
                 const sBadge = card.querySelector('.suite-badge');
                 if (suiteFailed === 0) {
-                    sBadge.className = 'suite-badge success';
-                    sBadge.textContent = `${suite.tests.length} / ${suite.tests.length} OK`;
+                    sBadge.className = 'suite-badge pass';
+                    sBadge.textContent = 'Bestanden';
                 } else {
-                    sBadge.className = 'suite-badge failure';
-                    sBadge.textContent = `${suiteFailed} Fehler`;
+                    sBadge.className = 'suite-badge fail';
+                    sBadge.textContent = `${suiteFailed} fehlgeschlagen`;
                 }
-
                 suitesContainer.appendChild(card);
             }
 
@@ -493,18 +696,12 @@
             btnRun.textContent = 'Tests erneut ausführen';
         }
 
-        function escapeHtml(str) {
-            return String(str || '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
+        // Auto-run tests immediately upon page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', runAllTests);
+        } else {
+            runAllTests();
         }
-
-        // Auto-run tests when page loads
-        window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(runAllTests, 500);
-        });
     </script>
 </body>
 </html>
