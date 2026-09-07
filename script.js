@@ -1,4 +1,4 @@
-const APP_VERSION = '0.9.9';
+const APP_VERSION = '1.0.0';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
