@@ -161,6 +161,83 @@
                         t.assertFalse(loaded[0].sellerPaid, 'sellerPaid Fallback muss false sein');
                         t.assertEqual(loaded[0].paidAt, '2026-09-01T10:00:00.000Z', 'paidAt Fallback aus createdAt');
                     }
+                },
+                {
+                    name: 'Bezahlung mit Bargeld (paidMethod=\'bar\') setzt paidAt Zeitstempel gleichermaßen',
+                    fn(t) {
+                        t.reset();
+                        const item = t.app.addSellerItem({
+                            sellerName: 'Klaus',
+                            sellerIban: 'DE89370400440532013000',
+                            param: 'Rad Bar',
+                            price: 80.00
+                        });
+                        t.assertFalse(!!item.paidAt, 'Vor Bezahlung kein paidAt');
+                        t.app.setSellerPaid(item.id, 'bar');
+                        const updated = t.app.getSellerItems().find(i => i.id === item.id);
+                        t.assertTrue(updated.paid, 'paid muss true sein');
+                        t.assertEqual(updated.paidMethod, 'bar', 'paidMethod muss bar sein');
+                        t.assertTrue(!!updated.paidAt, 'paidAt muss auch bei Barzahlung gesetzt sein');
+                    }
+                },
+                {
+                    name: 'setSellerNotified setzt notifiedAt Zeitstempel und überschreibt bei erneutem Aufruf',
+                    fn(t) {
+                        t.reset();
+                        const item = t.app.addSellerItem({
+                            sellerName: 'Klaus',
+                            sellerIban: 'DE89370400440532013000',
+                            param: 'Rad Notified',
+                            price: 90.00
+                        });
+                        t.assertFalse(!!item.notifiedAt, 'Vorher kein notifiedAt');
+                        t.app.setSellerNotified(item.id);
+                        let updated = t.app.getSellerItems().find(i => i.id === item.id);
+                        t.assertTrue(!!updated.notifiedAt, 'notifiedAt muss gesetzt sein');
+                        
+                        // Erneuter Aufruf überschreibt
+                        t.app.updateSellerItem(item.id, { ...updated, notifiedAt: '2026-09-19T20:00:00.000Z' });
+                        updated = t.app.getSellerItems().find(i => i.id === item.id);
+                        t.assertEqual(updated.notifiedAt, '2026-09-19T20:00:00.000Z', 'notifiedAt wurde überschrieben');
+                    }
+                },
+                {
+                    name: 'renderSellerList stellt vorhandene Statuszeitstempel rechtsbündig untereinander dar',
+                    fn(t) {
+                        t.reset();
+                        const item = t.app.addSellerItem({
+                            sellerName: 'Max Mustermann',
+                            sellerIban: 'DE89370400440532013000',
+                            param: 'Rad Status',
+                            price: 150.00
+                        });
+                        t.setMode('seller');
+                        t.app.renderSellerList();
+                        let html = t.getRenderedHtml();
+                        t.assertTrue(html.includes('seller-item-timestamps'), 'Zeitstempel-Container muss vorhanden sein');
+                        t.assertTrue(html.includes('seller-timestamp-created'), 'Erfasst-Zeitstempel muss vorhanden sein');
+                        t.assertTrue(html.includes('Erfasst:'), 'Label Erfasst: muss gerendert werden');
+                        t.assertFalse(html.includes('seller-timestamp-paid'), 'Bezahlt darf noch nicht gerendert werden');
+
+                        // Bezahlen mit Bar
+                        t.app.setSellerPaid(item.id, 'bar');
+                        html = t.getRenderedHtml();
+                        t.assertTrue(html.includes('seller-timestamp-paid'), 'Bezahlt-Zeitstempel muss nach Barzahlung gerendert werden');
+                        t.assertTrue(html.includes('Bezahlt:'), 'Label Bezahlt: muss vorhanden sein');
+
+                        // Informieren per SMS
+                        t.app.setSellerNotified(item.id);
+                        html = t.getRenderedHtml();
+                        t.assertTrue(html.includes('seller-timestamp-notified'), 'Informiert-Zeitstempel muss nach Benachrichtigung gerendert werden');
+                        t.assertTrue(html.includes('Informiert:'), 'Label Informiert: muss vorhanden sein');
+
+                        // Auszahlen
+                        t.setShowPaid(true);
+                        t.app.setSellerPaidSeller(item.id);
+                        html = t.getRenderedHtml();
+                        t.assertTrue(html.includes('seller-timestamp-seller-paid'), 'Ausgezahlt-Zeitstempel muss nach Erstattung gerendert werden');
+                        t.assertTrue(html.includes('Ausgezahlt:'), 'Label Ausgezahlt: muss vorhanden sein');
+                    }
                 }
             ]
         },

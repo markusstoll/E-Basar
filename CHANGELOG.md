@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-19
+
+### Added
+- **Status Timestamps for 4 Key Process Steps**:
+  - `createdAt`: Captured when registering the object for sale.
+  - `paidAt`: Captured on buyer payment (supported equally for both cash and electronic payment methods).
+  - `notifiedAt`: Captured when notifying the seller via SMS / iMessage (`overlayPaySellerNotify`).
+  - `sellerPaidAt`: Captured when recording payout to seller.
+- **Right-Aligned Timestamps Display**:
+  - Timestamps are displayed right-aligned and stacked vertically (`.seller-item-timestamps`) with tabular figures.
+  - Responsive styling adjusting cleanly on mobile viewports (`max-width: 600px`).
+- **Regression Tests**: Added 3 new tests in Suite 2 (total 33 tests) covering cash `paidAt`, `notifiedAt`, timestamp overwriting, and vertical rendering.
+
 ## [1.0.0] - 2026-09-07
 
 ### Added
@@ -88,7 +101,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.0.0...HEAD
+[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.0.1...HEAD
+[1.0.1]: https://github.com/markusstoll/E-Basar/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/markusstoll/E-Basar/compare/0.9.9...1.0.0
 [0.9.9]: https://github.com/markusstoll/E-Basar/compare/0.9.7...0.9.9
 [0.9.7]: https://github.com/markusstoll/E-Basar/compare/0.9.6...0.9.7

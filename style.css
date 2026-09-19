@@ -1126,6 +1126,58 @@ footer {
     color: #555;
 }
 
+.seller-item-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.seller-item-main {
+    flex: 1;
+    min-width: 240px;
+}
+
+.seller-item-timestamps {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    font-size: 11px;
+    color: #666;
+    gap: 3px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.seller-timestamp {
+    display: inline-flex;
+    justify-content: flex-end;
+    white-space: nowrap;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+}
+
+.seller-timestamp-created {
+    color: #718096;
+}
+
+.seller-timestamp-paid {
+    color: #276749;
+    font-weight: 500;
+}
+
+.seller-timestamp-notified {
+    color: #744210;
+    font-weight: 500;
+}
+
+.seller-timestamp-seller-paid {
+    color: #2b6cb0;
+    font-weight: 600;
+}
+
 .seller-empty {
     text-align: center;
     padding: 40px 20px;
@@ -1540,6 +1592,24 @@ footer {
 
     .history-item-details {
         grid-template-columns: 1fr;
+    }
+
+    .seller-item-body {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .seller-item-timestamps {
+        align-items: flex-start;
+        text-align: left;
+        margin-left: 0;
+        padding-top: 6px;
+        border-top: 1px dashed #e2e8f0;
+        width: 100%;
+    }
+
+    .seller-timestamp {
+        justify-content: flex-start;
     }
 }
 

@@ -1,4 +1,4 @@
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -197,6 +197,14 @@ function setupEventListeners() {
         const text = window.i18n ? window.i18n.tOr('sms.paymentConfirm', 'Die Bezahlung über ' + amountStr + ' EUR für ' + paramLabel + ' ' + param + ' wurde an ' + ibanDisplay + ' überwiesen, bitte bestätigen Sie den Zahlungseingang. Sie müssen nicht mehr zur Kasse kommen.', [amountStr, paramLabel, param, ibanDisplay]) : ('Die Bezahlung über ' + amountStr + ' EUR für ' + paramLabel + ' ' + param + ' wurde an ' + ibanDisplay + ' überwiesen, bitte bestätigen Sie den Zahlungseingang. Sie müssen nicht mehr zur Kasse kommen.');
         const phone = (item && (item.phone || '').trim()) ? (item.phone || '').trim().replace(/\s/g, '') : '';
         const url = phone ? 'sms:' + encodeURIComponent(phone) + '?body=' + encodeURIComponent(text) : 'sms:?body=' + encodeURIComponent(text);
+
+        // Timestamp für "per SMS / iMessage informiert" setzen
+        if (currentPaySellerItemIds && currentPaySellerItemIds.length > 0) {
+            setSellerItemsNotified(currentPaySellerItemIds);
+        } else if (currentPaySellerItemId) {
+            setSellerNotified(currentPaySellerItemId);
+        }
+
         window.location.href = url;
     });
 
@@ -476,18 +484,19 @@ function updateSellerItem(id, data) {
     const idx = items.findIndex(i => i.id === id);
     if (idx === -1) return;
     const oldItem = items[idx];
-    let paidAt = data.paidAt || oldItem.paidAt;
+    let paidAt = data.paidAt !== undefined ? data.paidAt : oldItem.paidAt;
     if (data.paid && !paidAt) {
         paidAt = new Date().toISOString();
     } else if (!data.paid) {
         paidAt = null;
     }
-    let sellerPaidAt = data.sellerPaidAt || oldItem.sellerPaidAt;
+    let sellerPaidAt = data.sellerPaidAt !== undefined ? data.sellerPaidAt : oldItem.sellerPaidAt;
     if (data.sellerPaid && !sellerPaidAt) {
         sellerPaidAt = new Date().toISOString();
     } else if (!data.sellerPaid) {
         sellerPaidAt = null;
     }
+    let notifiedAt = data.notifiedAt !== undefined ? data.notifiedAt : oldItem.notifiedAt;
     items[idx] = {
         ...oldItem,
         sellerName: data.sellerName.trim(),
@@ -499,7 +508,8 @@ function updateSellerItem(id, data) {
         paidMethod: data.paidMethod,
         paidAt: paidAt,
         sellerPaid: data.sellerPaid,
-        sellerPaidAt: sellerPaidAt
+        sellerPaidAt: sellerPaidAt,
+        notifiedAt: notifiedAt
     };
     saveSellerItems(items);
     updateFooterSums();
@@ -511,7 +521,7 @@ function setSellerPaid(id, method) {
     if (item) {
         item.paid = true;
         item.paidMethod = method === 'bar' ? 'bar' : 'elektronisch';
-        item.paidAt = item.paidAt || new Date().toISOString();
+        item.paidAt = new Date().toISOString();
         saveSellerItems(items);
         renderSellerList();
         updateFooterSums();
@@ -523,10 +533,38 @@ function setSellerPaidSeller(id) {
     const item = items.find(i => i.id === id);
     if (item) { 
         item.sellerPaid = true;
-        item.sellerPaidAt = item.sellerPaidAt || new Date().toISOString();
+        item.sellerPaidAt = new Date().toISOString();
         saveSellerItems(items); 
         renderSellerList(); 
         updateFooterSums();
+    }
+}
+
+function setSellerNotified(id) {
+    const items = getSellerItems();
+    const item = items.find(i => i.id === id);
+    if (item) {
+        item.notifiedAt = new Date().toISOString();
+        saveSellerItems(items);
+        renderSellerList();
+    }
+}
+
+function setSellerItemsNotified(ids) {
+    if (!ids || ids.length === 0) return;
+    const items = getSellerItems();
+    const now = new Date().toISOString();
+    let changed = false;
+    ids.forEach(id => {
+        const item = items.find(i => i.id === id);
+        if (item) {
+            item.notifiedAt = now;
+            changed = true;
+        }
+    });
+    if (changed) {
+        saveSellerItems(items);
+        renderSellerList();
     }
 }
 
@@ -1114,10 +1152,41 @@ function renderSellerList() {
         const displayName = (item.sellerName || '').trim() || '—';
         const displayIban = (item.sellerIban || '').trim() ? formatIBAN(item.sellerIban) : '—';
         const displayPhone = (item.phone || '').trim() || '—';
-        const paidDateText = item.paidAt ? formatDate(item.paidAt) : '';
-        const paidDateDetail = paidDateText
-            ? '<span>' + (window.i18n ? window.i18n.tOr('detail.paidAt', 'Bezahlt: ' + paidDateText, [paidDateText]) : ('Bezahlt: ' + paidDateText)) + '</span>'
+
+        const timestamps = [];
+        if (item.createdAt) {
+            const dt = formatDate(item.createdAt);
+            timestamps.push({
+                key: 'created',
+                label: window.i18n ? window.i18n.tOr('detail.createdAt', 'Erfasst: ' + dt, [dt]) : ('Erfasst: ' + dt)
+            });
+        }
+        if (item.paid && item.paidAt) {
+            const dt = formatDate(item.paidAt);
+            timestamps.push({
+                key: 'paid',
+                label: window.i18n ? window.i18n.tOr('detail.paidAt', 'Bezahlt: ' + dt, [dt]) : ('Bezahlt: ' + dt)
+            });
+        }
+        if (hasSeller && item.notifiedAt) {
+            const dt = formatDate(item.notifiedAt);
+            timestamps.push({
+                key: 'notified',
+                label: window.i18n ? window.i18n.tOr('detail.notifiedAt', 'Informiert: ' + dt, [dt]) : ('Informiert: ' + dt)
+            });
+        }
+        if (hasSeller && item.sellerPaid && item.sellerPaidAt) {
+            const dt = formatDate(item.sellerPaidAt);
+            timestamps.push({
+                key: 'seller-paid',
+                label: window.i18n ? window.i18n.tOr('detail.sellerPaidAt', 'Ausgezahlt: ' + dt, [dt]) : ('Ausgezahlt: ' + dt)
+            });
+        }
+
+        const timestampsHtml = timestamps.length > 0
+            ? `<div class="seller-item-timestamps">${timestamps.map(ts => `<div class="seller-timestamp seller-timestamp-${ts.key}">${escapeHtml(ts.label)}</div>`).join('')}</div>`
             : '';
+
         return `
         <div class="seller-item ${item.deleted ? 'seller-item-deleted' : ''} ${item.paid ? 'seller-item-paid' : ''} ${item.sellerPaid ? 'seller-item-seller-paid' : ''}">
             <div class="seller-item-header">
@@ -1125,11 +1194,15 @@ function renderSellerList() {
                 <strong>${escapeHtml(displayName)}</strong>
                 <span class="seller-item-badges">${badges.join('')}</span>
             </div>
-            <div class="seller-item-meta">${paramText} · ${typeof item.price === 'number' ? formatAmountDE(item.price) : '—'} EUR</div>
-            <div class="seller-item-details">
-                <span>IBAN: ${displayIban}</span>
-                <span>Tel: ${escapeHtml(displayPhone)}</span>
-                ${paidDateDetail}
+            <div class="seller-item-body">
+                <div class="seller-item-main">
+                    <div class="seller-item-meta">${paramText} · ${typeof item.price === 'number' ? formatAmountDE(item.price) : '—'} EUR</div>
+                    <div class="seller-item-details">
+                        <span>IBAN: ${displayIban}</span>
+                        <span>Tel: ${escapeHtml(displayPhone)}</span>
+                    </div>
+                </div>
+                ${timestampsHtml}
             </div>
             ${actions}
         </div>
@@ -2026,6 +2099,8 @@ if (typeof module !== 'undefined' && module.exports) {
         setSellerPaid,
         setSellerPaidSeller,
         setSellerDeleted,
+        setSellerNotified,
+        setSellerItemsNotified,
         getMode,
         setMode,
         setModeUI,
