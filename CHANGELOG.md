@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-09-20
+
+### Added
+- **Test-Modus für alle 5 Szenarien in einer Datenbank**:
+  - `loadTestScenario()` Funktion zur automatisierten Generierung aller 5 Kernszenarien in der gleichen Datenbank:
+    1. Objekt mit IBAN registriert (noch unbezahlt)
+    2. Objekt ohne IBAN registriert (noch unbezahlt)
+    3. Registriertes Objekt bar bezahlt (Auszahlung offen)
+    4. Nicht registriertes Objekt elektronisch bezahlt (Zahlungseingang Basar)
+    5. Registriertes Objekt bar bezahlt und elektronisch ausbezahlt (abgeschlossen)
+  - Neuer Button im Einstellungsmenü: *„Test-Szenarien laden (5 Testobjekte)“* zum direkten Testen in der Live-Web-App.
+- **End-to-End Regression Suite (Suite 9)**:
+  - 4 neue automatisierte Tests (Gesamtzahl: 40 Tests) zur umfassenden Verifikation aller Objektstatus in allen Modi (`seller`, `sell`, `payout`), aller Kassenabrechnungs-Summen (`updateFooterSums`) und aller 3 CSV-Report-Tabellen (`getReportData`).
+
 ## [1.1.1] - 2026-09-20
 
 ### Fixed
@@ -126,7 +140,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.1...HEAD
+[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.2...HEAD
+[1.1.2]: https://github.com/markusstoll/E-Basar/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/markusstoll/E-Basar/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/markusstoll/E-Basar/compare/1.0.1...1.1.0
 [1.0.1]: https://github.com/markusstoll/E-Basar/compare/1.0.0...1.0.1

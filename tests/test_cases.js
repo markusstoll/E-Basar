@@ -785,6 +785,176 @@
                     }
                 }
             ]
+        },
+        {
+            name: '9. Test-Modus: End-to-End Prüfung aller Szenarien in einer Datenbank',
+            tests: [
+                {
+                    name: 'Szenario-Initialisierung und Prüfung aller Objektstatus im Datenmodell',
+                    fn(t) {
+                        t.reset();
+                        const items = t.app.loadTestScenario(null, true);
+                        t.assertEqual(items.length, 5, 'Es müssen genau 5 Szenario-Objekte angelegt werden');
+
+                        const item1 = items.find(i => i.param.includes('Rad 1'));
+                        const item2 = items.find(i => i.param.includes('Rad 2'));
+                        const item3 = items.find(i => i.param.includes('Rad 3'));
+                        const item4 = items.find(i => i.param.includes('Rad 4'));
+                        const item5 = items.find(i => i.param.includes('Rad 5'));
+
+                        // 1. Objekt mit IBAN registriert
+                        t.assertTrue(!!item1.sellerIban, 'Objekt 1 muss IBAN haben');
+                        t.assertFalse(item1.paid, 'Objekt 1 darf nicht bezahlt sein');
+                        t.assertFalse(item1.sellerPaid, 'Objekt 1 darf nicht an Verkäufer ausgezahlt sein');
+                        t.assertFalse(!!item1.paidAt, 'Objekt 1 darf keinen paidAt Zeitstempel haben');
+
+                        // 2. Objekt ohne IBAN registriert
+                        t.assertEqual(item2.sellerIban, '', 'Objekt 2 darf keine IBAN haben');
+                        t.assertFalse(item2.paid, 'Objekt 2 darf nicht bezahlt sein');
+                        t.assertFalse(item2.sellerPaid, 'Objekt 2 darf nicht an Verkäufer ausgezahlt sein');
+
+                        // 3. registriertes Objekt bar bezahlt
+                        t.assertTrue(!!item3.sellerIban, 'Objekt 3 muss IBAN haben');
+                        t.assertTrue(item3.paid, 'Objekt 3 muss bezahlt sein');
+                        t.assertEqual(item3.paidMethod, 'bar', 'Objekt 3 muss bar bezahlt sein');
+                        t.assertTrue(!!item3.paidAt, 'Objekt 3 muss paidAt Zeitstempel haben');
+                        t.assertFalse(item3.sellerPaid, 'Objekt 3 darf noch nicht an Verkäufer ausgezahlt sein');
+
+                        // 4. nicht registriertes Objekt el. bezahlt
+                        t.assertEqual(item4.sellerIban, '', 'Objekt 4 darf keine IBAN haben');
+                        t.assertEqual(item4.sellerName, '', 'Objekt 4 darf keinen Verkäufernamen haben');
+                        t.assertTrue(item4.paid, 'Objekt 4 muss bezahlt sein');
+                        t.assertEqual(item4.paidMethod, 'elektronisch', 'Objekt 4 muss elektronisch bezahlt sein');
+                        t.assertTrue(!!item4.paidAt, 'Objekt 4 muss paidAt Zeitstempel haben');
+                        t.assertFalse(item4.sellerPaid, 'Objekt 4 darf nicht an Verkäufer ausgezahlt sein');
+
+                        // 5. registriertes Objekt bar bezahlt und elektronisch ausbezahlt
+                        t.assertTrue(!!item5.sellerIban, 'Objekt 5 muss IBAN haben');
+                        t.assertTrue(item5.paid, 'Objekt 5 muss bezahlt sein');
+                        t.assertEqual(item5.paidMethod, 'bar', 'Objekt 5 muss bar bezahlt sein');
+                        t.assertTrue(!!item5.paidAt, 'Objekt 5 muss paidAt Zeitstempel haben');
+                        t.assertTrue(item5.sellerPaid, 'Objekt 5 muss an Verkäufer ausgezahlt sein');
+                        t.assertTrue(!!item5.sellerPaidAt, 'Objekt 5 muss sellerPaidAt Zeitstempel haben');
+                    }
+                },
+                {
+                    name: 'Filter- und Anzeigeprüfung aller Objekte in allen 3 Modi (seller, sell, payout)',
+                    fn(t) {
+                        t.reset();
+                        t.app.loadTestScenario(null, true);
+
+                        // Modus sell:
+                        t.setMode('sell');
+                        t.setShowPaid(false);
+                        let rendered = t.getRenderedItems();
+                        t.assertEqual(rendered.length, 2, 'In sell (showPaid=false) dürfen nur die 2 unbezahlten Objekte sichtbar sein');
+                        t.assertTrue(rendered.some(i => i.param.includes('Rad 1')));
+                        t.assertTrue(rendered.some(i => i.param.includes('Rad 2')));
+
+                        t.setShowPaid(true);
+                        rendered = t.getRenderedItems();
+                        t.assertEqual(rendered.length, 5, 'In sell (showPaid=true) müssen alle 5 Objekte sichtbar sein');
+
+                        // Modus seller:
+                        t.setMode('seller');
+                        t.setShowPaid(false);
+                        rendered = t.getRenderedItems();
+                        t.assertEqual(rendered.length, 3, 'In seller (showPaid=false) müssen die 2 unbezahlten und das 1 bezahlte-aber-offene Objekt mit IBAN sichtbar sein');
+                        t.assertTrue(rendered.some(i => i.param.includes('Rad 1')));
+                        t.assertTrue(rendered.some(i => i.param.includes('Rad 2')));
+                        t.assertTrue(rendered.some(i => i.param.includes('Rad 3')));
+
+                        t.setShowPaid(true);
+                        rendered = t.getRenderedItems();
+                        t.assertEqual(rendered.length, 5, 'In seller (showPaid=true) müssen alle 5 Objekte sichtbar sein');
+
+                        // Modus payout:
+                        t.setMode('payout');
+                        t.setShowReimbursed(false);
+                        rendered = t.getRenderedItems();
+                        t.assertEqual(rendered.length, 1, 'In payout (showReimbursed=false) darf NUR Objekt 3 (bezahlt mit IBAN, offen) sichtbar sein');
+                        t.assertEqual(rendered[0].param, 'Rad 3 - Reg Bar Bezahlt');
+
+                        t.setShowReimbursed(true);
+                        rendered = t.getRenderedItems();
+                        t.assertEqual(rendered.length, 2, 'In payout (showReimbursed=true) dürfen NUR Objekt 3 und Objekt 5 (beide mit IBAN) sichtbar sein');
+                        t.assertTrue(rendered.some(i => i.param.includes('Rad 3')));
+                        t.assertTrue(rendered.some(i => i.param.includes('Rad 5')));
+                        t.assertFalse(rendered.some(i => i.param.includes('Rad 1')), 'Objekt 1 (unbezahlt) darf in payout nie erscheinen');
+                        t.assertFalse(rendered.some(i => i.param.includes('Rad 2')), 'Objekt 2 (ohne IBAN) darf in payout nie erscheinen');
+                        t.assertFalse(rendered.some(i => i.param.includes('Rad 4')), 'Objekt 4 (ohne IBAN) darf in payout nie erscheinen');
+                    }
+                },
+                {
+                    name: 'Prüfung aller angezeigten Summen in der Kassenabrechnung (updateFooterSums)',
+                    fn(t) {
+                        t.reset();
+                        t.app.loadTestScenario(null, true);
+                        t.app.updateFooterSums();
+
+                        // Erwartete Werte:
+                        // Bezahlung Käufer gesamt (Objekt 3 [80] + Objekt 4 [60] + Objekt 5 [120]): 260,00 EUR
+                        t.assertEqual(t.getFooterSum('sumPaid'), '260,00', 'Summe bezahlt Käufer');
+                        // Bar bezahlt (Objekt 3 [80] + Objekt 5 [120]): 200,00 EUR
+                        t.assertEqual(t.getFooterSum('sumBar'), '200,00', 'Summe Bar');
+                        // Elektronisch ohne IBAN (Objekt 4 [60]): Anzeige -54,00 EUR (- 60 * 0,9)
+                        t.assertEqual(t.getFooterSum('sumElectronicNoIban'), '-54,00', 'Elektronisch ohne IBAN abzgl. Provision');
+                        // An Verkäufer ausgezahlt (Objekt 5 [120 * 0,9]): 108,00 EUR
+                        t.assertEqual(t.getFooterSum('sumSellerPaid'), '108,00', 'Summe an Verkäufer gezahlt');
+                        // Noch zu verkaufen / ausstehend mit IBAN (Objekt 1 [100]): 100,00 EUR
+                        t.assertEqual(t.getFooterSum('sumPendingToSeller'), '100,00', 'Summe noch ausstehend');
+                        // Kassenbestand Barkasse (200 - 54): 146,00 EUR
+                        t.assertEqual(t.getFooterSum('balanceCash'), '146,00', 'Kassenbestand Barkasse');
+                    }
+                },
+                {
+                    name: 'Prüfung aller Reports und CSV-Export (getReportData)',
+                    fn(t) {
+                        t.reset();
+                        t.app.loadTestScenario(null, true);
+                        const reportData = t.app.getReportData();
+                        t.assertTrue(reportData !== null, 'ReportData darf nicht null sein');
+                        t.assertEqual(reportData.tables.length, 3, 'Es müssen 3 Report-Tabellen erzeugt werden');
+
+                        // Tabelle 1: Bezahlung bar, Zahlung an Verkäufer elektronisch (Objekt 5)
+                        const t1 = reportData.tables[0];
+                        t.assertEqual(t1.rows.length, 1, 'Tabelle 1 muss genau 1 Zeile haben (Objekt 5)');
+                        t.assertEqual(t1.rows[0][0], 'Rad 5 - Reg Bar El Ausgezahlt');
+                        t.assertEqual(t1.rows[0][1], 'David Done');
+                        t.assertEqual(t1.rows[0][2], 'DE23111155555555555555');
+                        t.assertEqual(t1.rows[0][3], '120,00');
+                        t.assertEqual(t1.rows[0][4], '108,00');
+                        t.assertEqual(t1.sumRow[3], '120,00');
+                        t.assertEqual(t1.sumRow[4], '108,00');
+                        t.assertEqual(t1.impactRow[3], '120,00', 'Kassenbestand Auswirkung: +120,00');
+                        t.assertEqual(t1.impactOnAccountRow[4], '-108,00', 'Konto Auswirkung: -108,00');
+
+                        // Tabelle 2: Bezahlung elektronisch, Zahlung an Verkäufer bar (Objekt 4)
+                        const t2 = reportData.tables[1];
+                        t.assertEqual(t2.rows.length, 1, 'Tabelle 2 muss genau 1 Zeile haben (Objekt 4)');
+                        t.assertEqual(t2.rows[0][0], 'Rad 4 - Anonym El Bezahlt');
+                        t.assertEqual(t2.rows[0][3], '60,00');
+                        t.assertEqual(t2.rows[0][4], '54,00');
+                        t.assertEqual(t2.sumRow[3], '60,00');
+                        t.assertEqual(t2.sumRow[4], '54,00');
+                        t.assertEqual(t2.impactRow[4], '-54,00', 'Kassenbestand Auswirkung: -54,00');
+                        t.assertEqual(t2.impactOnAccountRow[3], '60,00', 'Konto Auswirkung: +60,00');
+
+                        // Tabelle 3: Bezahlung elektronisch, Zahlung an Verkäufer elektronisch (kein Objekt)
+                        const t3 = reportData.tables[2];
+                        t.assertEqual(t3.rows.length, 0, 'Tabelle 3 hat 0 Zeilen');
+
+                        // CSV-Prüfung
+                        t.assertTrue(reportData.csv.startsWith('\uFEFF'), 'CSV muss mit UTF-8 BOM beginnen');
+                        t.assertTrue(reportData.csv.includes('Rad 5 - Reg Bar El Ausgezahlt'));
+                        t.assertTrue(reportData.csv.includes('Rad 4 - Anonym El Bezahlt'));
+                        t.assertTrue(reportData.csv.includes('120,00'));
+                        t.assertTrue(reportData.csv.includes('108,00'));
+                        t.assertTrue(reportData.csv.includes('60,00'));
+                        t.assertTrue(reportData.csv.includes('54,00'));
+                    }
+                }
+            ]
         }
     ];
 

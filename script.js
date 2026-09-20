@@ -1,4 +1,4 @@
-const APP_VERSION = '1.1.1';
+const APP_VERSION = '1.1.2';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -298,6 +298,16 @@ function setupEventListeners() {
     viewHistoryBtn.addEventListener('click', showHistory);
     const btnCsvExport = document.getElementById('btnCsvExport');
     if (btnCsvExport) btnCsvExport.addEventListener('click', openReport);
+    const btnLoadTestScenario = document.getElementById('btnLoadTestScenario');
+    if (btnLoadTestScenario) {
+        btnLoadTestScenario.addEventListener('click', function () {
+            const msg = window.i18n ? window.i18n.tOr('msg.confirmLoadTestScenario', 'Möchten Sie die 5 Test-Szenarien in die Datenbank laden? (Vorhandene Objekte werden ersetzt)') : 'Möchten Sie die 5 Test-Szenarien in die Datenbank laden? (Vorhandene Objekte werden ersetzt)';
+            if (!confirm(msg)) return;
+            loadTestScenario(null, true);
+            closeSettingsOverlay();
+            alert(window.i18n ? window.i18n.tOr('msg.testScenarioLoaded', '5 Test-Szenarien wurden erfolgreich in die Datenbank geladen!') : '5 Test-Szenarien wurden erfolgreich in die Datenbank geladen!');
+        });
+    }
     if (btnResetAll) btnResetAll.addEventListener('click', resetAllData);
     const btnResetWegedaten = document.getElementById('btnResetWegedaten');
     if (btnResetWegedaten) btnResetWegedaten.addEventListener('click', resetWegedatenOnly);
@@ -2165,6 +2175,122 @@ function resetAllData() {
     }
 }
 
+const TEST_SCENARIO_ITEMS = [
+    {
+        // 1. Objekt mit IBAN registriert
+        sellerName: 'Anna Alt',
+        sellerIban: 'DE21111155555555555555',
+        phone: '+49 170 1111111',
+        param: 'Rad 1 - Reg Mit IBAN',
+        price: 100.00,
+        paid: false,
+        sellerPaid: false,
+        paidMethod: null,
+        paidAt: null,
+        notifiedAt: null,
+        sellerPaidAt: null
+    },
+    {
+        // 2. Objekt ohne IBAN registriert
+        sellerName: 'Bernd Bar',
+        sellerIban: '',
+        phone: '',
+        param: 'Rad 2 - Reg Ohne IBAN',
+        price: 50.00,
+        paid: false,
+        sellerPaid: false,
+        paidMethod: null,
+        paidAt: null,
+        notifiedAt: null,
+        sellerPaidAt: null
+    },
+    {
+        // 3. registriertes Objekt bar bezahlt
+        sellerName: 'Clara Cash',
+        sellerIban: 'DE22111155555555555555',
+        phone: '+49 170 2222222',
+        param: 'Rad 3 - Reg Bar Bezahlt',
+        price: 80.00,
+        paid: true,
+        paidMethod: 'bar',
+        paidAt: '2026-09-20T10:00:00.000Z',
+        sellerPaid: false,
+        notifiedAt: '2026-09-20T09:59:00.000Z',
+        sellerPaidAt: null
+    },
+    {
+        // 4. nicht registriertes Objekt el. bezahlt
+        sellerName: '',
+        sellerIban: '',
+        phone: '',
+        param: 'Rad 4 - Anonym El Bezahlt',
+        price: 60.00,
+        paid: true,
+        paidMethod: 'elektronisch',
+        paidAt: '2026-09-20T11:00:00.000Z',
+        sellerPaid: false,
+        notifiedAt: null,
+        sellerPaidAt: null
+    },
+    {
+        // 5. registriertes Objekt bar bezahlt und elektronisch ausbezahlt
+        sellerName: 'David Done',
+        sellerIban: 'DE23111155555555555555',
+        phone: '+49 170 3333333',
+        param: 'Rad 5 - Reg Bar El Ausgezahlt',
+        price: 120.00,
+        paid: true,
+        paidMethod: 'bar',
+        paidAt: '2026-09-20T09:00:00.000Z',
+        sellerPaid: true,
+        notifiedAt: '2026-09-20T08:58:00.000Z',
+        sellerPaidAt: '2026-09-20T12:00:00.000Z'
+    }
+];
+
+function loadTestScenario(customSettings, clearExisting = false) {
+    if (clearExisting) {
+        saveSellerItems([]);
+    }
+    const defaultSettings = {
+        recipientName: 'Basar e.V.',
+        iban: 'DE89370400440532013000',
+        usageTemplate: 'Rechnung $objekt',
+        paramLabel: 'Fahrrad',
+        commissionPercent: 10,
+        weroLink: '',
+        appTitle: 'E-Basar Test-Szenario',
+        appSubtitle: 'Testdaten für alle Szenarien',
+        appLogoDataUrl: ''
+    };
+    saveSettings({ ...defaultSettings, ...(customSettings || {}) });
+    const createdItems = [];
+    TEST_SCENARIO_ITEMS.forEach(spec => {
+        const item = addSellerItem({
+            sellerName: spec.sellerName,
+            sellerIban: spec.sellerIban,
+            phone: spec.phone,
+            param: spec.param,
+            price: spec.price
+        });
+        if (spec.paid) {
+            updateSellerItem(item.id, {
+                ...item,
+                paid: true,
+                paidMethod: spec.paidMethod,
+                paidAt: spec.paidAt,
+                sellerPaid: spec.sellerPaid,
+                sellerPaidAt: spec.sellerPaidAt,
+                notifiedAt: spec.notifiedAt
+            });
+        }
+        createdItems.push(getSellerItems().find(i => i.id === item.id));
+    });
+    renderSellerList();
+    updateFooterSums();
+    return createdItems;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         STORAGE_KEY,
@@ -2203,6 +2329,9 @@ if (typeof module !== 'undefined' && module.exports) {
         getSelectedSellerItemIds,
         clearSelectedSellerItemIds,
         updateSellerSelectionBar,
+        getReportData,
+        loadTestScenario,
+        TEST_SCENARIO_ITEMS,
         setupEventListeners
     };
 }
