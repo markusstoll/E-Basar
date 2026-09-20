@@ -1,6 +1,6 @@
 {
   "name": "ebasar",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "E-Basar - Webapp für Basarabwicklungen: Echtzeitüberweisung and WERO for buyers/sellers, EPC QR codes, balancing for Barkasse reconciliation.",
   "main": "script.js",
   "scripts": {

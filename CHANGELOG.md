@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-09-20
+
+### Changed
+- **Hinweis auf Datenüberschreibung bei Test-Szenarien**:
+  - Button-Beschriftung und Bestätigungsdialog für „Test-Szenarien laden“ verdeutlichen nun explizit, dass der bestehende Datenbestand in der Datenbank dabei überschrieben wird.
+
 ## [1.1.2] - 2026-09-20
 
 ### Added
@@ -140,7 +146,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.2...HEAD
+[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.3...HEAD
+[1.1.3]: https://github.com/markusstoll/E-Basar/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/markusstoll/E-Basar/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/markusstoll/E-Basar/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/markusstoll/E-Basar/compare/1.0.1...1.1.0

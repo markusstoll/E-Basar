@@ -1,4 +1,4 @@
-const APP_VERSION = '1.1.2';
+const APP_VERSION = '1.1.3';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -301,7 +301,7 @@ function setupEventListeners() {
     const btnLoadTestScenario = document.getElementById('btnLoadTestScenario');
     if (btnLoadTestScenario) {
         btnLoadTestScenario.addEventListener('click', function () {
-            const msg = window.i18n ? window.i18n.tOr('msg.confirmLoadTestScenario', 'Möchten Sie die 5 Test-Szenarien in die Datenbank laden? (Vorhandene Objekte werden ersetzt)') : 'Möchten Sie die 5 Test-Szenarien in die Datenbank laden? (Vorhandene Objekte werden ersetzt)';
+            const msg = window.i18n ? window.i18n.tOr('msg.confirmLoadTestScenario', 'Möchten Sie die 5 Test-Szenarien in die Datenbank laden? Achtung: Der aktuelle Bestand wird dabei überschrieben!') : 'Möchten Sie die 5 Test-Szenarien in die Datenbank laden? Achtung: Der aktuelle Bestand wird dabei überschrieben!';
             if (!confirm(msg)) return;
             loadTestScenario(null, true);
             closeSettingsOverlay();
