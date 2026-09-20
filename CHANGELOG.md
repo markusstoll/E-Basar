@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-09-20
+
+### Fixed
+- **Payout-Bestätigung im Overlay & Schließen-Warnung (Regression Fix)**:
+  - Button `#overlayPaySellerDone` im Overlay mit Beschriftung *„Auszahlung an Verkäufer bestätigen“* (`overlay.paidToSeller`) ermöglicht nun das direkte Vermerken der Auszahlung mit Zeitstempel (`sellerPaid: true`, `sellerPaidAt`).
+  - Beim Schließen des Overlays über den Schließen-Button (`#closeOverlay`) wird bei unbestätigter Zahlung oder Auszahlung eine Sicherheitswarnung angezeigt: *„Soll das Overlay ohne Zahlungsvermerk geschlossen werden?“* (`overlay.confirmCloseWithoutPayment`).
+  - Direkte Weiterleitung auf das Payout-Overlay (`openPaySellerOverlay`), falls `openPayOverlay` für ein vom Käufer bereits bezahltes Objekt mit Verkäufer-IBAN aufgerufen wird.
+
+### Added
+- **Automatisierte Test-Suite 10**:
+  - 4 neue automatisierte Tests in `tests/test_cases.js` (Gesamtzahl: 44 Tests) zur Absicherung der Payout-Bestätigung, der Schließen-Warnung und der Weiterleitungslogik.
+
 ## [1.1.3] - 2026-09-20
 
 ### Changed
@@ -146,7 +158,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.3...HEAD
+[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.4...HEAD
+[1.1.4]: https://github.com/markusstoll/E-Basar/compare/1.1.3...1.1.4
 [1.1.3]: https://github.com/markusstoll/E-Basar/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/markusstoll/E-Basar/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/markusstoll/E-Basar/compare/1.1.0...1.1.1

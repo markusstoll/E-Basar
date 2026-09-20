@@ -1,4 +1,4 @@
-const APP_VERSION = '1.1.3';
+const APP_VERSION = '1.1.4';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -897,6 +897,11 @@ function handleSellerListClick(e) {
 function openPayOverlay(id) {
     const item = getSellerItems().find(i => i.id === id);
     if (!item) return;
+    const hasSeller = !!((item.sellerName || '').trim() && (item.sellerIban || '').trim());
+    if (item.paid && hasSeller && !item.sellerPaid) {
+        openPaySellerOverlay(id);
+        return;
+    }
     const s = getSettings();
     if (!s.recipientName || !s.iban) {
         alert(window.i18n ? window.i18n.tOr('msg.pleaseEnterRecipient', 'Bitte in den Einstellungen Empfänger und IBAN eintragen (für „Bezahlen").') : 'Bitte in den Einstellungen Empfänger und IBAN eintragen.');
@@ -1715,10 +1720,11 @@ function closeQROverlay() {
     const data = currentOverlayData;
     const needsPaymentConfirm = data && data.type === 'pay' && !data.paidAlready;
     const needsPayoutConfirm = data && data.type === 'paySeller' && !data.sellerPaidAlready;
-    if (needsPaymentConfirm) {
-        if (!confirm(window.i18n ? window.i18n.tOr('msg.closeWithoutPaid', 'Wirklich schließen, ohne als bezahlt zu markieren?') : 'Wirklich schließen, ohne als bezahlt zu markieren?')) return;
-    } else if (needsPayoutConfirm) {
-        if (!confirm(window.i18n ? window.i18n.tOr('msg.closeWithoutPayout', 'Wirklich schließen, ohne die Auszahlung an den Verkäufer als erfasst zu markieren?') : 'Wirklich schließen, ohne die Auszahlung an den Verkäufer als erfasst zu markieren?')) return;
+    if (needsPaymentConfirm || needsPayoutConfirm) {
+        const confirmMsg = window.i18n
+            ? window.i18n.tOr('overlay.confirmCloseWithoutPayment', 'Soll das Overlay ohne Zahlungsvermerk geschlossen werden?')
+            : 'Soll das Overlay ohne Zahlungsvermerk geschlossen werden?';
+        if (!confirm(confirmMsg)) return;
     }
     overlay.classList.add('hidden');
 }

@@ -955,6 +955,190 @@
                     }
                 }
             ]
+        },
+        {
+            name: '10. Payout-Bestätigung im Overlay & Schließen-Warnung',
+            tests: [
+                {
+                    name: 'openPaySellerOverlay zeigt Payout-Bestätigungsbutton an und Klick markiert Auszahlung und setzt Zeitstempel',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
+                        const item = t.app.addSellerItem({
+                            sellerName: 'Clara Cash',
+                            sellerIban: 'DE22111155555555555555',
+                            phone: '+49 170 2222222',
+                            param: 'Rad Auszahlung',
+                            price: 80.00
+                        });
+                        t.app.setSellerPaid(item.id, 'bar');
+                        t.app.openPaySellerOverlay(item.id);
+
+                        const overlay = t.getElementById('overlay');
+                        const actionSection = t.getElementById('overlayPaySellerAction');
+                        const btnDone = t.getElementById('overlayPaySellerDone');
+
+                        t.assertFalse(overlay.classList.contains('hidden'), 'Overlay muss sichtbar sein');
+                        t.assertFalse(actionSection.classList.contains('hidden'), 'Payout-Aktionsbereich muss sichtbar sein');
+                        t.assertFalse(btnDone.disabled, 'Payout-Button darf bei bereits bezahltem Artikel nicht disabled sein');
+
+                        // Klick auf Payout-Bestätigung
+                        if (typeof btnDone.click === 'function') {
+                            btnDone.click();
+                        } else {
+                            btnDone.dispatchEvent({ type: 'click' });
+                        }
+
+                        t.assertTrue(overlay.classList.contains('hidden'), 'Overlay muss nach Payout-Bestätigung geschlossen sein');
+                        const updated = t.app.getSellerItems().find(i => i.id === item.id);
+                        t.assertTrue(updated.sellerPaid, 'sellerPaid muss true sein');
+                        t.assertTrue(!!updated.sellerPaidAt, 'sellerPaidAt Zeitstempel muss gesetzt sein');
+                    }
+                },
+                {
+                    name: 'Schließen des Payout-Overlays mit Close-Button ohne Bestätigung löst Bestätigungswarnung aus',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
+                        const item = t.app.addSellerItem({
+                            sellerName: 'Clara Cash',
+                            sellerIban: 'DE22111155555555555555',
+                            phone: '+49 170 2222222',
+                            param: 'Rad SchliessenTest',
+                            price: 80.00
+                        });
+                        t.app.setSellerPaid(item.id, 'bar');
+                        t.app.openPaySellerOverlay(item.id);
+
+                        const overlay = t.getElementById('overlay');
+                        const closeBtn = t.getElementById('closeOverlay');
+
+                        let confirmCalled = false;
+                        let confirmPrompt = '';
+                        const origConfirm = global.confirm || window.confirm;
+                        const mockConfirm = function(msg) {
+                            confirmCalled = true;
+                            confirmPrompt = msg;
+                            return false; // Benutzer bricht Schließen ab
+                        };
+                        global.confirm = mockConfirm;
+                        if (typeof window !== 'undefined') window.confirm = mockConfirm;
+
+                        try {
+                            if (typeof closeBtn.click === 'function') {
+                                closeBtn.click();
+                            } else {
+                                closeBtn.dispatchEvent({ type: 'click' });
+                            }
+
+                            t.assertTrue(confirmCalled, 'confirm() muss beim Schließen ohne Payout aufgerufen werden');
+                            t.assertTrue(confirmPrompt.includes('ohne Zahlungsvermerk'), 'Warnmeldung muss "ohne Zahlungsvermerk" enthalten: ' + confirmPrompt);
+                            t.assertFalse(overlay.classList.contains('hidden'), 'Overlay muss offen bleiben, wenn der Benutzer im Dialog abbricht');
+
+                            // Wenn der Benutzer bestätigt:
+                            confirmCalled = false;
+                            const mockConfirmYes = function(msg) {
+                                confirmCalled = true;
+                                return true; // Benutzer bestätigt Schließen
+                            };
+                            global.confirm = mockConfirmYes;
+                            if (typeof window !== 'undefined') window.confirm = mockConfirmYes;
+
+                            if (typeof closeBtn.click === 'function') {
+                                closeBtn.click();
+                            } else {
+                                closeBtn.dispatchEvent({ type: 'click' });
+                            }
+
+                            t.assertTrue(confirmCalled, 'confirm() muss erneut aufgerufen werden');
+                            t.assertTrue(overlay.classList.contains('hidden'), 'Overlay muss nach Bestätigung geschlossen sein');
+                        } finally {
+                            global.confirm = origConfirm;
+                            if (typeof window !== 'undefined') window.confirm = origConfirm;
+                        }
+                    }
+                },
+                {
+                    name: 'openPayOverlay leitet für bereits bezahlte Objekte mit Verkäufer-IBAN zur Payout-Auszahlung weiter',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
+                        const item = t.app.addSellerItem({
+                            sellerName: 'Clara Cash',
+                            sellerIban: 'DE22111155555555555555',
+                            phone: '+49 170 2222222',
+                            param: 'Rad BereitsBezahlt',
+                            price: 50.00
+                        });
+                        t.app.setSellerPaid(item.id, 'bar');
+
+                        // Aufruf von openPayOverlay auf bereits bezahltem Objekt
+                        t.app.openPayOverlay(item.id);
+
+                        const actionSection = t.getElementById('overlayPaySellerAction');
+                        const btnDone = t.getElementById('overlayPaySellerDone');
+                        t.assertFalse(actionSection.classList.contains('hidden'), 'Payout-Aktionsbereich muss geöffnet werden');
+                        t.assertFalse(btnDone.disabled, 'Payout-Button muss aktiv sein');
+
+                        // Payout bestätigen
+                        if (typeof btnDone.click === 'function') {
+                            btnDone.click();
+                        } else {
+                            btnDone.dispatchEvent({ type: 'click' });
+                        }
+                        const updated = t.app.getSellerItems().find(i => i.id === item.id);
+                        t.assertTrue(updated.sellerPaid, 'sellerPaid muss true sein');
+                    }
+                },
+                {
+                    name: 'Schließen des Bezahl-Overlays vor Zahlung löst ebenfalls Bestätigungswarnung aus',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
+                        const item = t.app.addSellerItem({
+                            sellerName: '',
+                            sellerIban: '',
+                            param: 'Rad Unbezahlt',
+                            price: 25.00
+                        });
+
+                        t.app.openPayOverlay(item.id);
+
+                        const overlay = t.getElementById('overlay');
+                        const closeBtn = t.getElementById('closeOverlay');
+
+                        let confirmCalled = false;
+                        let confirmPrompt = '';
+                        const origConfirm = global.confirm || window.confirm;
+                        const mockConfirm = function(msg) {
+                            confirmCalled = true;
+                            confirmPrompt = msg;
+                            return false;
+                        };
+                        global.confirm = mockConfirm;
+                        if (typeof window !== 'undefined') window.confirm = mockConfirm;
+
+                        try {
+                            if (typeof closeBtn.click === 'function') {
+                                closeBtn.click();
+                            } else {
+                                closeBtn.dispatchEvent({ type: 'click' });
+                            }
+
+                            t.assertTrue(confirmCalled, 'confirm() muss beim Schließen ohne Zahlung aufgerufen werden');
+                            t.assertTrue(confirmPrompt.includes('ohne Zahlungsvermerk'), 'Warnung muss "ohne Zahlungsvermerk" enthalten: ' + confirmPrompt);
+                            t.assertFalse(overlay.classList.contains('hidden'), 'Overlay muss offen bleiben bei Abbruch');
+                        } finally {
+                            global.confirm = origConfirm;
+                            if (typeof window !== 'undefined') window.confirm = origConfirm;
+                        }
+                    }
+                }
+            ]
         }
     ];
 
