@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-20
+
+### Changed
+- **Seller Notification Moved to Payment Step**:
+  - Notification via SMS / iMessage moved from payout (`paySeller`) to buyer payment (`pay`).
+  - **Mandatory Step (Pflichtschritt)**: For items registered for cashless reimbursement (IBAN and phone present), payment completion buttons are disabled until the seller notification is triggered.
+  - **Updated Notification Template (`sms.paymentConfirm`)**: Announces transfer within 2 hours, specifying the net payout amount (price minus commission), item identifier, and formatted IBAN:
+    > *"Ihr {0} wurde verkauft und wir werden die Überweisung über {1} EUR für {0} {2} auf Ihr Konto {3} in den nächsten 2 Stunden vornehmen. Sie müssen nicht mehr zur Kasse kommen. Bitte bestätigen Sie dann den Eingang des Geldes!"*
+
+### Added
+- **Visual Notification State in Payment Overlay**:
+  - Status banner `#overlayPayNotifyRow` showing warning state (`⚠️`) when notification is required and success state (`✅`) with timestamp once sent.
+- **Automated Regression Tests**:
+  - Net payout calculation test after commission deduction (`buildSellerPaymentSmsText`).
+  - Mandatory notification workflow test verifying button lock/unlock behavior (`openPayOverlay`).
+
 ## [1.0.1] - 2026-09-19
 
 ### Added
@@ -101,7 +117,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.0.1...HEAD
+[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/markusstoll/E-Basar/compare/1.0.1...1.1.0
 [1.0.1]: https://github.com/markusstoll/E-Basar/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/markusstoll/E-Basar/compare/0.9.9...1.0.0
 [0.9.9]: https://github.com/markusstoll/E-Basar/compare/0.9.7...0.9.9

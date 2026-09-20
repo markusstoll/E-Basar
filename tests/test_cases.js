@@ -238,6 +238,84 @@
                         t.assertTrue(html.includes('seller-timestamp-seller-paid'), 'Ausgezahlt-Zeitstempel muss nach Erstattung gerendert werden');
                         t.assertTrue(html.includes('Ausgezahlt:'), 'Label Ausgezahlt: muss vorhanden sein');
                     }
+                },
+                {
+                    name: 'buildSellerPaymentSmsText berechnet Auszahlungsbetrag abzgl. Provision und formatiert Nachrichtentext korrekt',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, commissionPercent: 10, paramLabel: 'Fahrrad' });
+                        const item = {
+                            param: '24',
+                            price: 24.00,
+                            sellerName: 'Max Mustermann',
+                            sellerIban: 'DE21111155555555555555',
+                            phone: '0170 1234567'
+                        };
+                        const text = t.app.buildSellerPaymentSmsText(item);
+                        t.assertTrue(text.includes('Fahrrad 24'), 'Param und Label müssen enthalten sein');
+                        t.assertTrue(text.includes('21,60 EUR'), 'Auszahlungsbetrag (24 - 10% = 21,60) muss enthalten sein');
+                        t.assertTrue(text.includes('DE21 1111 5555 5555 55'), 'Formatierte IBAN muss enthalten sein');
+                        t.assertTrue(text.includes('in den nächsten 2 Stunden'), '2-Stunden-Frist muss enthalten sein');
+                        t.assertTrue(text.includes('Sie müssen nicht mehr zur Kasse kommen'), 'Hinweis nicht mehr zur Kasse muss enthalten sein');
+                        t.assertTrue(text.includes('Bitte bestätigen Sie dann den Eingang des Geldes'), 'Bestätigungsbitte muss enthalten sein');
+                    }
+                },
+                {
+                    name: 'openPayOverlay verlangt Verkäuferbenachrichtigung als Pflichtschritt wenn IBAN und Telefon vorhanden',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
+                        
+                        // 1. Item mit IBAN und Telefon (Benachrichtigung erforderlich)
+                        const itemWithSeller = t.app.addSellerItem({
+                            sellerName: 'Klaus',
+                            sellerIban: 'DE21111155555555555555',
+                            phone: '+49170123456',
+                            param: 'Rad MitVerkaeufer',
+                            price: 100
+                        });
+                        
+                        t.app.openPayOverlay(itemWithSeller.id);
+                        
+                        const notifyRow = t.getElementById('overlayPayNotifyRow');
+                        const btnElectronic = t.getElementById('overlayPayDoneElectronic');
+                        const btnCash = t.getElementById('overlayPayDoneCash');
+                        const notifyBtn = t.getElementById('overlayPayNotifyBtn');
+                        
+                        t.assertFalse(notifyRow.classList.contains('hidden'), 'Benachrichtigungszeile muss sichtbar sein');
+                        t.assertTrue(btnElectronic.disabled, 'Bezahlt (elektronisch) muss vor Benachrichtigung disabled sein');
+                        t.assertTrue(btnCash.disabled, 'Bezahlt (bar) muss vor Benachrichtigung disabled sein');
+                        
+                        // Benachrichtigung durch Klick auslösen
+                        if (typeof notifyBtn.click === 'function') {
+                            notifyBtn.click();
+                        } else {
+                            notifyBtn.dispatchEvent(typeof Event !== 'undefined' ? new Event('click') : { type: 'click' });
+                        }
+                        
+                        t.assertFalse(btnElectronic.disabled, 'Bezahlt (elektronisch) muss nach Benachrichtigung aktiv sein');
+                        t.assertFalse(btnCash.disabled, 'Bezahlt (bar) muss nach Benachrichtigung aktiv sein');
+                        t.assertTrue(notifyRow.classList.contains('notify-done'), 'Benachrichtigungszeile muss Status done haben');
+                        
+                        const updated = t.app.getSellerItems().find(i => i.id === itemWithSeller.id);
+                        t.assertTrue(!!updated.notifiedAt, 'notifiedAt muss gesetzt sein');
+                        
+                        // 2. Item OHNE Verkäufer / ohne Telefon (keine Benachrichtigung erforderlich)
+                        const itemAnonymous = t.app.addSellerItem({
+                            sellerName: '',
+                            sellerIban: '',
+                            phone: '',
+                            param: 'Rad Anonym',
+                            price: 50
+                        });
+                        
+                        t.app.openPayOverlay(itemAnonymous.id);
+                        t.assertTrue(notifyRow.classList.contains('hidden'), 'Benachrichtigungszeile muss bei anonymem Item hidden sein');
+                        t.assertFalse(btnElectronic.disabled, 'Bezahlt (elektronisch) muss bei anonymem Item sofort aktiv sein');
+                        t.assertFalse(btnCash.disabled, 'Bezahlt (bar) muss bei anonymem Item sofort aktiv sein');
+                    }
                 }
             ]
         },

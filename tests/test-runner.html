@@ -353,15 +353,22 @@
                 <strong id="weroDetailParamLabel"></strong>
             </div>
             <div id="overlayPayActions" class="overlay-status-actions hidden">
-                <button type="button" id="overlayPayDoneElectronic">Bezahlt (elektronisch)</button>
-                <button type="button" id="overlayPayDoneCash">Bezahlt (bar)</button>
+                <div id="overlayPayNotifyRow" class="overlay-pay-notify-row hidden">
+                    <span id="overlayPayNotifyStatus" class="overlay-pay-notify-status"><span id="overlayPayNotifyStatusIcon">⚠️</span> <span id="overlayPayNotifyStatusText">Verkäufer muss vorab informiert werden:</span></span>
+                    <button type="button" id="overlayPayNotifyBtn" class="btn-overlay-notify">💬 Verkäufer per SMS informieren</button>
+                </div>
+                <div class="overlay-status-buttons">
+                    <button type="button" id="overlayPayDoneElectronic">Bezahlt (elektronisch)</button>
+                    <button type="button" id="overlayPayDoneCash">Bezahlt (bar)</button>
+                </div>
             </div>
             <div id="overlayPaySellerAction" class="overlay-status-actions hidden">
                 <div id="overlayPaySellerBarPaidRow" class="overlay-pay-seller-bar-row hidden">
                     <input type="checkbox" id="overlayPaySellerBarPaidCheckbox" autocomplete="off">
                 </div>
-                <button type="button" id="overlayPaySellerDone">An Verkäufer ausgezahlt</button>
-                <button type="button" id="overlayPaySellerNotify">Verkäufer informieren</button>
+                <div class="overlay-status-buttons">
+                    <button type="button" id="overlayPaySellerDone">An Verkäufer ausgezahlt</button>
+                </div>
             </div>
         </div>
 
@@ -491,6 +498,16 @@
     </script>
 
     <!-- 2. Load Application Scripts directly (works 100% on file:// and http://) -->
+    <script src="../lib/qrcode.min.js"></script>
+    <script>
+        if (typeof QRCode === 'undefined') {
+            window.QRCode = {
+                toCanvas: function(canvas, text, opts, cb) {
+                    if (typeof cb === 'function') cb(null);
+                }
+            };
+        }
+    </script>
     <script src="../i18n.js"></script>
     <script src="../script.js"></script>
 
@@ -499,8 +516,9 @@
 
     <!-- 4. Test Runner Controller -->
     <script>
-        // Suppress modal alerts during test execution
+        // Suppress modal alerts and external protocol navigations during test execution
         window.alert = () => {};
+        window.__isTesting = true;
 
         const btnRun = document.getElementById('btnRunTests');
         const suitesContainer = document.getElementById('suitesContainer');

@@ -1,4 +1,4 @@
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.1.0';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -175,37 +175,44 @@ function setupEventListeners() {
     if (overlayPaySellerBarPaidCheckbox) {
         overlayPaySellerBarPaidCheckbox.addEventListener('change', function () {
             var btnDone = document.getElementById('overlayPaySellerDone');
-            var btnNotify = document.getElementById('overlayPaySellerNotify');
             var active = this.checked;
             if (btnDone) btnDone.disabled = !active;
-            if (btnNotify) btnNotify.disabled = !active;
         });
     }
-    const overlayPaySellerNotify = document.getElementById('overlayPaySellerNotify');
-    if (overlayPaySellerNotify) overlayPaySellerNotify.addEventListener('click', function () {
-        if (!currentOverlayData || currentOverlayData.type !== 'paySeller') return;
-        const items = getSellerItems();
-        const item = currentPaySellerItemIds && currentPaySellerItemIds.length > 0
-            ? items.find(i => i.id === currentPaySellerItemIds[0])
-            : (currentPaySellerItemId ? items.find(i => i.id === currentPaySellerItemId) : null);
-        const paramLabel = (currentOverlayData.paramLabel || getSettings().paramLabel || 'Objekt').trim() || 'Objekt';
-        const param = (currentOverlayData.param || '').trim();
-        const amount = typeof currentOverlayData.amount === 'number' ? currentOverlayData.amount : 0;
-        const amountStr = amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const iban = (currentOverlayData.iban || '').trim();
-        const ibanDisplay = iban ? formatIBAN(iban) : iban;
-        const text = window.i18n ? window.i18n.tOr('sms.paymentConfirm', 'Die Bezahlung über ' + amountStr + ' EUR für ' + paramLabel + ' ' + param + ' wurde an ' + ibanDisplay + ' überwiesen, bitte bestätigen Sie den Zahlungseingang. Sie müssen nicht mehr zur Kasse kommen.', [amountStr, paramLabel, param, ibanDisplay]) : ('Die Bezahlung über ' + amountStr + ' EUR für ' + paramLabel + ' ' + param + ' wurde an ' + ibanDisplay + ' überwiesen, bitte bestätigen Sie den Zahlungseingang. Sie müssen nicht mehr zur Kasse kommen.');
-        const phone = (item && (item.phone || '').trim()) ? (item.phone || '').trim().replace(/\s/g, '') : '';
+
+    const overlayPayNotifyBtn = document.getElementById('overlayPayNotifyBtn');
+    if (overlayPayNotifyBtn) overlayPayNotifyBtn.addEventListener('click', function () {
+        if (!currentPayItemId) return;
+        const item = getSellerItems().find(i => i.id === currentPayItemId);
+        if (!item) return;
+        const text = buildSellerPaymentSmsText(item);
+        const phone = (item.phone || '').trim().replace(/\s/g, '');
         const url = phone ? 'sms:' + encodeURIComponent(phone) + '?body=' + encodeURIComponent(text) : 'sms:?body=' + encodeURIComponent(text);
 
-        // Timestamp für "per SMS / iMessage informiert" setzen
-        if (currentPaySellerItemIds && currentPaySellerItemIds.length > 0) {
-            setSellerItemsNotified(currentPaySellerItemIds);
-        } else if (currentPaySellerItemId) {
-            setSellerNotified(currentPaySellerItemId);
+        setSellerNotified(currentPayItemId);
+
+        // UI im Overlay aktualisieren:
+        const notifyRow = document.getElementById('overlayPayNotifyRow');
+        const notifyStatusIcon = document.getElementById('overlayPayNotifyStatusIcon');
+        const notifyStatusText = document.getElementById('overlayPayNotifyStatusText');
+        const btnElectronic = document.getElementById('overlayPayDoneElectronic');
+        const btnCash = document.getElementById('overlayPayDoneCash');
+
+        if (notifyRow) notifyRow.classList.add('notify-done');
+        if (notifyStatusIcon) notifyStatusIcon.textContent = '✅';
+        const updatedItem = getSellerItems().find(i => i.id === currentPayItemId);
+        const dt = updatedItem && updatedItem.notifiedAt ? formatDate(updatedItem.notifiedAt) : formatDate(new Date().toISOString());
+        if (notifyStatusText) notifyStatusText.textContent = window.i18n ? window.i18n.tOr('overlay.notifyDone', 'Verkäufer informiert: ' + dt, [dt]) : ('Verkäufer informiert: ' + dt);
+        if (btnElectronic) {
+            btnElectronic.disabled = false;
+            btnElectronic.title = '';
+        }
+        if (btnCash) {
+            btnCash.disabled = false;
+            btnCash.title = '';
         }
 
-        window.location.href = url;
+        openSmsUrl(url);
     });
 
     closeHistory.addEventListener('click', closeHistoryOverlay);
@@ -605,6 +612,34 @@ function clearSellerIbanError() {
     if (errorEl) errorEl.textContent = '';
 }
 
+function buildSellerPaymentSmsText(item, settings) {
+    if (!item) return '';
+    const s = settings || getSettings();
+    const paramLabel = (s.paramLabel || 'Objekt').trim() || 'Objekt';
+    const param = (item.param || '').trim();
+    const commission = (s.commissionPercent != null && s.commissionPercent !== '') ? Number(s.commissionPercent) : 10;
+    const payoutAmount = Math.round(Number(item.price) * (1 - commission / 100) * 100) / 100;
+    const amountStr = payoutAmount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const iban = (item.sellerIban || '').trim();
+    const ibanDisplay = iban ? formatIBAN(iban) : iban;
+
+    return window.i18n
+        ? window.i18n.tOr(
+            'sms.paymentConfirm',
+            'Ihr ' + paramLabel + ' wurde verkauft und wir werden die Überweisung über ' + amountStr + ' EUR für ' + paramLabel + ' ' + param + ' auf Ihr Konto ' + ibanDisplay + ' in den nächsten 2 Stunden vornehmen. Sie müssen nicht mehr zur Kasse kommen. Bitte bestätigen Sie dann den Eingang des Geldes!',
+            [paramLabel, amountStr, param, ibanDisplay]
+        )
+        : ('Ihr ' + paramLabel + ' wurde verkauft und wir werden die Überweisung über ' + amountStr + ' EUR für ' + paramLabel + ' ' + param + ' auf Ihr Konto ' + ibanDisplay + ' in den nächsten 2 Stunden vornehmen. Sie müssen nicht mehr zur Kasse kommen. Bitte bestätigen Sie dann den Eingang des Geldes!');
+}
+
+function openSmsUrl(url) {
+    if (typeof window !== 'undefined' && window.__isTesting) {
+        window.__lastSmsUrl = url;
+        return;
+    }
+    window.location.href = url;
+}
+
 function handleSellerTestSms(e) {
     e.preventDefault();
     const name = (document.getElementById('sellerName') && document.getElementById('sellerName').value) || '';
@@ -613,7 +648,7 @@ function handleSellerTestSms(e) {
     const message = window.i18n ? window.i18n.tOr('sms.sellerRegistered', 'Verkäufer ' + name + ' mit IBAN ' + (iban || '(noch nicht angegeben)') + ' registriert', [name, iban || (window.i18n.tOr('sms.ibanNotGiven', '(noch nicht angegeben)'))]) : ('Verkäufer ' + name + ' mit IBAN ' + (iban || '(noch nicht angegeben)') + ' registriert');
     const smsBody = encodeURIComponent(message);
     const href = phone ? 'sms:' + phone.replace(/\s/g, '') + '?body=' + smsBody : 'sms:?body=' + smsBody;
-    window.location.href = href;
+    openSmsUrl(href);
 }
 
 function setSellerFormSellerBlockVisible(visible) {
@@ -1485,20 +1520,71 @@ function generateQRCode(data) {
     if (overlayPayActions) overlayPayActions.classList.toggle('hidden', data.type !== 'pay' || data.paidAlready);
     if (overlayPaySellerAction) overlayPaySellerAction.classList.toggle('hidden', data.type !== 'paySeller' || data.sellerPaidAlready);
 
+    if (data.type === 'pay' && !data.paidAlready) {
+        const item = getSellerItems().find(i => i.id === currentPayItemId);
+        const hasSeller = !!(item && (item.sellerName || '').trim() && (item.sellerIban || '').trim());
+        const hasPhone = !!(item && (item.phone || '').trim());
+        const requiresNotify = hasSeller && hasPhone;
+
+        const notifyRow = document.getElementById('overlayPayNotifyRow');
+        const notifyStatusIcon = document.getElementById('overlayPayNotifyStatusIcon');
+        const notifyStatusText = document.getElementById('overlayPayNotifyStatusText');
+        const btnElectronic = document.getElementById('overlayPayDoneElectronic');
+        const btnCash = document.getElementById('overlayPayDoneCash');
+
+        if (requiresNotify) {
+            if (notifyRow) notifyRow.classList.remove('hidden');
+            if (item && item.notifiedAt) {
+                if (notifyRow) notifyRow.classList.add('notify-done');
+                if (notifyStatusIcon) notifyStatusIcon.textContent = '✅';
+                const dt = formatDate(item.notifiedAt);
+                if (notifyStatusText) notifyStatusText.textContent = window.i18n ? window.i18n.tOr('overlay.notifyDone', 'Verkäufer informiert: ' + dt, [dt]) : ('Verkäufer informiert: ' + dt);
+                if (btnElectronic) {
+                    btnElectronic.disabled = false;
+                    btnElectronic.title = '';
+                }
+                if (btnCash) {
+                    btnCash.disabled = false;
+                    btnCash.title = '';
+                }
+            } else {
+                if (notifyRow) notifyRow.classList.remove('notify-done');
+                if (notifyStatusIcon) notifyStatusIcon.textContent = '⚠️';
+                const lockMsg = window.i18n ? window.i18n.tOr('overlay.notifyRequired', 'Verkäufer muss vor Abschluss per SMS/iMessage informiert werden') : 'Verkäufer muss vor Abschluss per SMS/iMessage informiert werden';
+                if (notifyStatusText) notifyStatusText.textContent = lockMsg;
+                if (btnElectronic) {
+                    btnElectronic.disabled = true;
+                    btnElectronic.title = lockMsg;
+                }
+                if (btnCash) {
+                    btnCash.disabled = true;
+                    btnCash.title = lockMsg;
+                }
+            }
+        } else {
+            if (notifyRow) notifyRow.classList.add('hidden');
+            if (btnElectronic) {
+                btnElectronic.disabled = false;
+                btnElectronic.title = '';
+            }
+            if (btnCash) {
+                btnCash.disabled = false;
+                btnCash.title = '';
+            }
+        }
+    }
+
     if (data.type === 'paySeller' && !data.sellerPaidAlready) {
         const barRow = document.getElementById('overlayPaySellerBarPaidRow');
         const barCheck = document.getElementById('overlayPaySellerBarPaidCheckbox');
         const btnDone = document.getElementById('overlayPaySellerDone');
-        const btnNotify = document.getElementById('overlayPaySellerNotify');
         if (data.paidByBuyerAlready) {
             if (barRow) barRow.classList.add('hidden');
             if (btnDone) btnDone.disabled = false;
-            if (btnNotify) btnNotify.disabled = false;
         } else {
             if (barRow) barRow.classList.remove('hidden');
             if (barCheck) barCheck.checked = false;
             if (btnDone) btnDone.disabled = true;
-            if (btnNotify) btnNotify.disabled = true;
         }
     }
 
@@ -2101,6 +2187,7 @@ if (typeof module !== 'undefined' && module.exports) {
         setSellerDeleted,
         setSellerNotified,
         setSellerItemsNotified,
+        buildSellerPaymentSmsText,
         getMode,
         setMode,
         setModeUI,
@@ -2109,9 +2196,12 @@ if (typeof module !== 'undefined' && module.exports) {
         updateFooterSums,
         openSellerFormOverlay,
         closeSellerFormOverlay,
+        openPayOverlay,
+        openPaySellerOverlay,
         toggleSellerSelection,
         getSelectedSellerItemIds,
         clearSelectedSellerItemIds,
-        updateSellerSelectionBar
+        updateSellerSelectionBar,
+        setupEventListeners
     };
 }

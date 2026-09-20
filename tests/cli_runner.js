@@ -94,12 +94,22 @@ class MockElement {
         this._innerHTML = val;
     }
     focus() {}
+    click() {
+        this.dispatchEvent({ type: 'click' });
+    }
     reset() {
         this.value = '';
         this.checked = false;
     }
     closest(selector) {
         return null;
+    }
+    getContext() {
+        return {
+            clearRect: () => {},
+            fillRect: () => {},
+            drawImage: () => {}
+        };
     }
 }
 
@@ -145,6 +155,10 @@ class MockDocument {
     addEventListener(event, fn) {
         if (!this.eventListeners.has(event)) this.eventListeners.set(event, []);
         this.eventListeners.get(event).push(fn);
+    }
+    dispatchEvent(event) {
+        const listeners = this.eventListeners.get(event.type || event);
+        if (listeners) listeners.forEach(fn => fn(event));
     }
 }
 
@@ -194,6 +208,12 @@ global.alert = (msg) => {};
 global.confirm = (msg) => true;
 global.prompt = (msg, def) => def;
 global.location = { reload: () => {}, href: '' };
+global.window.__isTesting = true;
+global.QRCode = {
+    toCanvas: (canvas, text, opts, cb) => {
+        if (typeof cb === 'function') cb(null);
+    }
+};
 
 // Minimal i18n mock fallback
 global.window.i18n = {
@@ -209,6 +229,9 @@ global.window.i18n = {
 // --- 2. Load App Code ---
 const scriptPath = path.join(__dirname, '..', 'script.js');
 const app = require(scriptPath);
+if (typeof app.setupEventListeners === 'function') {
+    app.setupEventListeners();
+}
 
 // --- 3. Load Test Cases ---
 const importedSuites = require('./test_cases.js');
