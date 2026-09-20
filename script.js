@@ -2213,7 +2213,7 @@ const TEST_SCENARIO_ITEMS = [
     {
         // 3. registriertes Objekt bar bezahlt
         sellerName: 'Clara Cash',
-        sellerIban: 'DE22111155555555555555',
+        sellerIban: 'DE04111122222222222222',
         phone: '+49 170 2222222',
         param: 'Rad 3 - Reg Bar Bezahlt',
         price: 80.00,
@@ -2241,7 +2241,7 @@ const TEST_SCENARIO_ITEMS = [
     {
         // 5. registriertes Objekt bar bezahlt und elektronisch ausbezahlt
         sellerName: 'David Done',
-        sellerIban: 'DE23111155555555555555',
+        sellerIban: 'DE42111133333333333333',
         phone: '+49 170 3333333',
         param: 'Rad 5 - Reg Bar El Ausgezahlt',
         price: 120.00,

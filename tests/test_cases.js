@@ -52,6 +52,21 @@
                         const n2 = t.app.normalizeIbanForCompare('DE89370400440532013000');
                         t.assertEqual(n1, n2, 'Normalisierte IBANs müssen identisch sein');
                     }
+                },
+                {
+                    name: 'Alle IBANs im Test-Szenario sind mathematisch gültig (validateIBAN)',
+                    fn(t) {
+                        t.reset();
+                        const items = t.app.TEST_SCENARIO_ITEMS;
+                        items.forEach(spec => {
+                            if (spec.sellerIban) {
+                                t.assertTrue(
+                                    t.app.validateIBAN(spec.sellerIban),
+                                    `IBAN "${spec.sellerIban}" von ${spec.sellerName} (${spec.param}) muss laut validateIBAN gültig sein`
+                                );
+                            }
+                        });
+                    }
                 }
             ]
         },
@@ -676,9 +691,9 @@
                         t.app.setSellerPaid(itemA1.id, 'bar');
                         const itemA2 = t.app.addSellerItem({ sellerName: 'Verkäufer A', sellerIban: 'DE89370400440532013000', param: 'Rad A2', price: 80 });
                         t.app.setSellerPaid(itemA2.id, 'bar');
-                        const itemB1 = t.app.addSellerItem({ sellerName: 'Verkäufer B', sellerIban: 'DE02100100100155635399', param: 'Rad B1', price: 120 });
+                        const itemB1 = t.app.addSellerItem({ sellerName: 'Verkäufer B', sellerIban: 'DE63111111111111111111', param: 'Rad B1', price: 120 });
                         t.app.setSellerPaid(itemB1.id, 'bar');
-                        const itemB2 = t.app.addSellerItem({ sellerName: 'Verkäufer B', sellerIban: 'DE02100100100155635399', param: 'Rad B2', price: 110 });
+                        const itemB2 = t.app.addSellerItem({ sellerName: 'Verkäufer B', sellerIban: 'DE63111111111111111111', param: 'Rad B2', price: 110 });
                         t.app.setSellerPaid(itemB2.id, 'bar');
                         
                         t.setMode('payout');
@@ -718,9 +733,9 @@
                         t.app.setSellerPaid(itemA1.id, 'bar');
                         const itemA2 = t.app.addSellerItem({ sellerName: 'Verkäufer A', sellerIban: 'DE89370400440532013000', param: 'Rad A2', price: 80 });
                         t.app.setSellerPaid(itemA2.id, 'bar');
-                        const itemB1 = t.app.addSellerItem({ sellerName: 'Verkäufer B', sellerIban: 'DE02100100100155635399', param: 'Rad B1', price: 120 });
+                        const itemB1 = t.app.addSellerItem({ sellerName: 'Verkäufer B', sellerIban: 'DE63111111111111111111', param: 'Rad B1', price: 120 });
                         t.app.setSellerPaid(itemB1.id, 'bar');
-                        const itemB2 = t.app.addSellerItem({ sellerName: 'Verkäufer B', sellerIban: 'DE02100100100155635399', param: 'Rad B2', price: 110 });
+                        const itemB2 = t.app.addSellerItem({ sellerName: 'Verkäufer B', sellerIban: 'DE63111111111111111111', param: 'Rad B2', price: 110 });
                         t.app.setSellerPaid(itemB2.id, 'bar');
                         
                         t.setMode('payout');
@@ -921,7 +936,7 @@
                         t.assertEqual(t1.rows.length, 1, 'Tabelle 1 muss genau 1 Zeile haben (Objekt 5)');
                         t.assertEqual(t1.rows[0][0], 'Rad 5 - Reg Bar El Ausgezahlt');
                         t.assertEqual(t1.rows[0][1], 'David Done');
-                        t.assertEqual(t1.rows[0][2], 'DE23111155555555555555');
+                        t.assertEqual(t1.rows[0][2], 'DE42111133333333333333');
                         t.assertEqual(t1.rows[0][3], '120,00');
                         t.assertEqual(t1.rows[0][4], '108,00');
                         t.assertEqual(t1.sumRow[3], '120,00');
@@ -967,7 +982,7 @@
                         t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
                         const item = t.app.addSellerItem({
                             sellerName: 'Clara Cash',
-                            sellerIban: 'DE22111155555555555555',
+                            sellerIban: 'DE04111122222222222222',
                             phone: '+49 170 2222222',
                             param: 'Rad Auszahlung',
                             price: 80.00
@@ -1004,7 +1019,7 @@
                         t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
                         const item = t.app.addSellerItem({
                             sellerName: 'Clara Cash',
-                            sellerIban: 'DE22111155555555555555',
+                            sellerIban: 'DE04111122222222222222',
                             phone: '+49 170 2222222',
                             param: 'Rad SchliessenTest',
                             price: 80.00
@@ -1068,7 +1083,7 @@
                         t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
                         const item = t.app.addSellerItem({
                             sellerName: 'Clara Cash',
-                            sellerIban: 'DE22111155555555555555',
+                            sellerIban: 'DE04111122222222222222',
                             phone: '+49 170 2222222',
                             param: 'Rad BereitsBezahlt',
                             price: 50.00
