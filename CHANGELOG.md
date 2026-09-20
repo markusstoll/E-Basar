@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-09-20
+
+### Fixed
+- **Hide Items Without IBAN in Payout Mode**:
+  - In „An Verkäufer erstatten“ (`payout`) mode, items without a registered IBAN are now completely hidden (both open and already reimbursed), as payouts can only be processed to a valid bank account.
+  - Items without IBAN remain visible as intended in „Verkaufen“ (`sell`) and „Verkäufer erfassen“ (`seller`) modes.
+  - Updated empty-state counter for payout mode to only count items with an IBAN.
+  - Added regression test in Suite 5 ensuring items without IBAN are excluded in payout mode under all filter states (total 36 tests).
+
 ## [1.1.0] - 2026-09-20
 
 ### Changed
@@ -117,7 +126,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.0...HEAD
+[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.1...HEAD
+[1.1.1]: https://github.com/markusstoll/E-Basar/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/markusstoll/E-Basar/compare/1.0.1...1.1.0
 [1.0.1]: https://github.com/markusstoll/E-Basar/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/markusstoll/E-Basar/compare/0.9.9...1.0.0

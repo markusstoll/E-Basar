@@ -467,6 +467,46 @@
                         t.assertEqual(list[1].param, 'Mittel', 'Mittlere Zahlung (12:00) muss auf Platz 2 sein');
                         t.assertEqual(list[2].param, 'Neu', 'Neueste Zahlung (14:00) muss auf Platz 3 sein');
                     }
+                },
+                {
+                    name: 'Objekte ohne IBAN werden in payout NIE angezeigt (weder offen noch erstattet)',
+                    fn(t) {
+                        t.reset();
+                        // 1. Objekt mit IBAN (bezahlt, offen für Erstattung)
+                        const itemWithIban = t.app.addSellerItem({ sellerName: 'Mit IBAN', sellerIban: 'DE89370400440532013000', param: 'MitIban', price: 25 });
+                        t.app.setSellerPaid(itemWithIban.id, 'bar');
+
+                        // 2. Objekt OHNE IBAN (bezahlt)
+                        const itemNoIban = t.app.addSellerItem({ sellerName: '', sellerIban: '', param: 'OhneIban', price: 15 });
+                        t.app.setSellerPaid(itemNoIban.id, 'bar');
+
+                        // 3. Objekt OHNE IBAN (bezahlt und erstattet markiert)
+                        const itemNoIbanPaid = t.app.addSellerItem({ sellerName: '', sellerIban: '', param: 'OhneIbanErstattet', price: 35 });
+                        t.app.setSellerPaid(itemNoIbanPaid.id, 'elektronisch');
+                        t.app.setSellerPaidSeller(itemNoIbanPaid.id);
+
+                        t.setMode('payout');
+                        t.setShowReimbursed(false);
+                        let list = t.getRenderedItems();
+                        t.assertEqual(list.length, 1, 'In payout darf nur das Objekt mit IBAN angezeigt werden');
+                        t.assertEqual(list[0].param, 'MitIban');
+
+                        t.setShowReimbursed(true);
+                        list = t.getRenderedItems();
+                        t.assertEqual(list.length, 1, 'Auch mit showReimbursed=true dürfen Objekte ohne IBAN in payout nicht erscheinen');
+                        t.assertEqual(list[0].param, 'MitIban');
+
+                        // Im Modus sell sind bei showPaid=true alle 3 sichtbar
+                        t.setMode('sell');
+                        t.setShowPaid(true);
+                        t.assertEqual(t.getRenderedItems().length, 3, 'In sell müssen bei showPaid=true alle 3 sichtbar sein');
+
+                        // Im Modus seller ist das Objekt ohne IBAN mit showPaid=true sichtbar (da bereits bezahlt und keine Erstattung nötig ist)
+                        t.setMode('seller');
+                        t.setShowPaid(true);
+                        const sellerList = t.getRenderedItems();
+                        t.assertTrue(sellerList.some(i => i.param === 'OhneIban'), 'In seller muss das bezahlte Objekt ohne IBAN mit showPaid=true sichtbar sein');
+                    }
                 }
             ]
         },

@@ -1,4 +1,4 @@
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.1.1';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -1086,6 +1086,7 @@ function renderSellerList() {
     let filtered = items.filter(item => {
         if (isPayout) {
             if (!item.paid) return false;
+            if (!(item.sellerIban || '').trim()) return false;
             if (!showReimbursed && item.sellerPaid) return false;
         } else if (mode === 'sell') {
             if (!showPaid && item.paid) return false;
@@ -1122,10 +1123,10 @@ function renderSellerList() {
     if (filtered.length === 0) {
         let emptyMsg = '';
         if (isPayout) {
-            const paidCount = items.filter(i => i.paid && (!i.deleted || showDeleted)).length;
+            const paidCount = items.filter(i => i.paid && (i.sellerIban || '').trim() && (!i.deleted || showDeleted)).length;
             if (paidCount === 0) {
                 emptyMsg = window.i18n ? window.i18n.tOr('empty.noPaidItems', 'Noch keine bezahlten Objekte vorhanden.') : 'Noch keine bezahlten Objekte vorhanden.';
-            } else if (!showReimbursed && items.some(i => i.paid && i.sellerPaid && (!i.deleted || showDeleted))) {
+            } else if (!showReimbursed && items.some(i => i.paid && (i.sellerIban || '').trim() && i.sellerPaid && (!i.deleted || showDeleted))) {
                 emptyMsg = window.i18n ? window.i18n.tOr('empty.noPayoutPending', 'Keine offenen Erstattungen. Alle bezahlten Objekte wurden bereits an die Verkäufer erstattet.') : 'Keine offenen Erstattungen. Alle bezahlten Objekte wurden bereits an die Verkäufer erstattet.';
             } else {
                 emptyMsg = hasFilter ? (window.i18n ? window.i18n.tOr('empty.noMatches', 'Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.', [paramLabel]) : ('Keine Treffer. Exakte ' + paramLabel + '-Bezeichnung bzw. Suche anpassen oder Bezahlte/Gelöschte einblenden.')) : (window.i18n ? window.i18n.tOr('empty.noMatchesShort', 'Keine Treffer.') : 'Keine Treffer.');
