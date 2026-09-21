@@ -1,4 +1,4 @@
-const APP_VERSION = '1.1.6';
+const APP_VERSION = '1.1.7';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -327,7 +327,9 @@ function setupEventListeners() {
         if (objectsOverlay && !objectsOverlay.classList.contains('hidden')) window.print();
     });
 
-    viewHistoryBtn.addEventListener('click', showHistory);
+    viewHistoryBtn.addEventListener('click', function () {
+        showHistory();
+    });
     const btnCsvExport = document.getElementById('btnCsvExport');
     if (btnCsvExport) btnCsvExport.addEventListener('click', openReport);
     const btnLoadTestScenario = document.getElementById('btnLoadTestScenario');
@@ -1920,23 +1922,28 @@ function showHistory(filter) {
     let isFiltered = false;
     let filterLabel = '';
 
-    if (filter) {
-        isFiltered = true;
-        const filterId = typeof filter === 'object' ? filter.id : null;
-        const filterParam = typeof filter === 'object' ? filter.param : filter;
-        filterLabel = filterParam || (filterId ? String(filterId) : '');
+    // Event-Objekte ignorieren (z. B. bei direktem Aufruf über EventListener)
+    const isEvent = filter && (typeof Event !== 'undefined' && filter instanceof Event || filter.target !== undefined || filter.type !== undefined);
+    if (filter && !isEvent) {
+        const filterId = (typeof filter === 'object' && filter.id) ? filter.id : null;
+        const filterParam = (typeof filter === 'object' ? filter.param : (typeof filter === 'string' ? filter : null)) || '';
 
-        filteredHistory = history.filter(function (entry) {
-            if (filterId && (entry.itemId === filterId || (entry.multipleItemIds && entry.multipleItemIds.includes(filterId)))) {
-                return true;
-            }
-            if (filterParam && entry.param) {
-                if (entry.param === filterParam) return true;
-                const parts = entry.param.split(',').map(function (s) { return s.trim(); });
-                if (parts.includes(filterParam.trim())) return true;
-            }
-            return false;
-        });
+        if (filterId || filterParam) {
+            isFiltered = true;
+            filterLabel = filterParam || (filterId ? String(filterId) : '');
+
+            filteredHistory = history.filter(function (entry) {
+                if (filterId && (entry.itemId === filterId || (entry.multipleItemIds && entry.multipleItemIds.includes(filterId)))) {
+                    return true;
+                }
+                if (filterParam && entry.param) {
+                    if (entry.param === filterParam) return true;
+                    const parts = entry.param.split(',').map(function (s) { return s.trim(); });
+                    if (parts.includes(filterParam.trim())) return true;
+                }
+                return false;
+            });
+        }
     }
 
     if (historyTitle) {
@@ -2160,7 +2167,7 @@ function getReportData() {
         const price = Number(item.price);
         const sellerPayout = Math.round(price * (1 - commission / 100) * 100) / 100;
         sumBar1 += price;
-        return [item.param || '', item.sellerName || '', item.sellerIban || '', formatCsvAmount(price), formatCsvAmount(sellerPayout)];
+        return [item.param || '', item.sellerName || '', (item.sellerIban ? formatIBAN(item.sellerIban) : ''), formatCsvAmount(price), formatCsvAmount(sellerPayout)];
     });
     const sumPayout1 = items1.reduce(function (acc, i) { return acc + Math.round(Number(i.price) * (1 - commission / 100) * 100) / 100; }, 0);
     tables.push({
@@ -2179,7 +2186,7 @@ function getReportData() {
     const rows2 = items2.map(function (item) {
         const price = Number(item.price);
         const sellerPayout = Math.round(price * (1 - commission / 100) * 100) / 100;
-        return [item.param || '', item.sellerName || '', item.sellerIban || '', formatCsvAmount(price), formatCsvAmount(sellerPayout)];
+        return [item.param || '', item.sellerName || '', (item.sellerIban ? formatIBAN(item.sellerIban) : ''), formatCsvAmount(price), formatCsvAmount(sellerPayout)];
     });
     tables.push({
         title: csvT('csv.report2Title', '2. Bezahlung elektronisch, Zahlung an Verkäufer bar'),
@@ -2197,7 +2204,7 @@ function getReportData() {
     const rows3 = items3.map(function (item) {
         const price = Number(item.price);
         const sellerPayout = Math.round(price * (1 - commission / 100) * 100) / 100;
-        return [item.param || '', item.sellerName || '', item.sellerIban || '', formatCsvAmount(price), formatCsvAmount(sellerPayout)];
+        return [item.param || '', item.sellerName || '', (item.sellerIban ? formatIBAN(item.sellerIban) : ''), formatCsvAmount(price), formatCsvAmount(sellerPayout)];
     });
     tables.push({
         title: csvT('csv.report3Title', '3. Bezahlung elektronisch, Zahlung an Verkäufer elektronisch'),
@@ -2243,7 +2250,10 @@ function openReport() {
         body += '</tr></thead><tbody>';
         t.rows.forEach(function (row) {
             body += '<tr>';
-            row.forEach(function (c) { body += '<td style="' + tdStyles + '">' + escapeHtml(c) + '</td>'; });
+            row.forEach(function (c, idx) {
+                const val = (idx === 2 && c) ? formatIBAN(c) : c;
+                body += '<td style="' + tdStyles + '">' + escapeHtml(val) + '</td>';
+            });
             body += '</tr>';
         });
         body += '<tr>';
@@ -2262,7 +2272,7 @@ function openReport() {
         body += '</tbody></table>';
     });
     const csvEscaped = data.csv.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/<\/script>/gi, '<\\/script>');
-    const html = '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Report</title><style>.report-table th:nth-child(4), .report-table th:nth-child(5), .report-table td:nth-child(4), .report-table td:nth-child(5) { text-align: right; } .report-table td:nth-child(3) { font-family: ui-monospace, \'SF Mono\', Menlo, Monaco, Consolas, \'Liberation Mono\', \'Courier New\', monospace; letter-spacing: 0.04em; }</style></head><body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem;">' +
+    const html = '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Report</title><style>.report-table th:nth-child(4), .report-table th:nth-child(5), .report-table td:nth-child(4), .report-table td:nth-child(5) { text-align: right; } .report-table td:nth-child(3) { font-family: ui-monospace, \'SF Mono\', Menlo, Monaco, Consolas, \'Liberation Mono\', \'Courier New\', monospace; word-spacing: -0.3em; font-variant-numeric: tabular-nums; }</style></head><body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem;">' +
         '<h1 style="margin-bottom: 1.5rem;">Report</h1>' + body +
         '<p style="margin-top: 2rem;"><button type="button" id="btnExportCsv" style="padding: 10px 20px; font-size: 16px; background: #667eea; color: #fff; border: none; border-radius: 8px; cursor: pointer;">' + escapeHtml(exportCsvLabel) + '</button></p>' +
         '<script>window.__REPORT_CSV = \'' + csvEscaped + '\'; document.getElementById("btnExportCsv").onclick = function() { var blob = new Blob([window.__REPORT_CSV], { type: "text/csv;charset=utf-8" }); var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "E-Basar-Export-" + new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19) + ".csv"; a.click(); URL.revokeObjectURL(a.href); };<\/script></body></html>';

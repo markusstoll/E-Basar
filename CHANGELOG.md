@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.7] - 2026-09-21
+
+### Fixed
+- **Protokoll-Aufruf aus Hauptmenü (`showHistory`)**:
+  - Klick auf „Protokoll“ im Hauptmenü öffnet wieder zuverlässig die ungefilterte Gesamthistorie. Zuvor wurde das übergebene DOM-Click-Event versehentlich als Filterobjekt gewertet, was zu einer leeren Anzeige führte.
+  - Neuer automatisierter Regressionstest in Test-Gruppe 7 (Gesamtzahl: 60 Tests).
+
+### Changed
+- **Optimierte Abstände für IBAN-4er-Blöcke (Monospace)**:
+  - Reduzierung des Leerzeichen-Abstands zwischen den 4er-Blöcken (`word-spacing: -0.3em; font-variant-numeric: tabular-nums;`), sodass Monospace-IBANs kompakt und natürlich lesbar bleiben, ohne den Zwischenraum unnatürlich breit zu dehnen.
+- **IBAN-Formatierung in Berichten & CSV-Export**:
+  - IBANs der Verkäufer im Report (sowohl in der HTML-Ansicht via `openReport` als auch im CSV-Export via `getReportData`) werden nun einheitlich in 4er-Blöcken formatiert dargestellt.
+
 ## [1.1.6] - 2026-09-21
 
 ### Added
@@ -191,7 +204,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.6...HEAD
+[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.7...HEAD
+[1.1.7]: https://github.com/markusstoll/E-Basar/compare/1.1.6...1.1.7
 [1.1.6]: https://github.com/markusstoll/E-Basar/compare/1.1.5...1.1.6
 [1.1.5]: https://github.com/markusstoll/E-Basar/compare/1.1.4...1.1.5
 [1.1.4]: https://github.com/markusstoll/E-Basar/compare/1.1.3...1.1.4

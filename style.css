@@ -187,13 +187,15 @@ main {
     border-color: #e74c3c;
 }
 
-/* Feste Laufweite (Monospace) für alle IBAN Ein- und Ausgabefelder */
+/* Feste Laufweite (Monospace) mit dezenten Abständen zwischen den 4er-Blöcken */
 .iban-monospace,
 #detailIban,
 #sellerIban,
 #settingsIban {
     font-family: ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
+    word-spacing: -0.3em;
+    font-variant-numeric: tabular-nums;
 }
 
 .input-error-message {

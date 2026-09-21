@@ -659,6 +659,39 @@
                         t.assertFalse(sellerOverlay.classList.contains('hidden'), 'sellerFormOverlay muss weiterhin geöffnet bleiben');
                         t.app.closeSellerFormOverlay();
                     }
+                },
+                {
+                    name: 'Hauptmenü-Klick auf Protokoll öffnet ungefiltertes Protokoll aller Objekte',
+                    fn(t) {
+                        t.reset();
+                        t.app.saveToHistory({
+                            type: 'pay',
+                            param: 'Rad 1',
+                            amount: 100,
+                            recipientName: 'Basar',
+                            iban: 'DE89370400440532013000',
+                            timestamp: new Date().toISOString(),
+                            subject: 'Zahlung Rad 1'
+                        });
+                        t.app.saveToHistory({
+                            type: 'pay',
+                            param: 'Buch 2',
+                            amount: 20,
+                            recipientName: 'Basar',
+                            iban: 'DE89370400440532013000',
+                            timestamp: new Date().toISOString(),
+                            subject: 'Zahlung Buch 2'
+                        });
+                        const viewHistoryBtn = t.getElementById('viewHistory');
+                        viewHistoryBtn.click();
+                        const historyOverlay = t.getElementById('historyOverlay');
+                        t.assertFalse(historyOverlay.classList.contains('hidden'), 'historyOverlay muss geöffnet sein');
+                        const historyList = t.getElementById('historyList');
+                        t.assertTrue(historyList.innerHTML.includes('Rad 1'), 'Ungefilterte Historie muss Rad 1 enthalten');
+                        t.assertTrue(historyList.innerHTML.includes('Buch 2'), 'Ungefilterte Historie muss Buch 2 enthalten');
+                        t.assertFalse(historyList.innerHTML.includes('Keine Protokolleinträge'), 'Darf nicht leer/gefiltert sein');
+                        t.getElementById('closeHistory').click();
+                    }
                 }
             ]
         },
@@ -1004,7 +1037,7 @@
                         t.assertEqual(t1.rows.length, 1, 'Tabelle 1 muss genau 1 Zeile haben (Objekt 5)');
                         t.assertEqual(t1.rows[0][0], 'Rad 5 - Reg Bar El Ausgezahlt');
                         t.assertEqual(t1.rows[0][1], 'David Done');
-                        t.assertEqual(t1.rows[0][2], 'DE42111133333333333333');
+                        t.assertEqual(t1.rows[0][2], 'DE42 1111 3333 3333 3333 33');
                         t.assertEqual(t1.rows[0][3], '120,00');
                         t.assertEqual(t1.rows[0][4], '108,00');
                         t.assertEqual(t1.sumRow[3], '120,00');
