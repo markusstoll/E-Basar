@@ -340,7 +340,7 @@
             <div id="overlayPanelSofort" class="overlay-panel">
                 <canvas id="qrCanvas"></canvas>
                 <span id="detailName"></span>
-                <span id="detailIban"></span>
+                <span id="detailIban" class="iban-monospace"></span>
                 <span id="detailAmount"></span>
                 <span id="detailSubject"></span>
                 <span id="detailDate"></span>
@@ -381,7 +381,7 @@
                 <input type="file" id="settingsLogo" name="logo">
                 <button type="button" id="btnRemoveLogo">Remove</button>
                 <input type="text" id="settingsRecipientName" name="recipientName" required>
-                <input type="text" id="settingsIban" name="iban" required>
+                <input type="text" id="settingsIban" name="iban" class="iban-monospace" required>
                 <input type="text" id="settingsUsageTemplate" name="usageTemplate" required>
                 <input type="text" id="settingsParamLabel" name="paramLabel" required>
                 <input type="number" id="settingsCommissionPercent" name="commissionPercent">
@@ -408,7 +408,7 @@
                 <div id="sellerFormSellerBlock">
                     <input type="text" id="sellerName" name="sellerName" required>
                     <div class="form-group" id="sellerIbanGroup">
-                        <input type="text" id="sellerIban" name="sellerIban" required>
+                        <input type="text" id="sellerIban" name="sellerIban" class="iban-monospace" required>
                         <span id="sellerIbanError"></span>
                     </div>
                     <a href="#" id="btnSellerTestSms">Testnachricht</a>

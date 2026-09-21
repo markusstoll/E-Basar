@@ -1,4 +1,4 @@
-const APP_VERSION = '1.1.5';
+const APP_VERSION = '1.1.6';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -1355,7 +1355,7 @@ function renderSellerList() {
                 <div class="seller-item-main">
                     <div class="seller-item-meta">${paramText} · ${typeof item.price === 'number' ? formatAmountDE(item.price) : '—'} EUR</div>
                     <div class="seller-item-details">
-                        <span>IBAN: ${displayIban}</span>
+                        <span>IBAN: <span class="iban-monospace">${displayIban}</span></span>
                         <span>Tel: ${escapeHtml(displayPhone)}</span>
                     </div>
                 </div>
@@ -1880,7 +1880,7 @@ function renderObjectsTable(items, paramLabel) {
         return '<tr>' +
             '<td>' + escapeHtml(item.param || '—') + '</td>' +
             '<td>' + escapeHtml((item.sellerName || '').trim() || '—') + '</td>' +
-            '<td>' + escapeHtml((item.sellerIban || '').trim() ? formatIBAN(item.sellerIban) : '—') + '</td>' +
+            '<td class="iban-monospace">' + escapeHtml((item.sellerIban || '').trim() ? formatIBAN(item.sellerIban) : '—') + '</td>' +
             '<td>' + (typeof item.price === 'number' ? formatAmountDE(item.price) : '—') + ' EUR</td>' +
             '<td>' + escapeHtml((item.phone || '').trim() || '—') + '</td>' +
             '<td>' + (item.paid ? yesLabel : noLabel) + '</td>' +
@@ -2036,7 +2036,7 @@ function createHistoryItem(item, index) {
                 </div>
                 <div>
                     <strong>${escapeHtml(lblIban)}</strong>
-                    <span>${item.iban ? formatIBAN(item.iban) : '—'}</span>
+                    <span class="iban-monospace">${item.iban ? formatIBAN(item.iban) : '—'}</span>
                 </div>
                 <div>
                     <strong>${escapeHtml(lblAmount)}</strong>
@@ -2262,7 +2262,7 @@ function openReport() {
         body += '</tbody></table>';
     });
     const csvEscaped = data.csv.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/<\/script>/gi, '<\\/script>');
-    const html = '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Report</title><style>.report-table th:nth-child(4), .report-table th:nth-child(5), .report-table td:nth-child(4), .report-table td:nth-child(5) { text-align: right; }</style></head><body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem;">' +
+    const html = '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Report</title><style>.report-table th:nth-child(4), .report-table th:nth-child(5), .report-table td:nth-child(4), .report-table td:nth-child(5) { text-align: right; } .report-table td:nth-child(3) { font-family: ui-monospace, \'SF Mono\', Menlo, Monaco, Consolas, \'Liberation Mono\', \'Courier New\', monospace; letter-spacing: 0.04em; }</style></head><body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem;">' +
         '<h1 style="margin-bottom: 1.5rem;">Report</h1>' + body +
         '<p style="margin-top: 2rem;"><button type="button" id="btnExportCsv" style="padding: 10px 20px; font-size: 16px; background: #667eea; color: #fff; border: none; border-radius: 8px; cursor: pointer;">' + escapeHtml(exportCsvLabel) + '</button></p>' +
         '<script>window.__REPORT_CSV = \'' + csvEscaped + '\'; document.getElementById("btnExportCsv").onclick = function() { var blob = new Blob([window.__REPORT_CSV], { type: "text/csv;charset=utf-8" }); var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "E-Basar-Export-" + new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19) + ".csv"; a.click(); URL.revokeObjectURL(a.href); };<\/script></body></html>';

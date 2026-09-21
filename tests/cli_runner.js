@@ -185,10 +185,18 @@ const indexPath = path.join(__dirname, '..', 'index.html');
 const indexHtml = fs.readFileSync(indexPath, 'utf-8');
 
 const mockDoc = new MockDocument();
-const idRegex = /id="([^"]+)"/g;
+const tagRegex = /<([a-zA-Z0-9-]+)([^>]*id="([^"]+)"[^>]*)>/g;
 let match;
-while ((match = idRegex.exec(indexHtml)) !== null) {
-    mockDoc.getElementById(match[1]);
+while ((match = tagRegex.exec(indexHtml)) !== null) {
+    const tagName = match[1];
+    const attrs = match[2];
+    const id = match[3];
+    const el = mockDoc.getElementById(id);
+    el.tagName = tagName.toUpperCase();
+    const classMatch = attrs.match(/class="([^"]+)"/);
+    if (classMatch) {
+        classMatch[1].split(/\s+/).forEach(c => c && el.classList.add(c));
+    }
 }
 
 // Special attributes for mode-btns

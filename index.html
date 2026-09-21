@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="app.title">E-Basar!</title>
-    <link rel="stylesheet" href="style.css?v=1.1.5">
+    <link rel="stylesheet" href="style.css?v=1.1.6">
 </head>
 <body>
     <div class="container">
         <header>
-            <span class="app-version">v1.1.5</span>
+            <span class="app-version">v1.1.6</span>
             <button id="settingsBtn" class="settings-btn" aria-label="Einstellungen" data-i18n="aria.settings" data-i18n-attr="aria-label">⚙</button>
             <div class="header-branding">
                 <img id="appLogo" class="app-logo hidden" alt="">
@@ -103,7 +103,7 @@
                     </div>
                     <div class="detail-item">
                         <strong data-i18n="overlay.iban">IBAN:</strong>
-                        <span id="detailIban"></span>
+                        <span id="detailIban" class="iban-monospace"></span>
                     </div>
                     <div class="detail-item">
                         <strong data-i18n="overlay.amount">Betrag:</strong>
@@ -205,7 +205,7 @@
                 </div>
                 <div class="form-group">
                     <label for="settingsIban" data-i18n="settings.iban">Empfänger IBAN *</label>
-                    <input type="text" id="settingsIban" name="iban" required placeholder="DE89370400440532013000">
+                    <input type="text" id="settingsIban" name="iban" class="iban-monospace" required placeholder="DE89370400440532013000">
                 </div>
                 <div class="form-group">
                     <label for="settingsUsageTemplate" data-i18n="settings.usageTemplate">Verwendungszweck (Platzhalter: $objekt) *</label>
@@ -267,7 +267,7 @@
                     </div>
                     <div class="form-group" id="sellerIbanGroup">
                         <label for="sellerIban" data-i18n="form.sellerIban">IBAN Verkäufer *</label>
-                        <input type="text" id="sellerIban" name="sellerIban" required placeholder="DE89370400440532013000" autocomplete="off">
+                        <input type="text" id="sellerIban" name="sellerIban" class="iban-monospace" required placeholder="DE89370400440532013000" autocomplete="off">
                         <span id="sellerIbanError" class="input-error-message" aria-live="polite"></span>
                     </div>
                     <div class="form-group">
@@ -363,9 +363,9 @@
     </div>
 
 <!-- QR-Bibliothek lokal (unterstützt lange EPC-Strings, funktioniert mit file://) -->
-    <script src="lib/qrcode.min.js?v=1.1.5"></script>
-    <script src="i18n.js?v=1.1.5"></script>
-    <script src="script.js?v=1.1.5"></script>
+    <script src="lib/qrcode.min.js?v=1.1.6"></script>
+    <script src="i18n.js?v=1.1.6"></script>
+    <script src="script.js?v=1.1.6"></script>
 </body>
 </html>
 

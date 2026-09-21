@@ -67,6 +67,22 @@
                             }
                         });
                     }
+                },
+                {
+                    name: 'IBAN Ein- und Ausgabefelder verwenden iban-monospace Klasse',
+                    fn(t) {
+                        t.reset();
+                        const sellerIban = t.getElementById('sellerIban');
+                        t.assertTrue(sellerIban.classList.contains('iban-monospace'), 'sellerIban muss iban-monospace haben');
+                        const settingsIban = t.getElementById('settingsIban');
+                        t.assertTrue(settingsIban.classList.contains('iban-monospace'), 'settingsIban muss iban-monospace haben');
+                        const detailIban = t.getElementById('detailIban');
+                        t.assertTrue(detailIban.classList.contains('iban-monospace'), 'detailIban muss iban-monospace haben');
+                        t.app.addSellerItem({ sellerName: 'S1', sellerIban: 'DE89370400440532013000', param: 'Rad 1', price: 100 });
+                        t.app.renderSellerList();
+                        const listEl = t.getElementById('sellerList');
+                        t.assertTrue(listEl.innerHTML.includes('iban-monospace'), 'Gerenderte Verkäuferliste muss iban-monospace für IBAN enthalten');
+                    }
                 }
             ]
         },

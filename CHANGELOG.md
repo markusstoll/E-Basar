@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-09-21
+
 ### Added
 - **Objektbezogenes Protokoll im Bearbeiten-Overlay**:
   - Neuer Button *„Protokoll“* ganz unten im Bearbeiten-Dialog (`#sellerFormOverlay`), der das Protokoll gefiltert für das jeweilige Objekt öffnet.
@@ -14,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Neuer automatisierter Regressionstest in Test-Gruppe 7 (Gesamtzahl: 58 Tests).
 
 ### Changed
+- **Schrift mit fester Laufweite (Monospace) für alle IBAN Ein- und Ausgabefelder**:
+  - Alle IBAN-Eingabefelder (`#sellerIban`, `#settingsIban`) sowie Ausgabefelder (`#detailIban`, Verkäuferliste, Protokolleinträge, Objektübersicht und Berichte) nutzen nun eine Monospace-Schriftart (`ui-monospace`, `SF Mono`, `Menlo`, `Consolas`, etc.) mit optimierter Laufweite für beste Lesbarkeit.
+  - Neuer automatisierter Regressionstest in Test-Gruppe 1 (Gesamtzahl: 59 Tests).
 - **Gefahrenzone in Einstellungen**:
   - Button *„Test-Szenarien laden“* ist nun wie die anderen Aktionen der Gefahrenzone rot hervorgehoben (`btn-danger`) und an das Ende der Gefahrenzone verschoben.
 
@@ -186,7 +191,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.5...HEAD
+[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.6...HEAD
+[1.1.6]: https://github.com/markusstoll/E-Basar/compare/1.1.5...1.1.6
 [1.1.5]: https://github.com/markusstoll/E-Basar/compare/1.1.4...1.1.5
 [1.1.4]: https://github.com/markusstoll/E-Basar/compare/1.1.3...1.1.4
 [1.1.3]: https://github.com/markusstoll/E-Basar/compare/1.1.2...1.1.3
