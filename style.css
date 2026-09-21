@@ -778,6 +778,20 @@ footer {
     border-left: 4px solid #667eea;
 }
 
+.history-item.history-item-reset {
+    border-left-color: #e53e3e;
+    background: #fff5f5;
+}
+
+.history-item.history-item-change {
+    border-left-color: #dd6b20;
+    background: #fffaf0;
+}
+
+.history-item.history-item-payseller {
+    border-left-color: #38a169;
+}
+
 .history-item-header {
     display: flex;
     justify-content: space-between;

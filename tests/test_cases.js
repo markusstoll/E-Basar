@@ -1154,6 +1154,379 @@
                     }
                 }
             ]
+        },
+        {
+            name: '11. Protokoll (History): Protokollierung nur bei Abschluss mit Auswahl',
+            tests: [
+                {
+                    name: 'Öffnen des Bezahl-Overlays erzeugt noch KEINEN Protokolleintrag',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
+                        const item = t.app.addSellerItem({
+                            sellerName: '',
+                            sellerIban: '',
+                            param: 'Rad Protokoll-Test',
+                            price: 35.00
+                        });
+                        t.app.openPayOverlay(item.id);
+                        t.assertEqual(t.app.getHistory().length, 0, 'History muss beim reinen Öffnen des Bezahl-Overlays leer bleiben');
+                    }
+                },
+                {
+                    name: 'Schließen des Bezahl-Overlays mit Abbrechen/Schließen-Button erzeugt KEINEN Protokolleintrag',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
+                        const item = t.app.addSellerItem({
+                            sellerName: '',
+                            sellerIban: '',
+                            param: 'Rad Protokoll-Test-2',
+                            price: 40.00
+                        });
+                        t.app.openPayOverlay(item.id);
+
+                        const closeBtn = t.getElementById('closeOverlay');
+                        const origConfirm = global.confirm || window.confirm;
+                        global.confirm = () => true;
+                        if (typeof window !== 'undefined') window.confirm = global.confirm;
+                        try {
+                            if (typeof closeBtn.click === 'function') closeBtn.click();
+                            else closeBtn.dispatchEvent({ type: 'click' });
+                        } finally {
+                            global.confirm = origConfirm;
+                            if (typeof window !== 'undefined') window.confirm = origConfirm;
+                        }
+
+                        t.assertEqual(t.app.getHistory().length, 0, 'History muss nach Schließen ohne Auswahl leer bleiben');
+                    }
+                },
+                {
+                    name: 'Klick auf "Bezahlt (elektronisch)" schließt Overlay und erzeugt genau einen Protokolleintrag',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
+                        const item = t.app.addSellerItem({
+                            sellerName: '',
+                            sellerIban: '',
+                            param: 'Rad El-Protokoll',
+                            price: 55.00
+                        });
+                        t.app.openPayOverlay(item.id);
+                        t.assertEqual(t.app.getHistory().length, 0, 'Vor Klick kein Eintrag');
+
+                        const btnElectronic = t.getElementById('overlayPayDoneElectronic');
+                        if (typeof btnElectronic.click === 'function') btnElectronic.click();
+                        else btnElectronic.dispatchEvent({ type: 'click' });
+
+                        const h = t.app.getHistory();
+                        t.assertEqual(h.length, 1, 'Genau 1 Protokolleintrag nach Bezahlung');
+                        t.assertEqual(h[0].type, 'pay');
+                        t.assertEqual(h[0].paidMethod, 'elektronisch');
+                        t.assertEqual(h[0].amount, 55.00);
+                        t.assertEqual(h[0].recipientName, 'Basar e.V.');
+                        t.assertEqual(h[0].iban, 'DE89370400440532013000');
+                    }
+                },
+                {
+                    name: 'Klick auf "Bezahlt (bar)" schließt Overlay und erzeugt genau einen Protokolleintrag mit paidMethod bar',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
+                        const item = t.app.addSellerItem({
+                            sellerName: '',
+                            sellerIban: '',
+                            param: 'Rad Bar-Protokoll',
+                            price: 25.00
+                        });
+                        t.app.openPayOverlay(item.id);
+
+                        const btnCash = t.getElementById('overlayPayDoneCash');
+                        if (typeof btnCash.click === 'function') btnCash.click();
+                        else btnCash.dispatchEvent({ type: 'click' });
+
+                        const h = t.app.getHistory();
+                        t.assertEqual(h.length, 1, 'Genau 1 Protokolleintrag nach Barzahlung');
+                        t.assertEqual(h[0].type, 'pay');
+                        t.assertEqual(h[0].paidMethod, 'bar');
+                        t.assertEqual(h[0].amount, 25.00);
+                    }
+                },
+                {
+                    name: 'Öffnen und Schließen des Payout-Overlays erzeugt KEINEN Protokolleintrag',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
+                        const item = t.app.addSellerItem({
+                            sellerName: 'Clara Cash',
+                            sellerIban: 'DE04111122222222222222',
+                            phone: '+49 170 2222222',
+                            param: 'Rad Payout-Open-Test',
+                            price: 80.00
+                        });
+                        t.app.setSellerPaid(item.id, 'bar');
+
+                        t.app.openPaySellerOverlay(item.id);
+                        t.assertEqual(t.app.getHistory().length, 0, 'History muss beim reinen Öffnen des Payout-Overlays leer bleiben');
+
+                        const closeBtn = t.getElementById('closeOverlay');
+                        const origConfirm = global.confirm || window.confirm;
+                        global.confirm = () => true;
+                        if (typeof window !== 'undefined') window.confirm = global.confirm;
+                        try {
+                            if (typeof closeBtn.click === 'function') closeBtn.click();
+                            else closeBtn.dispatchEvent({ type: 'click' });
+                        } finally {
+                            global.confirm = origConfirm;
+                            if (typeof window !== 'undefined') window.confirm = origConfirm;
+                        }
+
+                        t.assertEqual(t.app.getHistory().length, 0, 'History muss nach Schließen des Payout-Overlays leer bleiben');
+                    }
+                },
+                {
+                    name: 'Klick auf "Auszahlung an Verkäufer bestätigen" erzeugt genau einen Protokolleintrag für Payout',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
+                        const item = t.app.addSellerItem({
+                            sellerName: 'Clara Cash',
+                            sellerIban: 'DE04111122222222222222',
+                            phone: '+49 170 2222222',
+                            param: 'Rad Payout-Done-Test',
+                            price: 80.00
+                        });
+                        t.app.setSellerPaid(item.id, 'bar');
+
+                        t.app.openPaySellerOverlay(item.id);
+                        t.assertEqual(t.app.getHistory().length, 0, 'Vor Auszahlungsbestätigung kein History-Eintrag');
+
+                        const btnDone = t.getElementById('overlayPaySellerDone');
+                        if (typeof btnDone.click === 'function') btnDone.click();
+                        else btnDone.dispatchEvent({ type: 'click' });
+
+                        const h = t.app.getHistory();
+                        t.assertEqual(h.length, 1, 'Genau 1 Protokolleintrag nach Payout-Bestätigung');
+                        t.assertEqual(h[0].type, 'paySeller');
+                        t.assertEqual(h[0].recipientName, 'Clara Cash');
+                        t.assertEqual(h[0].iban, 'DE04111122222222222222');
+                        t.assertEqual(h[0].amount, 72.00);
+                    }
+                },
+                {
+                    name: 'Sammelauszahlung an Verkäufer erzeugt bei Klick auf "Auszahlung an Verkäufer bestätigen" genau einen Protokolleintrag',
+                    fn(t) {
+                        t.reset();
+                        const s = t.app.getSettings();
+                        t.app.saveSettings({ ...s, recipientName: 'Basar e.V.', iban: 'DE89370400440532013000' });
+                        const item1 = t.app.addSellerItem({
+                            sellerName: 'Clara Cash',
+                            sellerIban: 'DE04111122222222222222',
+                            param: 'Rad Sammel 1',
+                            price: 100.00
+                        });
+                        const item2 = t.app.addSellerItem({
+                            sellerName: 'Clara Cash',
+                            sellerIban: 'DE04111122222222222222',
+                            param: 'Rad Sammel 2',
+                            price: 50.00
+                        });
+                        t.app.setSellerPaid(item1.id, 'bar');
+                        t.app.setSellerPaid(item2.id, 'bar');
+
+                        t.app.openPaySellerOverlayMultiple([item1.id, item2.id]);
+                        t.assertEqual(t.app.getHistory().length, 0, 'Vor Auszahlungsbestätigung darf kein Eintrag existieren');
+
+                        const btnDone = t.getElementById('overlayPaySellerDone');
+                        if (typeof btnDone.click === 'function') btnDone.click();
+                        else btnDone.dispatchEvent({ type: 'click' });
+
+                        const h = t.app.getHistory();
+                        t.assertEqual(h.length, 1, 'Genau 1 Protokolleintrag für Sammelauszahlung');
+                        t.assertEqual(h[0].type, 'paySeller');
+                        t.assertEqual(h[0].recipientName, 'Clara Cash');
+                        t.assertEqual(h[0].amount, 135.00);
+                        t.assertEqual(h[0].multipleItemIds.length, 2);
+                    }
+                },
+                {
+                    name: 'Status im Bearbeiten-Overlay auf unbezahlt zurücksetzen erzeugt Protokolleintrag (paymentReset)',
+                    fn(t) {
+                        t.reset();
+                        const item = t.app.addSellerItem({
+                            sellerName: 'Clara Cash',
+                            sellerIban: 'DE04111122222222222222',
+                            param: 'Rad Reset-Test',
+                            price: 80.00
+                        });
+                        t.app.setSellerPaid(item.id, 'bar');
+                        // Vor dem Reset: 1 History-Eintrag von setSellerPaid
+                        const histCountBefore = t.app.getHistory().length;
+
+                        // Bearbeiten: Bezahlt-Haken entfernen
+                        t.app.updateSellerItem(item.id, {
+                            sellerName: 'Clara Cash',
+                            sellerIban: 'DE04111122222222222222',
+                            param: 'Rad Reset-Test',
+                            price: 80.00,
+                            phone: '',
+                            paid: false,
+                            sellerPaid: false
+                        });
+
+                        const h = t.app.getHistory();
+                        t.assertEqual(h.length, histCountBefore + 1, 'Genau 1 neuer Protokolleintrag nach Reset');
+                        t.assertEqual(h[0].type, 'statusReset');
+                        t.assertEqual(h[0].statusChange, 'paymentReset');
+                        t.assertEqual(h[0].param, 'Rad Reset-Test');
+                        t.assertEqual(h[0].amount, 80.00);
+
+                        // Prüfen der HTML-Generierung von createHistoryItem
+                        const html = t.app.createHistoryItem(h[0], 0);
+                        t.assertTrue(html.includes('history-item-reset'), 'HTML muss Klasse history-item-reset enthalten');
+                        t.assertTrue(html.includes('Zahlungsstatus zurückgesetzt'), 'HTML muss Text Zahlungsstatus zurückgesetzt enthalten');
+                    }
+                },
+                {
+                    name: 'Auszahlungsstatus im Bearbeiten-Overlay auf nicht ausgezahlt zurücksetzen erzeugt Protokolleintrag (payoutReset)',
+                    fn(t) {
+                        t.reset();
+                        const item = t.app.addSellerItem({
+                            sellerName: 'David Done',
+                            sellerIban: 'DE42111133333333333333',
+                            param: 'Rad Payout-Reset',
+                            price: 100.00
+                        });
+                        t.app.setSellerPaid(item.id, 'bar');
+                        t.app.setSellerPaidSeller(item.id);
+                        const histCountBefore = t.app.getHistory().length;
+
+                        // Bearbeiten: sellerPaid auf false zurücksetzen
+                        t.app.updateSellerItem(item.id, {
+                            sellerName: 'David Done',
+                            sellerIban: 'DE42111133333333333333',
+                            param: 'Rad Payout-Reset',
+                            price: 100.00,
+                            phone: '',
+                            paid: true,
+                            sellerPaid: false
+                        });
+
+                        const h = t.app.getHistory();
+                        t.assertEqual(h.length, histCountBefore + 1, 'Genau 1 neuer Protokolleintrag für Payout-Reset');
+                        t.assertEqual(h[0].type, 'statusReset');
+                        t.assertEqual(h[0].statusChange, 'payoutReset');
+                        t.assertEqual(h[0].amount, 90.00); // 100 € - 10 %
+                        t.assertEqual(h[0].param, 'Rad Payout-Reset');
+
+                        const html = t.app.createHistoryItem(h[0], 0);
+                        t.assertTrue(html.includes('history-item-reset'), 'Klasse history-item-reset');
+                        t.assertTrue(html.includes('Auszahlungsstatus an Verkäufer zurückgesetzt'), 'Auszahlungsstatus zurückgesetzt');
+                    }
+                },
+                {
+                    name: 'Nachträgliches Markieren als bezahlt im Bearbeiten-Overlay erzeugt Protokolleintrag (paymentSet)',
+                    fn(t) {
+                        t.reset();
+                        const item = t.app.addSellerItem({
+                            sellerName: 'Anna Alt',
+                            sellerIban: 'DE21111155555555555555',
+                            param: 'Rad Manuell-Bezahlt',
+                            price: 50.00
+                        });
+                        t.assertEqual(t.app.getHistory().length, 0);
+
+                        // Bearbeiten: Nachträglich als bezahlt markieren
+                        t.app.updateSellerItem(item.id, {
+                            sellerName: 'Anna Alt',
+                            sellerIban: 'DE21111155555555555555',
+                            param: 'Rad Manuell-Bezahlt',
+                            price: 50.00,
+                            phone: '',
+                            paid: true,
+                            paidMethod: 'bar',
+                            sellerPaid: false
+                        });
+
+                        const h = t.app.getHistory();
+                        t.assertEqual(h.length, 1, '1 Eintrag für nachträgliche Bezahlung');
+                        t.assertEqual(h[0].type, 'statusChange');
+                        t.assertEqual(h[0].statusChange, 'paymentSet');
+                        t.assertEqual(h[0].paidMethod, 'bar');
+
+                        const html = t.app.createHistoryItem(h[0], 0);
+                        t.assertTrue(html.includes('history-item-change'), 'Klasse history-item-change');
+                        t.assertTrue(html.includes('Manuell als bezahlt markiert'), 'Text Manuell als bezahlt markiert');
+                    }
+                },
+                {
+                    name: 'Nachträgliches Markieren als ausgezahlt im Bearbeiten-Overlay erzeugt Protokolleintrag (payoutSet)',
+                    fn(t) {
+                        t.reset();
+                        const item = t.app.addSellerItem({
+                            sellerName: 'Anna Alt',
+                            sellerIban: 'DE21111155555555555555',
+                            param: 'Rad Manuell-Ausgezahlt',
+                            price: 60.00
+                        });
+                        t.app.setSellerPaid(item.id, 'bar');
+                        const histCountBefore = t.app.getHistory().length;
+
+                        // Bearbeiten: sellerPaid nachträglich auf true setzen
+                        t.app.updateSellerItem(item.id, {
+                            sellerName: 'Anna Alt',
+                            sellerIban: 'DE21111155555555555555',
+                            param: 'Rad Manuell-Ausgezahlt',
+                            price: 60.00,
+                            phone: '',
+                            paid: true,
+                            sellerPaid: true
+                        });
+
+                        const h = t.app.getHistory();
+                        t.assertEqual(h.length, histCountBefore + 1);
+                        t.assertEqual(h[0].type, 'statusChange');
+                        t.assertEqual(h[0].statusChange, 'payoutSet');
+                        t.assertEqual(h[0].amount, 54.00); // 60 € - 10 %
+
+                        const html = t.app.createHistoryItem(h[0], 0);
+                        t.assertTrue(html.includes('history-item-change'), 'Klasse history-item-change');
+                        t.assertTrue(html.includes('Manuell als an Verkäufer ausgezahlt markiert'), 'Text Manuell ausgezahlt');
+                    }
+                },
+                {
+                    name: 'Bearbeiten ohne Statusänderung erzeugt KEINEN Protokolleintrag',
+                    fn(t) {
+                        t.reset();
+                        const item = t.app.addSellerItem({
+                            sellerName: 'Bernd Bar',
+                            sellerIban: '',
+                            param: 'Rad Preisänderung',
+                            price: 30.00
+                        });
+                        t.assertEqual(t.app.getHistory().length, 0);
+
+                        // Bearbeiten: Nur Preis und Name ändern, Status bleibt unverändert (paid: false, sellerPaid: false)
+                        t.app.updateSellerItem(item.id, {
+                            sellerName: 'Bernd Neu',
+                            sellerIban: '',
+                            param: 'Rad Preisänderung',
+                            price: 35.00,
+                            phone: '+49 170 9999999',
+                            paid: false,
+                            sellerPaid: false
+                        });
+
+                        t.assertEqual(t.app.getHistory().length, 0, 'Keine Statusänderung -> Kein Protokolleintrag');
+                    }
+                }
+            ]
         }
     ];
 

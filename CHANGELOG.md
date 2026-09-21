@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-09-21
+
+### Fixed
+- **Protokollierung nur bei tatsächlichem Abschluss mit Auswahl**:
+  - `saveToHistory` wird nicht mehr beim bloßen Öffnen eines Overlays ausgeführt, sondern erst, wenn eine Auswahl getroffen wird (`overlayPayDoneElectronic`, `overlayPayDoneCash`, `overlayPaySellerDone`).
+  - Schließen oder Abbrechen des Overlays ohne Zahlungsvermerk erzeugt keinen Protokolleintrag mehr.
+  - Verwendung gültiger Test-IBANs aus `tests/test-ibans.txt` in den Test-Szenarien und Testfällen.
+
+### Added
+- **Protokollierung von Statusänderungen & Resets im Bearbeiten-Overlay**:
+  - Zurücksetzen des Zahlungsstatus (`paymentReset`) oder des Auszahlungsstatus (`payoutReset`) im Bearbeiten-Dialog wird nun explizit protokolliert.
+  - Manuelle nachträgliche Statusmarkierungen (`paymentSet`, `payoutSet`) werden ebenfalls im Protokoll erfasst.
+  - Visuelle Hervorhebung im Protokoll (rote Randmarkierung für Resets/Stornos, orange Randmarkierung für manuelle Statusänderungen, grüne Randmarkierung für Verkäuferauszahlungen).
+  - Anzeige der gewählten Zahlart (Bar / Elektronisch) in Protokoll-Einträgen.
+- **Automatisierte Test-Suite 11 (12 Tests)**:
+  - Umfassende automatisierte Tests für das Protokollverhalten bei Bezahlung, Auszahlung, Schließen ohne Auswahl sowie Status-Resets und Status-Setzungen im Bearbeiten-Overlay (Gesamtzahl: 57 Tests).
+
 ## [1.1.4] - 2026-09-20
 
 ### Fixed
@@ -158,7 +175,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.4...HEAD
+[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.5...HEAD
+[1.1.5]: https://github.com/markusstoll/E-Basar/compare/1.1.4...1.1.5
 [1.1.4]: https://github.com/markusstoll/E-Basar/compare/1.1.3...1.1.4
 [1.1.3]: https://github.com/markusstoll/E-Basar/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/markusstoll/E-Basar/compare/1.1.1...1.1.2

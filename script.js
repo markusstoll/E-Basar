@@ -1,4 +1,4 @@
-const APP_VERSION = '1.1.4';
+const APP_VERSION = '1.1.5';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -135,7 +135,12 @@ function setupEventListeners() {
             setSellerPaid(currentPayItemId, 'elektronisch');
             currentPayItemId = null;
         }
-        if (currentOverlayData) currentOverlayData.paidAlready = true;
+        if (currentOverlayData) {
+            currentOverlayData.paidAlready = true;
+            currentOverlayData.paidMethod = 'elektronisch';
+            currentOverlayData.timestamp = new Date().toISOString();
+            saveToHistory(currentOverlayData);
+        }
         closeQROverlay();
     });
     if (overlayPayDoneCash) overlayPayDoneCash.addEventListener('click', function () {
@@ -143,7 +148,12 @@ function setupEventListeners() {
             setSellerPaid(currentPayItemId, 'bar');
             currentPayItemId = null;
         }
-        if (currentOverlayData) currentOverlayData.paidAlready = true;
+        if (currentOverlayData) {
+            currentOverlayData.paidAlready = true;
+            currentOverlayData.paidMethod = 'bar';
+            currentOverlayData.timestamp = new Date().toISOString();
+            saveToHistory(currentOverlayData);
+        }
         closeQROverlay();
     });
     if (overlayPaySellerDone) overlayPaySellerDone.addEventListener('click', function () {
@@ -160,15 +170,26 @@ function setupEventListeners() {
                 setSellerPaidSeller(id);
                 selectedSellerItemIds.delete(id);
             });
+            if (currentOverlayData) {
+                currentOverlayData.sellerPaidAlready = true;
+                currentOverlayData.timestamp = new Date().toISOString();
+                if (markBarPaid) currentOverlayData.markBarPaid = true;
+                saveToHistory(currentOverlayData);
+            }
             currentPaySellerItemIds = null;
             renderSellerList();
             updateFooterSums();
         } else if (currentPaySellerItemId) {
             if (markBarPaid) setSellerPaid(currentPaySellerItemId, 'bar');
             setSellerPaidSeller(currentPaySellerItemId);
+            if (currentOverlayData) {
+                currentOverlayData.sellerPaidAlready = true;
+                currentOverlayData.timestamp = new Date().toISOString();
+                if (markBarPaid) currentOverlayData.markBarPaid = true;
+                saveToHistory(currentOverlayData);
+            }
             currentPaySellerItemId = null;
         }
-        if (currentOverlayData) currentOverlayData.sellerPaidAlready = true;
         closeQROverlay();
     });
     const overlayPaySellerBarPaidCheckbox = document.getElementById('overlayPaySellerBarPaidCheckbox');
@@ -496,7 +517,7 @@ function addSellerItem(item) {
     return entry;
 }
 
-function updateSellerItem(id, data) {
+function updateSellerItem(id, data, options = {}) {
     const items = getSellerItems();
     const idx = items.findIndex(i => i.id === id);
     if (idx === -1) return;
@@ -530,6 +551,72 @@ function updateSellerItem(id, data) {
     };
     saveSellerItems(items);
     updateFooterSums();
+
+    // Protokollierung von Statusänderungen (sofern nicht explizit unterdrückt via options.logHistory = false)
+    if (options.logHistory !== false) {
+        const s = getSettings();
+        const paramLabel = (s.paramLabel || 'Objekt').trim() || 'Objekt';
+        const commission = (s.commissionPercent != null && s.commissionPercent !== '') ? Number(s.commissionPercent) : 10;
+        const payoutAmount = Math.round(Number(data.price) * (1 - commission / 100) * 100) / 100;
+
+        // 1. Bezahlt zurückgesetzt
+        if (oldItem.paid && !data.paid) {
+            saveToHistory({
+                type: 'statusReset',
+                statusChange: 'paymentReset',
+                recipientName: data.sellerName || oldItem.sellerName || '',
+                iban: data.sellerIban || oldItem.sellerIban || '',
+                amount: Number(data.price),
+                param: data.param,
+                paramLabel: paramLabel,
+                timestamp: new Date().toISOString(),
+                subject: window.i18n ? window.i18n.tOr('history.paymentReset', 'Zahlungsstatus zurückgesetzt') : 'Zahlungsstatus zurückgesetzt'
+            });
+        }
+        // 2. Auszahlung an Verkäufer zurückgesetzt
+        if (oldItem.sellerPaid && !data.sellerPaid) {
+            saveToHistory({
+                type: 'statusReset',
+                statusChange: 'payoutReset',
+                recipientName: data.sellerName || oldItem.sellerName || '',
+                iban: data.sellerIban || oldItem.sellerIban || '',
+                amount: payoutAmount,
+                param: data.param,
+                paramLabel: paramLabel,
+                timestamp: new Date().toISOString(),
+                subject: window.i18n ? window.i18n.tOr('history.payoutReset', 'Auszahlungsstatus an Verkäufer zurückgesetzt') : 'Auszahlungsstatus an Verkäufer zurückgesetzt'
+            });
+        }
+        // 3. Nachträglich als bezahlt markiert
+        if (!oldItem.paid && data.paid) {
+            saveToHistory({
+                type: 'statusChange',
+                statusChange: 'paymentSet',
+                paidMethod: data.paidMethod || 'elektronisch',
+                recipientName: data.sellerName || oldItem.sellerName || '',
+                iban: data.sellerIban || oldItem.sellerIban || '',
+                amount: Number(data.price),
+                param: data.param,
+                paramLabel: paramLabel,
+                timestamp: new Date().toISOString(),
+                subject: window.i18n ? window.i18n.tOr('history.paymentManual', 'Nachträglich als bezahlt markiert') : 'Nachträglich als bezahlt markiert'
+            });
+        }
+        // 4. Nachträglich als an Verkäufer ausgezahlt markiert
+        if (!oldItem.sellerPaid && data.sellerPaid) {
+            saveToHistory({
+                type: 'statusChange',
+                statusChange: 'payoutSet',
+                recipientName: data.sellerName || oldItem.sellerName || '',
+                iban: data.sellerIban || oldItem.sellerIban || '',
+                amount: payoutAmount,
+                param: data.param,
+                paramLabel: paramLabel,
+                timestamp: new Date().toISOString(),
+                subject: window.i18n ? window.i18n.tOr('history.payoutManual', 'Nachträglich als an Verkäufer ausgezahlt markiert') : 'Nachträglich als an Verkäufer ausgezahlt markiert'
+            });
+        }
+    }
 }
 
 function setSellerPaid(id, method) {
@@ -921,7 +1008,6 @@ function openPayOverlay(id) {
         paidAlready: !!item.paid
     };
     generateQRCode(transferData);
-    saveToHistory(transferData);
 }
 
 function openPaySellerOverlay(id) {
@@ -946,7 +1032,6 @@ function openPaySellerOverlay(id) {
         paidByBuyerAlready: !!item.paid
     };
     generateQRCode(transferData);
-    saveToHistory(transferData);
 }
 
 function openPaySellerOverlayMultiple(ids) {
@@ -984,7 +1069,6 @@ function openPaySellerOverlayMultiple(ids) {
         multipleItemIds: ids
     };
     generateQRCode(transferData);
-    saveToHistory(transferData);
 }
 
 function fillSellerFormFromLast() {
@@ -1727,6 +1811,10 @@ function closeQROverlay() {
         if (!confirm(confirmMsg)) return;
     }
     overlay.classList.add('hidden');
+    currentOverlayData = null;
+    currentPayItemId = null;
+    currentPaySellerItemId = null;
+    currentPaySellerItemIds = null;
 }
 
 function closeHistoryOverlay() {
@@ -1833,17 +1921,49 @@ function exportHistoryToPDF() {
 function createHistoryItem(item, index) {
     const paramLabel = item.paramLabel || '';
     const param = item.param || '';
-    const title = (item.type === 'paySeller')
-        ? (window.i18n ? window.i18n.tOr('history.sellerPayment', ('Verkäuferbezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param).trim(), [paramLabel, param]).trim() : ('Verkäuferbezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param))
-        : (paramLabel || param)
-            ? (window.i18n ? window.i18n.tOr('history.payment', ('Bezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param).trim(), [paramLabel, param]).trim() : ('Bezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param))
-            : (window.i18n ? window.i18n.tOr('history.transfer', 'Überweisung #' + (index + 1), [index + 1]) : ('Überweisung #' + (index + 1)));
+    let title = '';
+    let itemClass = 'history-item';
+    if (item.type === 'statusReset') {
+        itemClass += ' history-item-reset';
+        const changeLabel = item.statusChange === 'paymentReset'
+            ? (window.i18n ? window.i18n.tOr('history.paymentReset', 'Zahlungsstatus zurückgesetzt') : 'Zahlungsstatus zurückgesetzt')
+            : (window.i18n ? window.i18n.tOr('history.payoutReset', 'Auszahlungsstatus an Verkäufer zurückgesetzt') : 'Auszahlungsstatus an Verkäufer zurückgesetzt');
+        title = window.i18n
+            ? window.i18n.tOr('history.statusReset', 'Status zurückgesetzt ({0}): {1} {2}', [changeLabel, paramLabel, param]).trim()
+            : ('Status zurückgesetzt (' + changeLabel + '): ' + paramLabel + (paramLabel && param ? ' ' : '') + param).trim();
+    } else if (item.type === 'statusChange') {
+        itemClass += ' history-item-change';
+        const changeLabel = item.statusChange === 'paymentSet'
+            ? (window.i18n ? window.i18n.tOr('history.paymentManual', 'Manuell als bezahlt markiert') : 'Manuell als bezahlt markiert')
+            : (window.i18n ? window.i18n.tOr('history.payoutManual', 'Manuell als an Verkäufer ausgezahlt markiert') : 'Manuell als an Verkäufer ausgezahlt markiert');
+        title = window.i18n
+            ? window.i18n.tOr('history.statusChange', 'Statusänderung ({0}): {1} {2}', [changeLabel, paramLabel, param]).trim()
+            : ('Statusänderung (' + changeLabel + '): ' + paramLabel + (paramLabel && param ? ' ' : '') + param).trim();
+    } else if (item.type === 'paySeller') {
+        itemClass += ' history-item-payseller';
+        title = (window.i18n ? window.i18n.tOr('history.sellerPayment', ('Verkäuferbezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param).trim(), [paramLabel, param]).trim() : ('Verkäuferbezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param));
+    } else if (paramLabel || param) {
+        title = (window.i18n ? window.i18n.tOr('history.payment', ('Bezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param).trim(), [paramLabel, param]).trim() : ('Bezahlung ' + paramLabel + (paramLabel && param ? ' ' : '') + param));
+    } else {
+        title = (window.i18n ? window.i18n.tOr('history.transfer', 'Überweisung #' + (index + 1), [index + 1]) : ('Überweisung #' + (index + 1)));
+    }
     const lblRecipient = window.i18n ? window.i18n.tOr('history.recipient', 'Empfänger') : 'Empfänger';
     const lblIban = window.i18n ? window.i18n.tOr('history.iban', 'IBAN') : 'IBAN';
     const lblAmount = window.i18n ? window.i18n.tOr('history.amount', 'Betrag') : 'Betrag';
     const lblSubject = window.i18n ? window.i18n.tOr('history.subject', 'Betreff') : 'Betreff';
+    const lblMethod = window.i18n ? window.i18n.tOr('history.method', 'Zahlart') : 'Zahlart';
+    const methodText = item.paidMethod === 'bar'
+        ? (window.i18n ? window.i18n.tOr('history.methodBar', 'Bar') : 'Bar')
+        : item.paidMethod === 'elektronisch'
+            ? (window.i18n ? window.i18n.tOr('history.methodElectronic', 'Elektronisch') : 'Elektronisch')
+            : '';
+    const methodHtml = methodText ? `
+                <div>
+                    <strong>${escapeHtml(lblMethod)}</strong>
+                    <span>${escapeHtml(methodText)}</span>
+                </div>` : '';
     return `
-        <div class="history-item">
+        <div class="${itemClass}">
             <div class="history-item-header">
                 <strong>${escapeHtml(title)}</strong>
                 <span class="history-item-date">${formatDate(item.timestamp)}</span>
@@ -1851,20 +1971,20 @@ function createHistoryItem(item, index) {
             <div class="history-item-details">
                 <div>
                     <strong>${escapeHtml(lblRecipient)}</strong>
-                    <span>${escapeHtml(item.recipientName)}</span>
+                    <span>${escapeHtml(item.recipientName || '—')}</span>
                 </div>
                 <div>
                     <strong>${escapeHtml(lblIban)}</strong>
-                    <span>${formatIBAN(item.iban)}</span>
+                    <span>${item.iban ? formatIBAN(item.iban) : '—'}</span>
                 </div>
                 <div>
                     <strong>${escapeHtml(lblAmount)}</strong>
-                    <span>${item.amount.toFixed(2)} EUR</span>
+                    <span>${typeof item.amount === 'number' ? item.amount.toFixed(2) + ' EUR' : '—'}</span>
                 </div>
                 <div>
                     <strong>${escapeHtml(lblSubject)}</strong>
                     <span>${escapeHtml(item.subject) || '-'}</span>
-                </div>
+                </div>${methodHtml}
             </div>
         </div>
     `;
@@ -2288,7 +2408,7 @@ function loadTestScenario(customSettings, clearExisting = false) {
                 sellerPaid: spec.sellerPaid,
                 sellerPaidAt: spec.sellerPaidAt,
                 notifiedAt: spec.notifiedAt
-            });
+            }, { logHistory: false });
         }
         createdItems.push(getSellerItems().find(i => i.id === item.id));
     });
@@ -2331,6 +2451,7 @@ if (typeof module !== 'undefined' && module.exports) {
         closeSellerFormOverlay,
         openPayOverlay,
         openPaySellerOverlay,
+        openPaySellerOverlayMultiple,
         toggleSellerSelection,
         getSelectedSellerItemIds,
         clearSelectedSellerItemIds,
@@ -2338,6 +2459,10 @@ if (typeof module !== 'undefined' && module.exports) {
         getReportData,
         loadTestScenario,
         TEST_SCENARIO_ITEMS,
-        setupEventListeners
+        setupEventListeners,
+        saveToHistory,
+        getHistory,
+        createHistoryItem,
+        closeQROverlay
     };
 }
