@@ -1069,6 +1069,36 @@
                         t.assertTrue(reportData.csv.includes('60,00'));
                         t.assertTrue(reportData.csv.includes('54,00'));
                     }
+                },
+                {
+                    name: 'openReport erzeugt Querformat-Drucklayout ohne max-width und mit Drucken-Button',
+                    fn(t) {
+                        t.reset();
+                        t.app.loadTestScenario(null, true);
+                        let capturedHtml = '';
+                        const win = (typeof window !== 'undefined') ? window : global.window;
+                        const origOpen = win ? win.open : undefined;
+                        if (win) {
+                            win.open = function () {
+                                return {
+                                    document: {
+                                        write(h) { capturedHtml += h; },
+                                        close() {}
+                                    }
+                                };
+                            };
+                        }
+                        try {
+                            t.app.openReport();
+                            t.assertTrue(capturedHtml.includes('@page { size: landscape;'), 'Report muss Querformat-Print-CSS enthalten');
+                            t.assertFalse(capturedHtml.includes('max-width: 900px'), 'Report darf keine 900px max-width Beschränkung mehr haben');
+                            t.assertTrue(capturedHtml.includes('id="btnPrintReport"'), 'Report muss einen Drucken-Button enthalten');
+                            t.assertTrue(capturedHtml.includes('id="btnExportCsv"'), 'Report muss einen CSV-Export-Button enthalten');
+                            t.assertTrue(capturedHtml.includes('window.print()'), 'Drucken-Button muss window.print() aufrufen');
+                        } finally {
+                            if (win) win.open = origOpen;
+                        }
+                    }
                 }
             ]
         },

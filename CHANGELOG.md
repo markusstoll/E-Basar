@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.8] - 2026-09-21
+
+### Changed
+- **Report-Layout ohne Breitenbeschränkung**:
+  - `max-width: 900px` entfernt; die Tabelle nutzt nun die volle verfügbare Fenster- und Druckbreite.
+  - Spalten für Verkäufer-IBAN und Beträge nutzen `white-space: nowrap;`, um unnötige Zeilenumbrüche zu verhindern.
+- **Querformat-Drucklayout (`@page { size: landscape; }`)**:
+  - Automatische Seitenausrichtung im Querformat für den Ausdruck mit optimierten Rändern (`12mm 15mm`), Tabellen-Kopfzeilenwiederholung (`display: table-header-group`) und Verhinderung von Zeilenumbrüchen über Seitengrenzen (`page-break-inside: avoid`).
+  - Farbdarstellung von Summen- und Kopfzeilen bleibt im Druck erhalten (`print-color-adjust: exact`).
+
+### Added
+- **Drucken-Button im Report**:
+  - Eigener Button *„Drucken“* (`#btnPrintReport`) startet direkt den Druckdialog (`window.print()`).
+  - Alle Aktions-Buttons werden beim Ausdrucken via `.no-print` automatisch ausgeblendet.
+  - Neuer automatisierter Regressionstest in Test-Gruppe 9 (Gesamtzahl: 61 Tests).
+
 ## [1.1.7] - 2026-09-21
 
 ### Fixed
@@ -204,7 +220,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.7...HEAD
+[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.8...HEAD
+[1.1.8]: https://github.com/markusstoll/E-Basar/compare/1.1.7...1.1.8
 [1.1.7]: https://github.com/markusstoll/E-Basar/compare/1.1.6...1.1.7
 [1.1.6]: https://github.com/markusstoll/E-Basar/compare/1.1.5...1.1.6
 [1.1.5]: https://github.com/markusstoll/E-Basar/compare/1.1.4...1.1.5

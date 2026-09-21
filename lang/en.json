@@ -23,6 +23,7 @@
   "button.history": "History",
   "button.csvExport": "CSV export",
   "button.report": "Report",
+  "report.print": "Print",
   "report.exportCsv": "Export as CSV",
   "csv.report1Title": "1. Payment cash, payout to seller electronic",
   "csv.report2Title": "2. Payment electronic, payout to seller cash",

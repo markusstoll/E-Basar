@@ -23,6 +23,7 @@
   "button.history": "Protokoll",
   "button.csvExport": "CSV-Export",
   "button.report": "Report",
+  "report.print": "Drucken",
   "report.exportCsv": "Export als CSV",
   "csv.report1Title": "1. Bezahlung bar, Zahlung an Verkäufer elektronisch",
   "csv.report2Title": "2. Bezahlung elektronisch, Zahlung an Verkäufer bar",

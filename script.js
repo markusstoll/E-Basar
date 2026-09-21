@@ -1,4 +1,4 @@
-const APP_VERSION = '1.1.7';
+const APP_VERSION = '1.1.8';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -2235,6 +2235,7 @@ function openReport() {
         alert(window.i18n ? window.i18n.tOr('msg.noCsvExport', 'Keine Objekte mit Zahlungsstatus zum Exportieren.') : 'Keine Objekte mit Zahlungsstatus zum Exportieren.');
         return;
     }
+    const printLabel = window.i18n ? window.i18n.tOr('report.print', 'Drucken') : 'Drucken';
     const exportCsvLabel = window.i18n ? window.i18n.tOr('report.exportCsv', 'Export als CSV') : 'Export als CSV';
     const tableStyles = 'border-collapse: collapse; width: 100%; margin-bottom: 2rem; font-size: 14px;';
     const thStyles = 'border: 1px solid #333; background: #667eea; color: #fff; padding: 10px 12px; text-align: left;';
@@ -2256,26 +2257,53 @@ function openReport() {
             });
             body += '</tr>';
         });
-        body += '<tr>';
+        body += '<tr class="sum-row">';
         t.sumRow.forEach(function (c) { body += '<td style="' + sumStyles + '">' + escapeHtml(c) + '</td>'; });
         body += '</tr>';
         if (t.impactRow) {
-            body += '<tr>';
+            body += '<tr class="impact-row">';
             t.impactRow.forEach(function (c) { body += '<td style="' + impactStyles + '">' + escapeHtml(c) + '</td>'; });
             body += '</tr>';
         }
         if (t.impactOnAccountRow) {
-            body += '<tr>';
+            body += '<tr class="impact-row">';
             t.impactOnAccountRow.forEach(function (c) { body += '<td style="' + impactStyles + '">' + escapeHtml(c) + '</td>'; });
             body += '</tr>';
         }
         body += '</tbody></table>';
     });
     const csvEscaped = data.csv.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/<\/script>/gi, '<\\/script>');
-    const html = '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Report</title><style>.report-table th:nth-child(4), .report-table th:nth-child(5), .report-table td:nth-child(4), .report-table td:nth-child(5) { text-align: right; } .report-table td:nth-child(3) { font-family: ui-monospace, \'SF Mono\', Menlo, Monaco, Consolas, \'Liberation Mono\', \'Courier New\', monospace; word-spacing: -0.3em; font-variant-numeric: tabular-nums; }</style></head><body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem;">' +
+    const html = '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Report</title><style>' +
+        '@page { size: landscape; margin: 12mm 15mm; }' +
+        'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 1.5rem 2rem; padding: 0; color: #333; }' +
+        '.report-table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; font-size: 14px; }' +
+        '.report-table th, .report-table td { border: 1px solid #ccc; padding: 8px 12px; }' +
+        '.report-table th { border-color: #333; background: #667eea; color: #fff; text-align: left; }' +
+        '.report-table th:nth-child(3), .report-table td:nth-child(3) { font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; word-spacing: -0.3em; font-variant-numeric: tabular-nums; white-space: nowrap; }' +
+        '.report-table th:nth-child(4), .report-table th:nth-child(5), .report-table td:nth-child(4), .report-table td:nth-child(5) { text-align: right; white-space: nowrap; }' +
+        '.report-table tr.sum-row td { border-color: #333; font-weight: bold; background: #f0f0f0; }' +
+        '.report-table tr.impact-row td { border-color: #333; font-weight: bold; background: #fff3cd; }' +
+        '@media print {' +
+        '  .no-print { display: none !important; }' +
+        '  body { margin: 0 !important; padding: 0 !important; }' +
+        '  .report-table { font-size: 11px; margin-bottom: 1.5rem; page-break-inside: auto; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+        '  .report-table th, .report-table td { padding: 5px 8px; }' +
+        '  .report-table tr { page-break-inside: avoid; page-break-after: auto; }' +
+        '  .report-table thead { display: table-header-group; }' +
+        '  .report-table-title { page-break-after: avoid; margin-top: 1rem; margin-bottom: 0.5rem; }' +
+        '  h1 { font-size: 1.4rem; margin-bottom: 0.75rem; }' +
+        '}' +
+        '</style></head><body>' +
         '<h1 style="margin-bottom: 1.5rem;">Report</h1>' + body +
-        '<p style="margin-top: 2rem;"><button type="button" id="btnExportCsv" style="padding: 10px 20px; font-size: 16px; background: #667eea; color: #fff; border: none; border-radius: 8px; cursor: pointer;">' + escapeHtml(exportCsvLabel) + '</button></p>' +
-        '<script>window.__REPORT_CSV = \'' + csvEscaped + '\'; document.getElementById("btnExportCsv").onclick = function() { var blob = new Blob([window.__REPORT_CSV], { type: "text/csv;charset=utf-8" }); var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "E-Basar-Export-" + new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19) + ".csv"; a.click(); URL.revokeObjectURL(a.href); };<\/script></body></html>';
+        '<div class="no-print" style="margin-top: 2rem; display: flex; gap: 12px; align-items: center;">' +
+        '<button type="button" id="btnPrintReport" style="padding: 10px 20px; font-size: 15px; font-weight: 500; background: #3182ce; color: #fff; border: none; border-radius: 8px; cursor: pointer;">' + escapeHtml(printLabel) + '</button>' +
+        '<button type="button" id="btnExportCsv" style="padding: 10px 20px; font-size: 15px; font-weight: 500; background: #667eea; color: #fff; border: none; border-radius: 8px; cursor: pointer;">' + escapeHtml(exportCsvLabel) + '</button>' +
+        '</div>' +
+        '<script>' +
+        'window.__REPORT_CSV = \'' + csvEscaped + '\';' +
+        'document.getElementById("btnPrintReport").onclick = function() { window.print(); };' +
+        'document.getElementById("btnExportCsv").onclick = function() { var blob = new Blob([window.__REPORT_CSV], { type: "text/csv;charset=utf-8" }); var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "E-Basar-Export-" + new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19) + ".csv"; a.click(); URL.revokeObjectURL(a.href); };' +
+        '<\/script></body></html>';
     const w = window.open('', '_blank');
     if (w) {
         w.document.write(html);
@@ -2528,6 +2556,7 @@ if (typeof module !== 'undefined' && module.exports) {
         clearSelectedSellerItemIds,
         updateSellerSelectionBar,
         getReportData,
+        openReport,
         loadTestScenario,
         TEST_SCENARIO_ITEMS,
         setupEventListeners,
