@@ -243,9 +243,9 @@
                     <input type="file" id="importFileInput" accept=".json,application/json" class="settings-import-input">
                     <button type="button" id="btnImportData" class="btn-danger" data-i18n="settings.importButton">Backup einlesen (überschreibt Bestand)</button>
                 </div>
-                <button type="button" id="btnLoadTestScenario" class="btn-secondary" style="margin-bottom: 8px;" data-i18n="settings.loadTestScenario">Test-Szenarien laden (überschreibt Bestand)</button>
                 <button type="button" id="btnResetWegedaten" class="btn-danger" data-i18n="settings.resetWegedaten">Nur Verlaufsdaten löschen (Protokoll + Objekte)</button>
                 <button type="button" id="btnResetAll" class="btn-danger" data-i18n="settings.deleteAll">Alle Daten löschen</button>
+                <button type="button" id="btnLoadTestScenario" class="btn-danger" data-i18n="settings.loadTestScenario">Test-Szenarien laden (überschreibt Bestand)</button>
             </div>
         </div>
     </div>
@@ -304,6 +304,9 @@
                     <button type="button" id="btnFillFromLast" class="btn-secondary" data-i18n="form.fillFromLast">Aus letzter Eingabe</button>
                     <button type="submit" id="btnSellerSubmit" class="btn-primary" data-i18n="form.saveObject">Objekt speichern</button>
                 </div>
+                <div id="sellerFormHistoryRow" class="seller-form-history-row hidden">
+                    <button type="button" id="btnSellerHistory" class="btn-secondary" data-i18n="form.showHistory">Protokoll</button>
+                </div>
             </form>
         </div>
     </div>
@@ -349,7 +352,7 @@
     <div id="historyOverlay" class="overlay hidden">
         <div class="overlay-content history-content">
             <button id="closeHistory" class="close-btn" aria-label="Schließen" data-i18n="aria.close" data-i18n-attr="aria-label">&times;</button>
-            <h2 data-i18n="history.title">Protokoll</h2>
+            <h2 id="historyTitle" data-i18n="history.title">Protokoll</h2>
             <div class="history-actions">
                 <button id="exportHistory" class="btn-secondary" data-i18n="history.exportPdf">Als PDF exportieren</button>
             </div>

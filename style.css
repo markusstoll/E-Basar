@@ -754,6 +754,10 @@ footer {
 }
 
 /* History Styles */
+#historyOverlay {
+    z-index: 1100;
+}
+
 .history-content {
     max-width: 700px;
 }
@@ -1326,6 +1330,20 @@ footer {
 
 .form-actions .btn-primary {
     margin-top: 0;
+}
+
+.seller-form-history-row {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #eee;
+}
+
+.seller-form-history-row.hidden {
+    display: none;
+}
+
+.seller-form-history-row .btn-secondary {
+    width: 100%;
 }
 
 /* Tablet / iPad – Point of Sale: größere, gut lesbare Oberfläche */

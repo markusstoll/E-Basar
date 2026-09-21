@@ -392,9 +392,9 @@
             <button type="button" id="btnExportData">Backup herunterladen</button>
             <input type="file" id="importFileInput">
             <button type="button" id="btnImportData">Backup einlesen</button>
-            <button type="button" id="btnLoadTestScenario">Test-Szenarien laden (überschreibt Bestand)</button>
             <button type="button" id="btnResetWegedaten">Nur Verlaufsdaten löschen</button>
             <button type="button" id="btnResetAll">Alle Daten löschen</button>
+            <button type="button" id="btnLoadTestScenario">Test-Szenarien laden (überschreibt Bestand)</button>
         </div>
 
         <div id="sellerFormOverlay" class="overlay hidden">
@@ -429,6 +429,9 @@
                 </div>
                 <button type="button" id="btnFillFromLast">Aus letzter Eingabe</button>
                 <button type="submit" id="btnSellerSubmit">Speichern</button>
+                <div id="sellerFormHistoryRow" class="hidden">
+                    <button type="button" id="btnSellerHistory">Protokoll</button>
+                </div>
             </form>
         </div>
 
@@ -451,6 +454,7 @@
 
         <div id="historyOverlay" class="overlay hidden">
             <button id="closeHistory" class="close-btn">&times;</button>
+            <h2 id="historyTitle">Protokoll</h2>
             <button id="exportHistory">Als PDF exportieren</button>
             <div id="historyList"></div>
         </div>

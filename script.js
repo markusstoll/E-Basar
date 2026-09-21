@@ -90,6 +90,17 @@ function setupEventListeners() {
         else openSellerFormOverlay();
     });
     document.getElementById('btnFillFromLast').addEventListener('click', fillSellerFormFromLast);
+    const btnSellerHistory = document.getElementById('btnSellerHistory');
+    if (btnSellerHistory) {
+        btnSellerHistory.addEventListener('click', function () {
+            const editId = sellerEditIdInput ? sellerEditIdInput.value : '';
+            if (!editId) return;
+            const items = getSellerItems();
+            const item = items.find(i => i.id === editId);
+            if (!item) return;
+            showHistory({ id: item.id, param: item.param });
+        });
+    }
     function syncShowPaidWithSearch() {
         if (getMode() === 'payout') return;
         const hasSearch = !!((sellerFilterParamEl && sellerFilterParamEl.value.trim()) || (sellerFilterSellerEl && sellerFilterSellerEl.value.trim()));
@@ -570,7 +581,8 @@ function updateSellerItem(id, data, options = {}) {
                 param: data.param,
                 paramLabel: paramLabel,
                 timestamp: new Date().toISOString(),
-                subject: window.i18n ? window.i18n.tOr('history.paymentReset', 'Zahlungsstatus zurückgesetzt') : 'Zahlungsstatus zurückgesetzt'
+                subject: window.i18n ? window.i18n.tOr('history.paymentReset', 'Zahlungsstatus zurückgesetzt') : 'Zahlungsstatus zurückgesetzt',
+                itemId: data.id
             });
         }
         // 2. Auszahlung an Verkäufer zurückgesetzt
@@ -584,7 +596,8 @@ function updateSellerItem(id, data, options = {}) {
                 param: data.param,
                 paramLabel: paramLabel,
                 timestamp: new Date().toISOString(),
-                subject: window.i18n ? window.i18n.tOr('history.payoutReset', 'Auszahlungsstatus an Verkäufer zurückgesetzt') : 'Auszahlungsstatus an Verkäufer zurückgesetzt'
+                subject: window.i18n ? window.i18n.tOr('history.payoutReset', 'Auszahlungsstatus an Verkäufer zurückgesetzt') : 'Auszahlungsstatus an Verkäufer zurückgesetzt',
+                itemId: data.id
             });
         }
         // 3. Nachträglich als bezahlt markiert
@@ -599,7 +612,8 @@ function updateSellerItem(id, data, options = {}) {
                 param: data.param,
                 paramLabel: paramLabel,
                 timestamp: new Date().toISOString(),
-                subject: window.i18n ? window.i18n.tOr('history.paymentManual', 'Nachträglich als bezahlt markiert') : 'Nachträglich als bezahlt markiert'
+                subject: window.i18n ? window.i18n.tOr('history.paymentManual', 'Nachträglich als bezahlt markiert') : 'Nachträglich als bezahlt markiert',
+                itemId: data.id
             });
         }
         // 4. Nachträglich als an Verkäufer ausgezahlt markiert
@@ -613,7 +627,8 @@ function updateSellerItem(id, data, options = {}) {
                 param: data.param,
                 paramLabel: paramLabel,
                 timestamp: new Date().toISOString(),
-                subject: window.i18n ? window.i18n.tOr('history.payoutManual', 'Nachträglich als an Verkäufer ausgezahlt markiert') : 'Nachträglich als an Verkäufer ausgezahlt markiert'
+                subject: window.i18n ? window.i18n.tOr('history.payoutManual', 'Nachträglich als an Verkäufer ausgezahlt markiert') : 'Nachträglich als an Verkäufer ausgezahlt markiert',
+                itemId: data.id
             });
         }
     }
@@ -776,6 +791,7 @@ function openSellerFormOverlay(editId) {
     const statusContainer = document.getElementById('sellerStatusContainer');
     const toggleRow = document.getElementById('sellerFormToggleSellerRow');
     const sellerBlock = document.getElementById('sellerFormSellerBlock');
+    const historyRow = document.getElementById('sellerFormHistoryRow');
     const label = (getSettings().paramLabel || 'Objekt').trim() || 'Objekt';
 
     if (titleEl) titleEl.textContent = window.i18n ? (editId ? window.i18n.tOr('form.sellerTitleEdit', label + ' bearbeiten', [label]) : window.i18n.tOr('form.sellerTitleNew', 'Neues ' + label + ' erfassen', [label])) : (editId ? (label + ' bearbeiten') : ('Neues ' + label + ' erfassen'));
@@ -801,6 +817,7 @@ function openSellerFormOverlay(editId) {
             });
         }
         if (statusContainer) statusContainer.classList.remove('hidden');
+        if (historyRow) historyRow.classList.remove('hidden');
         const hasSeller = !!((item && (item.sellerIban || '').trim()));
         if (toggleRow) toggleRow.classList.toggle('hidden', hasSeller);
         if (hasSeller) {
@@ -810,6 +827,7 @@ function openSellerFormOverlay(editId) {
         }
     } else {
         if (statusContainer) statusContainer.classList.add('hidden');
+        if (historyRow) historyRow.classList.add('hidden');
         if (toggleRow) toggleRow.classList.add('hidden');
         setSellerFormSellerBlockVisible(true);
         const paidCb = document.getElementById('sellerEditPaid');
@@ -825,6 +843,8 @@ function openSellerFormOverlay(editId) {
 function closeSellerFormOverlay() {
     sellerFormOverlay.classList.add('hidden');
     if (sellerEditIdInput) sellerEditIdInput.value = '';
+    const historyRow = document.getElementById('sellerFormHistoryRow');
+    if (historyRow) historyRow.classList.add('hidden');
 }
 
 function openSellerQuickFormOverlay() {
@@ -1005,7 +1025,8 @@ function openPayOverlay(id) {
         type: 'pay',
         param: item.param,
         paramLabel: s.paramLabel || '',
-        paidAlready: !!item.paid
+        paidAlready: !!item.paid,
+        itemId: id
     };
     generateQRCode(transferData);
 }
@@ -1029,7 +1050,8 @@ function openPaySellerOverlay(id) {
         param: item.param,
         paramLabel: s.paramLabel || '',
         sellerPaidAlready: !!item.sellerPaid,
-        paidByBuyerAlready: !!item.paid
+        paidByBuyerAlready: !!item.paid,
+        itemId: id
     };
     generateQRCode(transferData);
 }
@@ -1887,16 +1909,55 @@ function getHistory() {
     return historyJson ? JSON.parse(historyJson) : [];
 }
 
-function showHistory() {
+function showHistory(filter) {
     // Beim Öffnen sicherstellen, dass Export-Button existiert (falls DOM nachgeladen)
     // Listener wird in setupEventListeners gesetzt
     const history = getHistory();
     const historyList = document.getElementById('historyList');
+    const historyTitle = document.getElementById('historyTitle') || document.querySelector('#historyOverlay h2');
     
-    if (history.length === 0) {
-        historyList.innerHTML = '<div class="history-empty">' + (window.i18n ? window.i18n.tOr('history.empty', 'Noch keine QR Codes generiert') : 'Noch keine QR Codes generiert') + '</div>';
+    let filteredHistory = history;
+    let isFiltered = false;
+    let filterLabel = '';
+
+    if (filter) {
+        isFiltered = true;
+        const filterId = typeof filter === 'object' ? filter.id : null;
+        const filterParam = typeof filter === 'object' ? filter.param : filter;
+        filterLabel = filterParam || (filterId ? String(filterId) : '');
+
+        filteredHistory = history.filter(function (entry) {
+            if (filterId && (entry.itemId === filterId || (entry.multipleItemIds && entry.multipleItemIds.includes(filterId)))) {
+                return true;
+            }
+            if (filterParam && entry.param) {
+                if (entry.param === filterParam) return true;
+                const parts = entry.param.split(',').map(function (s) { return s.trim(); });
+                if (parts.includes(filterParam.trim())) return true;
+            }
+            return false;
+        });
+    }
+
+    if (historyTitle) {
+        if (isFiltered && filterLabel) {
+            historyTitle.textContent = window.i18n
+                ? window.i18n.tOr('history.titleFiltered', 'Protokoll: {0}', [filterLabel])
+                : ('Protokoll: ' + filterLabel);
+        } else {
+            historyTitle.textContent = window.i18n
+                ? window.i18n.tOr('history.title', 'Protokoll')
+                : 'Protokoll';
+        }
+    }
+
+    if (filteredHistory.length === 0) {
+        const emptyText = isFiltered
+            ? (window.i18n ? window.i18n.tOr('history.emptyFiltered', 'Keine Protokolleinträge für dieses Objekt vorhanden.') : 'Keine Protokolleinträge für dieses Objekt vorhanden.')
+            : (window.i18n ? window.i18n.tOr('history.empty', 'Noch keine QR Codes generiert') : 'Noch keine QR Codes generiert');
+        historyList.innerHTML = '<div class="history-empty">' + escapeHtml(emptyText) + '</div>';
     } else {
-        historyList.innerHTML = history.map((item, index) => createHistoryItem(item, index)).join('');
+        historyList.innerHTML = filteredHistory.map((item, index) => createHistoryItem(item, index)).join('');
     }
     
     historyOverlay.classList.remove('hidden');
@@ -2462,6 +2523,8 @@ if (typeof module !== 'undefined' && module.exports) {
         setupEventListeners,
         saveToHistory,
         getHistory,
+        showHistory,
+        closeHistoryOverlay,
         createHistoryItem,
         closeQROverlay
     };

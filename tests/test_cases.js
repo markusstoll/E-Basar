@@ -571,6 +571,8 @@
                         t.app.openSellerFormOverlay(); // ohne ID = Neuanlage
                         const container = t.getElementById('sellerStatusContainer');
                         t.assertTrue(container.classList.contains('hidden'), 'Status-Container muss bei Neuanlage hidden sein');
+                        const historyRow = t.getElementById('sellerFormHistoryRow');
+                        t.assertTrue(historyRow.classList.contains('hidden'), 'Protokoll-Row muss bei Neuanlage hidden sein');
                         const paidCb = t.getElementById('sellerEditPaid');
                         const sellerPaidCb = t.getElementById('sellerEditSellerPaid');
                         t.assertFalse(paidCb.checked, 'Bezahlt-Checkbox muss bei Neuanlage uncheck sein');
@@ -587,8 +589,58 @@
                         t.app.openSellerFormOverlay(item.id); // mit ID = Bearbeiten
                         const container = t.getElementById('sellerStatusContainer');
                         t.assertFalse(container.classList.contains('hidden'), 'Status-Container darf bei Bearbeiten nicht hidden sein');
+                        const historyRow = t.getElementById('sellerFormHistoryRow');
+                        t.assertFalse(historyRow.classList.contains('hidden'), 'Protokoll-Row darf bei Bearbeiten nicht hidden sein');
                         const paidCb = t.getElementById('sellerEditPaid');
                         t.assertTrue(paidCb.checked, 'Bezahlt-Checkbox muss den Wert des Objekts widerspiegeln (true)');
+                        t.app.closeSellerFormOverlay();
+                    }
+                },
+                {
+                    name: 'Protokoll-Button im Bearbeiten-Overlay öffnet gefiltertes Protokoll für das Objekt',
+                    fn(t) {
+                        t.reset();
+                        const itemA = t.app.addSellerItem({ sellerName: 'S1', sellerIban: 'DE89370400440532013000', param: 'Rad A', price: 100 });
+                        const itemB = t.app.addSellerItem({ sellerName: 'S2', sellerIban: 'DE89370400440532013000', param: 'Buch B', price: 20 });
+                        t.app.saveToHistory({
+                            type: 'pay',
+                            itemId: itemA.id,
+                            param: itemA.param,
+                            amount: itemA.price,
+                            recipientName: 'Basar',
+                            iban: 'DE89370400440532013000',
+                            timestamp: new Date().toISOString(),
+                            subject: 'Zahlung Rad A'
+                        });
+                        t.app.saveToHistory({
+                            type: 'pay',
+                            itemId: itemB.id,
+                            param: itemB.param,
+                            amount: itemB.price,
+                            recipientName: 'Basar',
+                            iban: 'DE89370400440532013000',
+                            timestamp: new Date().toISOString(),
+                            subject: 'Zahlung Buch B'
+                        });
+                        t.app.openSellerFormOverlay(itemA.id);
+                        const sellerOverlay = t.getElementById('sellerFormOverlay');
+                        t.assertFalse(sellerOverlay.classList.contains('hidden'), 'Bearbeiten-Overlay muss geöffnet sein');
+                        const btnHistory = t.getElementById('btnSellerHistory');
+                        t.assertTrue(!!btnHistory, 'btnSellerHistory muss existieren');
+                        btnHistory.click();
+
+                        const historyOverlay = t.getElementById('historyOverlay');
+                        t.assertFalse(historyOverlay.classList.contains('hidden'), 'historyOverlay muss geöffnet sein');
+                        const titleEl = t.getElementById('historyTitle');
+                        t.assertTrue(titleEl.textContent.includes('Rad A'), 'Titel muss Objektnamen enthalten');
+                        const historyList = t.getElementById('historyList');
+                        t.assertTrue(historyList.innerHTML.includes('Rad A'), 'Gefilterte Historie muss Rad A enthalten');
+                        t.assertFalse(historyList.innerHTML.includes('Buch B'), 'Gefilterte Historie darf Buch B NICHT enthalten');
+
+                        // History schließen: Bearbeiten-Overlay muss weiterhin geöffnet sein
+                        t.getElementById('closeHistory').click();
+                        t.assertTrue(historyOverlay.classList.contains('hidden'), 'historyOverlay muss nach Klick auf Schließen geschlossen sein');
+                        t.assertFalse(sellerOverlay.classList.contains('hidden'), 'sellerFormOverlay muss weiterhin geöffnet bleiben');
                         t.app.closeSellerFormOverlay();
                     }
                 }

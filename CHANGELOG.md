@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Objektbezogenes Protokoll im Bearbeiten-Overlay**:
+  - Neuer Button *„Protokoll“* ganz unten im Bearbeiten-Dialog (`#sellerFormOverlay`), der das Protokoll gefiltert für das jeweilige Objekt öffnet.
+  - Dynamischer Titel im Protokoll-Overlay (*„Protokoll: [Objekt]“*) und Hinweis bei keinen vorhandenen Einträgen.
+  - Saubere Überlagerung (`z-index: 1100`), sodass das Schließen des Protokolls direkt zum weiterhin geöffneten Bearbeiten-Dialog zurückkehrt.
+  - Neuer automatisierter Regressionstest in Test-Gruppe 7 (Gesamtzahl: 58 Tests).
+
+### Changed
+- **Gefahrenzone in Einstellungen**:
+  - Button *„Test-Szenarien laden“* ist nun wie die anderen Aktionen der Gefahrenzone rot hervorgehoben (`btn-danger`) und an das Ende der Gefahrenzone verschoben.
+
 ## [1.1.5] - 2026-09-21
 
 ### Fixed
