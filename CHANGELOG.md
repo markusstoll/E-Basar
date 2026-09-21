@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.9] - 2026-09-21
+
+### Fixed
+- **Robuste und idempotente IBAN-Formatierung (`formatIBAN`)**:
+  - `formatIBAN` bereinigt Eingabewerte vor der Gruppierung nun vollständig von vorhandenen Leerzeichen und Nicht-Alphanumerik-Zeichen.
+  - Verhindert fehlerhafte, verschobene Leerzeichen („wilde Gruppierung“) bei mehrfachem Durchlauf (z. B. in `openReport()` nach `getReportData()`).
+  - Garantiert stets saubere 4er-Blöcke (`DE89 3704 0044 0532 0130 00`), wobei nur die letzte Gruppe ggf. weniger Zeichen enthält.
+  - Erweiterte automatisierte Regressionstests für Idempotenz, Kleinbuchstaben, unvollständige Endgruppen und Report-HTML-Ausgabe.
+
 ## [1.1.8] - 2026-09-21
 
 ### Changed
@@ -220,7 +229,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.8...HEAD
+[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.9...HEAD
+[1.1.9]: https://github.com/markusstoll/E-Basar/compare/1.1.8...1.1.9
 [1.1.8]: https://github.com/markusstoll/E-Basar/compare/1.1.7...1.1.8
 [1.1.7]: https://github.com/markusstoll/E-Basar/compare/1.1.6...1.1.7
 [1.1.6]: https://github.com/markusstoll/E-Basar/compare/1.1.5...1.1.6

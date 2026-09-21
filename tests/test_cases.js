@@ -35,6 +35,12 @@
                     fn(t) {
                         const formatted = t.app.formatIBAN('DE89370400440532013000');
                         t.assertEqual(formatted, 'DE89 3704 0044 0532 0130 00', 'IBAN muss in 4er Blöcke aufgeteilt werden');
+                        // Idempotenz: bereits formatierte IBAN darf keine wilden Leerzeichen erzeugen
+                        t.assertEqual(t.app.formatIBAN('DE89 3704 0044 0532 0130 00'), 'DE89 3704 0044 0532 0130 00', 'Bereits formatierte IBAN bleibt identisch');
+                        // Kleinbuchstaben & Leerzeichen
+                        t.assertEqual(t.app.formatIBAN('de89 3704 0044 0532 0130 00'), 'DE89 3704 0044 0532 0130 00', 'Kleinbuchstaben werden normalisiert');
+                        // Letzte Gruppe mit weniger Zeichen (22 Zeichen -> 5x4 + 2)
+                        t.assertEqual(t.app.formatIBAN('DE42111133333333333333'), 'DE42 1111 3333 3333 3333 33', 'Letzte Gruppe kann weniger als 4 Zeichen enthalten');
                     }
                 },
                 {
@@ -1095,6 +1101,8 @@
                             t.assertTrue(capturedHtml.includes('id="btnPrintReport"'), 'Report muss einen Drucken-Button enthalten');
                             t.assertTrue(capturedHtml.includes('id="btnExportCsv"'), 'Report muss einen CSV-Export-Button enthalten');
                             t.assertTrue(capturedHtml.includes('window.print()'), 'Drucken-Button muss window.print() aufrufen');
+                            t.assertTrue(capturedHtml.includes('DE42 1111 3333 3333 3333 33'), 'Report-Tabelle muss IBAN sauber in 4er-Blöcken formatiert darstellen');
+                            t.assertFalse(capturedHtml.includes('DE42   111'), 'Report darf keine wilden Leerzeichen-Verdopplungen enthalten');
                         } finally {
                             if (win) win.open = origOpen;
                         }

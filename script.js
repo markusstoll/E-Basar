@@ -1,4 +1,4 @@
-const APP_VERSION = '1.1.8';
+const APP_VERSION = '1.1.9';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -1809,8 +1809,11 @@ function formatAmountDE(amount) {
 }
 
 function formatIBAN(iban) {
-    // Format IBAN with spaces every 4 characters
-    return iban.replace(/(.{4})/g, '$1 ').trim();
+    if (!iban) return '';
+    // Format IBAN with spaces every 4 characters (clean non-alphanumeric first)
+    const clean = String(iban).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    const parts = clean.match(/.{1,4}/g);
+    return parts ? parts.join(' ') : '';
 }
 
 function formatDate(isoString) {
