@@ -393,6 +393,25 @@
                         const list = t.getRenderedItems();
                         t.assertEqual(list.length, 3, 'Alle 3 Objekte müssen bei showPaid=true sichtbar sein');
                     }
+                },
+                {
+                    name: 'Bereits bezahlte Objekte zeigen in sell keinen Bezahlen-Knopf an',
+                    fn(t) {
+                        t.reset();
+                        const unpaid = t.app.addSellerItem({ sellerName: 'S1', sellerIban: 'DE89370400440532013000', param: 'Rad Unbezahlt', price: 50 });
+                        const paid = t.app.addSellerItem({ sellerName: 'S2', sellerIban: 'DE89370400440532013000', param: 'Rad Bezahlt', price: 80 });
+                        t.app.setSellerPaid(paid.id, 'bar');
+
+                        t.setMode('sell');
+                        t.setShowPaid(true);
+
+                        const html = t.getRenderedHtml();
+                        // Unbezahltes Objekt muss Bezahlen-Knopf haben
+                        t.assertTrue(html.includes(`data-action="pay" data-id="${unpaid.id}"`), 'Unbezahltes Objekt muss Bezahlen-Knopf haben');
+                        // Bereits bezahltes Objekt darf KEINEN Bezahlen-Knopf haben
+                        t.assertFalse(html.includes(`data-action="pay" data-id="${paid.id}"`), 'Bereits bezahltes Objekt darf KEINEN Bezahlen-Knopf haben');
+                        t.assertFalse(html.includes(`data-action="paySeller" data-id="${paid.id}"`), 'Bereits bezahltes Objekt darf in sell keinen Auszahlen-Knopf haben');
+                    }
                 }
             ]
         },
@@ -1215,7 +1234,7 @@
                     }
                 },
                 {
-                    name: 'openPayOverlay leitet für bereits bezahlte Objekte mit Verkäufer-IBAN zur Payout-Auszahlung weiter',
+                    name: 'openPayOverlay öffnet stets das Käufer-Bezahl-Overlay und leitet niemals zur Verkäufer-Auszahlung weiter',
                     fn(t) {
                         t.reset();
                         const s = t.app.getSettings();
@@ -1233,18 +1252,13 @@
                         t.app.openPayOverlay(item.id);
 
                         const actionSection = t.getElementById('overlayPaySellerAction');
-                        const btnDone = t.getElementById('overlayPaySellerDone');
-                        t.assertFalse(actionSection.classList.contains('hidden'), 'Payout-Aktionsbereich muss geöffnet werden');
-                        t.assertFalse(btnDone.disabled, 'Payout-Button muss aktiv sein');
+                        t.assertTrue(actionSection.classList.contains('hidden'), 'Payout-Aktionsbereich darf NICHT geöffnet werden');
 
-                        // Payout bestätigen
-                        if (typeof btnDone.click === 'function') {
-                            btnDone.click();
-                        } else {
-                            btnDone.dispatchEvent({ type: 'click' });
-                        }
+                        const titleEl = t.getElementById('qrOverlayTitle');
+                        t.assertEqual(titleEl.textContent, 'Bezahlung durch Käufer', 'Titel muss Bezahlung durch Käufer sein');
+
                         const updated = t.app.getSellerItems().find(i => i.id === item.id);
-                        t.assertTrue(updated.sellerPaid, 'sellerPaid muss true sein');
+                        t.assertFalse(updated.sellerPaid, 'sellerPaid darf nicht verändert werden');
                     }
                 },
                 {

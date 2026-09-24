@@ -1,4 +1,4 @@
-const APP_VERSION = '1.1.9';
+const APP_VERSION = '1.1.10';
 
 // Storage keys
 const STORAGE_KEY = 'transferHistory';
@@ -1006,11 +1006,6 @@ function handleSellerListClick(e) {
 function openPayOverlay(id) {
     const item = getSellerItems().find(i => i.id === id);
     if (!item) return;
-    const hasSeller = !!((item.sellerName || '').trim() && (item.sellerIban || '').trim());
-    if (item.paid && hasSeller && !item.sellerPaid) {
-        openPaySellerOverlay(id);
-        return;
-    }
     const s = getSettings();
     if (!s.recipientName || !s.iban) {
         alert(window.i18n ? window.i18n.tOr('msg.pleaseEnterRecipient', 'Bitte in den Einstellungen Empfänger und IBAN eintragen (für „Bezahlen").') : 'Bitte in den Einstellungen Empfänger und IBAN eintragen.');
@@ -1299,7 +1294,7 @@ function renderSellerList() {
         const editLabel = window.i18n ? window.i18n.tOr('action.edit', 'Bearbeiten') : 'Bearbeiten';
         const payLabel = window.i18n ? window.i18n.tOr('action.pay', 'Bezahlen') : 'Bezahlen';
         const deleteLabel = window.i18n ? window.i18n.tOr('action.delete', 'Löschen') : 'Löschen';
-        const payBtn = isPayout ? '' : `<button type="button" class="btn-small btn-pay" data-action="pay" data-id="${escapeHtml(item.id)}">${escapeHtml(payLabel)}</button>`;
+        const payBtn = (isPayout || item.paid) ? '' : `<button type="button" class="btn-small btn-pay" data-action="pay" data-id="${escapeHtml(item.id)}">${escapeHtml(payLabel)}</button>`;
         const actions = item.deleted ? '' : `
             <div class="seller-item-actions">
                 <button type="button" class="btn-small btn-edit" data-action="edit" data-id="${escapeHtml(item.id)}">${escapeHtml(editLabel)}</button>

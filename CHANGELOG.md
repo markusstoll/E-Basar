@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.10] - 2026-09-24
+
+### Fixed
+- **Bezahl-Button bei bereits bezahlten Objekten (`renderSellerList` & `openPayOverlay`)**:
+  - Für bereits bezahlte Objekte wird in der Verkaufen- (und Verkäufer-)Ansicht kein „Bezahlen“-Button mehr gerendert.
+  - `openPayOverlay` leitet nicht mehr fälschlicherweise auf das Payout-Overlay zur Verkäuferauszahlung (`openPaySellerOverlay`) um, sondern öffnet stets die vorgesehene Käufer-Bezahlfunktion.
+  - Regressionstests in Suite 3 und Suite 10 angepasst/erweitert (Gesamtzahl: 62 Tests).
+
 ## [1.1.9] - 2026-09-21
 
 ### Fixed
@@ -229,7 +237,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.9...HEAD
+[Unreleased]: https://github.com/markusstoll/E-Basar/compare/1.1.10...HEAD
+[1.1.10]: https://github.com/markusstoll/E-Basar/compare/1.1.9...1.1.10
 [1.1.9]: https://github.com/markusstoll/E-Basar/compare/1.1.8...1.1.9
 [1.1.8]: https://github.com/markusstoll/E-Basar/compare/1.1.7...1.1.8
 [1.1.7]: https://github.com/markusstoll/E-Basar/compare/1.1.6...1.1.7
